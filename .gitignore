@@ -4,5 +4,5 @@
 /.idea/
 /distr/
 /composite/spring-petclinic-kotlin/hs_err_pid.*.log
-/drill4j.iml
+/*.iml
 /test.log
