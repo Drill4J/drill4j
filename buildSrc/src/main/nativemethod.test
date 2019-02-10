@@ -1,0 +1,32 @@
+
+    val forNativeMethods =
+        ClassParser("build/classes/kotlin/jvm/main/com/epam/kjni/testdata/DrillNativeManager.class").parse()
+    val filter = forNativeMethods.methods.filter { it.isNative }
+    val className = forNativeMethods.className
+        val map = filter.map {
+            val builder = FunSpec.builder(it.name)
+
+//            : CPointer<JNIEnvVar>
+            val type = ClassName("kotlinx.cinterop", "CPointer")
+//            (type as TypeName).parameterizedBy()
+            val parameterSpec = ParameterSpec.builder("env", type)
+
+
+            builder.addParameter(parameterSpec.build())
+
+            val build = AnnotationSpec
+                .builder(ClassName("kotlin.native", "CName"))
+                .addMember("\"Java_${className.replace(".", "_")}_${it.name}\"").build()
+            builder.addAnnotation(build)
+            builder.build()
+        }
+
+        val builder = FileSpec.builder("", "wrd" + "gen")
+
+        map.forEach {
+            builder
+                .addFunction(it)
+        }
+        builder.build().writeTo(File("C:\\Users\\Igor_Kuzminykh\\kjni"))
+//
+//

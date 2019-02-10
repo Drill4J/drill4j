@@ -1,0 +1,7 @@
+version: '2'
+services:
+  drillmongodb:
+    image: 'mongo'
+    restart: always
+    ports:
+      - 27017:27017
