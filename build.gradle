@@ -65,8 +65,9 @@ kotlin {
 
         fromPreset(kotlin.presets[preset], 'nativeCommon')
         fromPreset(kotlin.presets[preset], 'knasm')
+        fromPreset(kotlin.presets[preset], 'kjni')
 
-        configure([nativeCommon]) {
+        configure([nativeCommon, kjni]) {
             compilations.main.outputKinds('DYNAMIC')
 
             compilations.main {
@@ -108,8 +109,9 @@ kotlin {
         nativeCommonMain {
             dependsOn agentCommonMain
             dependsOn knasmMain
+            dependsOn kjniMain
             dependencies {
-                implementation fileTree(file("testLib/kjni.klib"))
+//                implementation fileTree(file("testLib/kjni.klib"))
                 implementation("com.soywiz:korio:1.1.0-drill")
 //                implementation("com.epam:kn-asm:0.0.1")
                 implementation("com.soywiz:klogger:1.2.1")
@@ -122,6 +124,15 @@ kotlin {
         }
         knasmMain {
             dependencies {
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0"
+            }
+        }
+        kjniMain {
+            kotlin{
+                srcDir("src/kjniMain/basicprimitive")
+            }
+            dependencies {
+
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0"
             }
         }
@@ -277,6 +288,7 @@ task deleteAndCopyAgent {
     }
 }
 
+//println()
 task buildAgent {
     dependsOn agentJar
     dependsOn deleteAndCopyAgent
