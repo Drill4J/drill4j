@@ -288,14 +288,12 @@ task deleteAndCopyAgent {
     }
 }
 
-//println()
 task buildAgent {
     dependsOn agentJar
     dependsOn deleteAndCopyAgent
     group = "application"
 }
-buildPlugin.dependsOn publishDrillAdminPartPublicationToMavenLocal
-buildPlugin.dependsOn publishDrillAgentPartPublicationToMavenLocal
 
 build.dependsOn buildAgent
-build.dependsOn buildPlugin
+build.dependsOn publishDrillAdminPartPublicationToMavenLocal
+build.dependsOn publishDrillAgentPartPublicationToMavenLocal
