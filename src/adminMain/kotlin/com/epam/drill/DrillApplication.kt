@@ -4,6 +4,7 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.endpoints.*
 import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
+import com.epam.drill.jwt.config.JwtConfig
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
@@ -12,6 +13,9 @@ import com.soywiz.klogger.Logger
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.*
+import io.ktor.auth.jwt.JWTPrincipal
+import io.ktor.auth.jwt.jwt
 import io.ktor.features.CORS
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
@@ -27,8 +31,10 @@ import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
+import io.ktor.locations.url
 import io.ktor.response.respondBytes
 import io.ktor.response.respondFile
+import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,6 +77,9 @@ val pluginServices = Kodein.Module(name = "pluginServices") {
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
 fun Application.module(installation: Application.() -> Unit = {
+    val jwtAudience = environment.config.property("jwt.audience").getString()
+    val jwtRealm = environment.config.property("jwt.realm").getString()
+
     install(ContentNegotiation) {
         register(ContentType.Application.Json, GsonConverter())
     }
@@ -94,15 +103,33 @@ fun Application.module(installation: Application.() -> Unit = {
         maxFrameSize = Long.MAX_VALUE
         masking = false
     }
+
+    install(Authentication) {
+        jwt {
+            realm = jwtRealm
+            verifier(JwtConfig.verifier)
+            validate { credential ->
+                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
+            }
+        }
+    }
 }) {
     kodeinApplication {
         installation()
 
         routing {
-            get("/plugin/{xx}/{x1}") {
+            get("/login") {
                 val resource = this::class.java.getResource("/public/index.html")
-                call.respondBytes(resource.openStream().readBytes(), contentType = ContentType.Any)
+                call.respondBytes(resource.openStream().readBytes(), contentType = ContentType.Text.Html)
             }
+
+            authenticate {
+                get("/plugin/{xx}/{x1}") {
+                    val resource = this::class.java.getResource("/public/index.html")
+                    call.respondBytes(resource.openStream().readBytes(), contentType = ContentType.Any)
+                }
+            }
+
             static {
 
                 resources("public")
