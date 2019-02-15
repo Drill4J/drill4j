@@ -9,6 +9,7 @@ import com.epam.drill.storage.MongoClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
 import io.ktor.application.Application
+import io.ktor.auth.authenticate
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.routing
@@ -29,33 +30,45 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
 
     init {
         app.routing {
-            webSocket("/drill-server-socket") {
+            authenticate {
+                webSocket("/drill-server-socket") {
 
-                incoming.consumeEach { frame ->
-                    when (frame) {
-                        is Frame.Text -> {
-                            val event = Gson().fromJson(frame.readText(), Message::class.java)
-                            when (event.type) {
-                                MessageType.REGISTER -> {
-                                    if (sessionStorage[event.destination] == null) {
-                                        sessionStorage[event.destination] = mutableSetOf(this)
+                    incoming.consumeEach { frame ->
+                        when (frame) {
+                            is Frame.Text -> {
+                                val event = Gson().fromJson(frame.readText(), Message::class.java)
+                                when (event.type) {
+                                    MessageType.REGISTER -> {
+                                        if (sessionStorage[event.destination] == null) {
+                                            sessionStorage[event.destination] = mutableSetOf(this)
+                                        }
+                                        sessionStorage[event.destination]?.add(this)
+                                        val mapper = ObjectMapper()
+                                        send(
+                                            Frame.Text(
+                                                Gson().toJson(
+                                                    Message(
+                                                        MessageType.MESSAGE,
+                                                        event.destination,
+                                                        mapper.writeValueAsString(storage.agents.values.map { it.agentInfo })
+                                                    )
+                                                )
+                                            )
+                                        )
+
                                     }
-                                    sessionStorage[event.destination]?.add(this)
-                                    val mapper = ObjectMapper()
-                                    send(Frame.Text(Gson().toJson(Message(MessageType.MESSAGE, event.destination, mapper.writeValueAsString(storage.agents.values.map { it.agentInfo })))))
+                                    MessageType.MESSAGE -> {
+                                    }
 
-                                }
-                                MessageType.MESSAGE -> {
-                                }
-
-                                else -> {
+                                    else -> {
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
+            }
         }
     }
 }

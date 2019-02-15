@@ -10,6 +10,7 @@ import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.call
+import io.ktor.auth.authenticate
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Location
@@ -70,10 +71,12 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
     init {
         app.routing {
-            post<PluginConfig> { ll ->
-                val text = Message(MessageType.MESSAGE, "updatePluginConfig/${ll.pluginName}", call.receive())
-                agentStorage.agents[ll.agentName]?.agentWsSession?.send(Frame.Text(Gson().toJson(text)))
-                call.respondText { "xxx" }
+            authenticate {
+                post<PluginConfig> { ll ->
+                    val text = Message(MessageType.MESSAGE, "updatePluginConfig/${ll.pluginName}", call.receive())
+                    agentStorage.agents[ll.agentName]?.agentWsSession?.send(Frame.Text(Gson().toJson(text)))
+                    call.respondText { "xxx" }
+                }
             }
         }
     }

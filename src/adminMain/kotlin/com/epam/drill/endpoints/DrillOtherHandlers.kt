@@ -6,6 +6,7 @@ import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
 import io.ktor.application.Application
 import io.ktor.application.call
+import io.ktor.auth.authenticate
 import io.ktor.html.respondHtml
 import io.ktor.locations.get
 import io.ktor.response.respond
@@ -23,29 +24,33 @@ class DrillOtherHandlers(override val kodein: Kodein) : KodeinAware {
 
     init {
         app.routing {
-            get("/plugin-info/getPluginsConfiguration") {
+            authenticate {
+                get("/plugin-info/getPluginsConfiguration") {
 
-                call.respond(plugins.plugins.keys.toTypedArray())
+                    call.respond(plugins.plugins.keys.toTypedArray())
 
+                }
             }
 
-            get<Routes.PluginContent> { ll ->
+            authenticate {
+                get<Routes.PluginContent> { ll ->
 
-                call.respondHtml {
-                    head {
-                        script { src = "/${ll.pluginId}.js" }
-                    }
-                    body {
-                        div {
-                            +"CONTENT OF THE \"${ll.pluginId}\" PLUGIN"
+                    call.respondHtml {
+                        head {
+                            script { src = "/${ll.pluginId}.js" }
                         }
-                        div {
-                            id = "root"
+                        body {
+                            div {
+                                +"CONTENT OF THE \"${ll.pluginId}\" PLUGIN"
+                            }
+                            div {
+                                id = "root"
+                            }
                         }
                     }
+
+
                 }
-
-
             }
 
         }

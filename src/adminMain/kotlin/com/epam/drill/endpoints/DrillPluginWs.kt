@@ -9,6 +9,7 @@ import com.epam.drill.storage.MongoClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
 import io.ktor.application.Application
+import io.ktor.auth.authenticate
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.routing
@@ -65,69 +66,70 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
     init {
         app.routing {
-            webSocket("/drill-socket") {
+            authenticate {
+                webSocket("/drill-socket") {
 
-                incoming.consumeEach { frame ->
-                    when (frame) {
-                        is Frame.Text -> {
-                            val event = Gson().fromJson(frame.readText(), Message::class.java)
-                            when (event.type) {
-                                MessageType.REGISTER -> {
-                                    if (sessionStorage[event.destination] == null) {
-                                        sessionStorage[event.destination] = mutableSetOf(this)
-                                    }
-                                    sessionStorage[event.destination]?.add(this)
+                    incoming.consumeEach { frame ->
+                        when (frame) {
+                            is Frame.Text -> {
+                                val event = Gson().fromJson(frame.readText(), Message::class.java)
+                                when (event.type) {
+                                    MessageType.REGISTER -> {
+                                        if (sessionStorage[event.destination] == null) {
+                                            sessionStorage[event.destination] = mutableSetOf(this)
+                                        }
+                                        sessionStorage[event.destination]?.add(this)
 //                                    logDebug("${event.destination} was subscribe")
 
-                                    val objects =
-                                        mc.client!!.getDatabase("test").getCollection<SeqMessage>(event.destination)
-                                    for (ogs in objects.find()) {
-                                        val message = getMessageForSocket(ogs)
-                                        this.send(
-                                            Frame.Text(
-                                                Gson().toJson(
-                                                    Message(
-                                                        MessageType.MESSAGE,
-                                                        event.destination,
-                                                        message
+                                        val objects =
+                                            mc.client!!.getDatabase("test").getCollection<SeqMessage>(event.destination)
+                                        for (ogs in objects.find()) {
+                                            val message = getMessageForSocket(ogs)
+                                            this.send(
+                                                Frame.Text(
+                                                    Gson().toJson(
+                                                        Message(
+                                                            MessageType.MESSAGE,
+                                                            event.destination,
+                                                            message
+                                                        )
                                                     )
                                                 )
                                             )
-                                        )
+                                        }
+
+
                                     }
-
-
-                                }
-                                MessageType.MESSAGE -> {
-                                }
-                                MessageType.DELETE -> {
-                                    val id = event.message
-                                    val collection =
-                                        mc.client!!.getDatabase("test").getCollection<SeqMessage>(event.destination)
-                                    val deleteOneById = collection.deleteOne(SeqMessage::id eq id)
-                                    println(deleteOneById)
-                                    if (deleteOneById.deletedCount > 0) {
-                                        this.send(
-                                            Frame.Text(
-                                                Gson().toJson(
-                                                    Message(
-                                                        MessageType.DELETE,
-                                                        event.destination,
-                                                        id
+                                    MessageType.MESSAGE -> {
+                                    }
+                                    MessageType.DELETE -> {
+                                        val id = event.message
+                                        val collection =
+                                            mc.client!!.getDatabase("test").getCollection<SeqMessage>(event.destination)
+                                        val deleteOneById = collection.deleteOne(SeqMessage::id eq id)
+                                        println(deleteOneById)
+                                        if (deleteOneById.deletedCount > 0) {
+                                            this.send(
+                                                Frame.Text(
+                                                    Gson().toJson(
+                                                        Message(
+                                                            MessageType.DELETE,
+                                                            event.destination,
+                                                            id
+                                                        )
                                                     )
                                                 )
                                             )
-                                        )
+                                        }
                                     }
-                                }
-                                else -> {
+                                    else -> {
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-
         }
     }
 }
