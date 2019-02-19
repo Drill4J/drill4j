@@ -21,7 +21,7 @@ object JwtConfig {
      * produce a tocken
      */
     fun makeToken(user: User): String = JWT.create()
-        .withSubject("Autentication")
+        .withSubject("Authentication")
         .withIssuer(issuser)
         .withClaim("id", user.id)
         .withClaim("role", user.role)

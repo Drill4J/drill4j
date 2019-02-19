@@ -5,6 +5,8 @@ import com.epam.drill.endpoints.*
 import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
 import com.epam.drill.jwt.config.JwtConfig
+import com.epam.drill.jwt.user.source.UserSource
+import com.epam.drill.jwt.user.source.UserSourceImpl
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
@@ -13,38 +15,34 @@ import com.soywiz.klogger.Logger
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
-import io.ktor.auth.*
-import io.ktor.auth.jwt.JWTPrincipal
+import io.ktor.auth.Authentication
+import io.ktor.auth.UserPasswordCredential
+import io.ktor.auth.authenticate
 import io.ktor.auth.jwt.jwt
 import io.ktor.features.CORS
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.gson.GsonConverter
-import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
-import io.ktor.http.ContentType.Application.Xml
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.content.defaultResource
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
-import io.ktor.locations.url
-import io.ktor.response.respondBytes
-import io.ktor.response.respondFile
-import io.ktor.response.respondText
+import io.ktor.response.header
+import io.ktor.response.respond
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.html.*
 import org.kodein.di.Kodein
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
-import java.io.File
 import java.time.Duration
 
 val logger = Logger("DrillApplication").apply { level =Logger.Level.TRACE }
@@ -57,6 +55,9 @@ val storage = Kodein.Module(name = "agentStorage") {
 val devContainer = Kodein.Module(name = "devContainer") {
     bind<DevEndpoints>() with eagerSingleton { DevEndpoints(kodein) }
 }
+
+val userSource: UserSource = UserSourceImpl()
+
 @KtorExperimentalLocationsAPI
 @ObsoleteCoroutinesApi
 val handlers = Kodein.Module(name = "handlers") {
@@ -83,17 +84,6 @@ fun Application.module(installation: Application.() -> Unit = {
     install(ContentNegotiation) {
         register(ContentType.Application.Json, GsonConverter())
     }
-//    install(CORS) {
-//
-//        method(HttpMethod.Options)
-//        method(HttpMethod.Put)
-//        method(HttpMethod.Delete)
-//        method(HttpMethod.Patch)
-//        header(HttpHeaders.Authorization)
-//        header("MyCustomHeader")
-//        allowCredentials = true
-//        anyHost()
-//    }
     install(StatusPages)
     install(CallLogging)
     install(Locations)
@@ -108,25 +98,39 @@ fun Application.module(installation: Application.() -> Unit = {
         jwt {
             realm = jwtRealm
             verifier(JwtConfig.verifier)
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
+            validate {
+                it.payload.getClaim("id").asInt()?.let(userSource::findUserById)
             }
         }
+    }
+
+    install(CORS) {
+        anyHost()
+        allowCredentials = true
+        method(HttpMethod.Post)
+        method(HttpMethod.Get)
+        method(HttpMethod.Delete)
+        method(HttpMethod.Put)
+        exposeHeader(HttpHeaders.Authorization)
     }
 }) {
     kodeinApplication {
         installation()
 
         routing {
-            get("/login") {
-                val resource = this::class.java.getResource("/public/index.html")
-                call.respondBytes(resource.openStream().readBytes(), contentType = ContentType.Text.Html)
+            post("/login") {
+                val username = "guest"
+                val password = ""
+                val credentials = UserPasswordCredential(username, password)
+                val user = userSource.findUserByCredentials(credentials)
+                val token = JwtConfig.makeToken(user)
+                call.response.header(HttpHeaders.Authorization, token)
+                call.respond(HttpStatusCode.OK)
             }
 
             authenticate {
                 get("/plugin/{xx}/{x1}") {
-                    val resource = this::class.java.getResource("/public/index.html")
-                    call.respondBytes(resource.openStream().readBytes(), contentType = ContentType.Any)
+                        call.respond(HttpStatusCode.OK)
                 }
             }
 
