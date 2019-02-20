@@ -80,7 +80,6 @@ task runDrillAdmin() {
             jvmArgs(
                     "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006",
                     "-Xmx2g"
-//                    , "-agentpath:C:\\Users\\Igor_Kuzminykh\\xxDrill4J\\distr\\main.dll=drillInstallationDir="
             )
         }
     }
@@ -88,3 +87,14 @@ task runDrillAdmin() {
 
 runDrillAdmin.dependsOn('adminJar')
 
+
+adminJar {
+    manifest {
+        attributes(
+                "Main-Class": "io.ktor.server.netty.EngineMain")
+    }
+    from {
+        kotlin.targets['admin'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+}
