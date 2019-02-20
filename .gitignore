@@ -6,3 +6,6 @@
 /composite/spring-petclinic-kotlin/hs_err_pid.*.log
 /*.iml
 /test.log
+/nativeprojects/drill-jvmapi/build/
+/drill-plugin-api/build/
+/docker-compose/data/

@@ -64,7 +64,8 @@ tasks.named<BootRun>("bootRun") {
     doFirst {
         jvmArgs("-Xmx2g")
         jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007")
-        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../src/nativeCommonMain/resources")},distrFolder=${file("../../distr")}")
+//        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../src/nativeCommonMain/resources")},drillInstallationDir=${file("../../distr")}")
+        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../resources")},drillInstallationDir=${file("../../distr")}")
     }
 
 }

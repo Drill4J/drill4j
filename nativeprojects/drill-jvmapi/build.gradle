@@ -1,0 +1,81 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.internal.jvm.Jvm
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
+
+plugins {
+    id 'kotlin-multiplatform'
+    id 'kotlinx-serialization'
+
+}
+
+group 'com.epam'
+version '0.0.1'
+
+apply plugin: 'maven-publish'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+    maven { url "https://dl.bintray.com/kodein-framework/Kodein-DI" }
+    maven { url "https://dl.bintray.com/soywiz/soywiz" }
+    maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
+    maven { url "https://kotlin.bintray.com/ktor" }
+    maven { url "https://dl.bintray.com/spekframework/spek-dev" }
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url "https://drill4j.bintray.com/nativewebsockets" }
+
+
+}
+
+def jdkHome = Jvm.current().javaHome.toPath()
+def includeBase = jdkHome.resolve("include")
+
+def includeAddition
+
+if (Os.isFamily(Os.FAMILY_MAC)) {
+    includeAddition = includeBase.resolve("darwin")
+}
+if (Os.isFamily(Os.FAMILY_UNIX)) {
+    includeAddition = includeBase.resolve("linux")
+}
+if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    includeAddition = includeBase.resolve("win32")
+
+}
+def preset
+if (Os.isFamily(Os.FAMILY_MAC)) preset = "macosX64"
+if (Os.isFamily(Os.FAMILY_UNIX)) preset = "linuxX64"
+if (Os.isFamily(Os.FAMILY_WINDOWS)) preset = "mingwX64"
+
+
+kotlin {
+    targets {
+        fromPreset(kotlin.presets[preset], 'jvmapi')
+
+        configure([jvmapi]) {
+            compilations.main {
+                cinterops {
+                    jvmapi {
+                        includeDirs includeBase, includeAddition, "./src/nativeInterop/cpp"
+                    }
+                }
+            }
+
+        }
+
+    }
+
+
+    sourceSets {
+
+        jvmapiMain {
+            dependencies {
+                implementation project(":nativeprojects:drill-logger")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0"
+            }
+        }
+    }
+}
+

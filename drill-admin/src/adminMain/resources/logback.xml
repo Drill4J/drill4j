@@ -1,0 +1,30 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>test.log</file>
+        <encoder>
+            <pattern>{ "date_time":"%date", "thread":"[%thread]", "log_level":"%-5level", "class_name":"%logger{0}", "log_message":"%msg" }%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="OFF">
+        <appender-ref ref="STDOUT"/>
+    </root>
+    <logger name="org.eclipse.jetty" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+    <logger name="org.mongodb.driver.cluster" level="OFF"/>
+    <logger name="org.mongodb.driver.connection" level="OFF"/>
+    <logger name="d.f.e.process.runtime.ProcessControl" level="OFF"/>
+    <logger name="d.f.e.p.runtime.AbstractProcess" level="OFF"/>
+    <logger name="d.f.embed.mongo.AbstractMongoProcess" level="OFF"/>
+    <logger name="d.f.embed.mongo.runtime.Mongod" level="OFF"/>
+    <logger name="DrillPluginWs" level="TRACE"/>
+    <logger name="com.epam.drill.endpoints.DrillPluginWs" level="TRACE"/>
+    <logger name="com.epam.drill.plugins.AgentPlugins" level="TRACE"/>
+    <!--<logger name="" level="OFF"/>-->
+</configuration>

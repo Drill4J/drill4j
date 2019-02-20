@@ -17,7 +17,18 @@ pluginManagement {
     }
 }
 rootProject.name = 'drill4j'
+include(":drill-agent")
+include(":drill-common")
+include(":drill-admin")
+include(":drill-plugin-api:drill-admin-part")
+include(":drill-plugin-api:drill-agent-part")
+include(":nativeprojects:drill-jvmapi")
+include(":nativeprojects:drill-kni")
+include(":nativeprojects:drill-kasm")
+include(":nativeprojects:drill-logger")
+include(":plugins:drill-exception-plugin-native")
 
 includeBuild("./composite/spring-petclinic-kotlin")
-includeBuild("./plugins/drill-exception-plugin")
+//includeBuild("./plugins/drill-exception-plugin")
+//includeBuild("./plugins/drill-exception-plugin-native")
 enableFeaturePreview('GRADLE_METADATA')
