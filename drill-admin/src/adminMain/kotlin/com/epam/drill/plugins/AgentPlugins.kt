@@ -1,7 +1,7 @@
 package com.epam.drill.plugins
 
 
-import com.epam.drill.extractConfigFile
+import com.epam.drill.extractPluginBean
 import com.epam.drill.loadInRuntime
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
@@ -59,13 +59,10 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         val cl = ClassLoader.getSystemClassLoader()
         loadInRuntime(f, cl)
         val jarFile = JarFile(f)
-        extractConfigFile(jarFile, tempDirectory)
         val entrySet = jarFile.entries().iterator().asSequence().toSet()
         val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
         val constructor = pluginApiClass.getConstructor(WsService::class.java, String::class.java)
-        //fixme this hardcode
-        val adminPluginPart = constructor.newInstance(wsService, "except-ions") as AdminPluginPart
-        return adminPluginPart
+        return constructor.newInstance(wsService, extractPluginBean(jarFile, tempDirectory).id) as AdminPluginPart
     }
 
     private fun processAgentPart(jar: JarFile, tempDirectory: File): File {

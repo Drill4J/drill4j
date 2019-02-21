@@ -1,5 +1,7 @@
 package com.epam.drill
 
+import com.epam.drill.common.PluginBean
+import com.google.gson.Gson
 import java.io.File
 import java.net.URL
 import java.util.jar.JarEntry
@@ -26,7 +28,7 @@ fun retrieveApiClass(targetClass: Class<*>, entrySet: Set<JarEntry>, cl: ClassLo
 }
 
 
-fun extractConfigFile(jarFile: JarFile, parCat: File) {
+fun extractPluginBean(jarFile: JarFile, parCat: File): PluginBean {
     val jarEntry: JarEntry = jarFile.getJarEntry("static/plugin_config.json")
     val cs = File(parCat, jarEntry.name)
     if (!cs.exists()) {
@@ -38,6 +40,7 @@ fun extractConfigFile(jarFile: JarFile, parCat: File) {
             }
         }
     }
+    return Gson().fromJson<PluginBean>(cs.readText(), PluginBean::class.java)
 }
 
 
