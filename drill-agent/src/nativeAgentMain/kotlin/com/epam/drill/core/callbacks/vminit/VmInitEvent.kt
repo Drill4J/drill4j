@@ -10,6 +10,7 @@ import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.extension
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.std.openAsZip
+import com.soywiz.korio.util.OS
 import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.runBlocking
@@ -99,12 +100,15 @@ suspend fun fake() {
                                 println(pluginName)
                                 println("added")
 
+                                val ext = if(OS.isWindows) "dll" else "so"
+                                val pref = if(OS.isWindows) "" else "lib"
+
                                 CallVoidMethodA(
                                     userPlugin,
                                     GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
                                     nativeHeap.allocArray(1.toLong()) {
                                         val newStringUTF =
-                                            NewStringUTF(jar.parent["nativePart"]["main.dll"].absolutePath)
+                                            NewStringUTF(jar.parent["nativePart"]["${pref}main.$ext"].absolutePath)
                                         l = newStringUTF
 
                                     })

@@ -60,12 +60,29 @@ tasks.named<Test>("test") {
     jvmArgs("-javaagent:${file("../../distr/drill-core-agent.jar")}")
 }
 
+
+val ex =
+    if (Os.isFamily(Os.FAMILY_UNIX)) {
+        "so"
+    } else "dll"
+
+
+val pref =
+    if (Os.isFamily(Os.FAMILY_UNIX)) {
+        "lib"
+    } else ""
+
+
 tasks.named<BootRun>("bootRun") {
     doFirst {
         jvmArgs("-Xmx2g")
         jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007")
 //        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../src/nativeCommonMain/resources")},drillInstallationDir=${file("../../distr")}")
-        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../resources")},drillInstallationDir=${file("../../distr")}")
+        jvmArgs(
+            "-agentpath:${file("../../distr/${pref}main.$ex")}=configsFolder=${file("../../resources")},drillInstallationDir=${file(
+                "../../distr"
+            )}"
+        )
     }
 
 }

@@ -15,6 +15,7 @@ import com.soywiz.korio.file.std.openAsZip
 import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.lang.Thread_sleep
 import com.soywiz.korio.net.ws.WebSocketClient
+import com.soywiz.korio.util.OS
 import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
@@ -139,12 +140,14 @@ fun load(it: ByteArray) {
                                 val name = alloc<CPointerVar<ByteVar>>()
                                 GetClassSignature(getSuperclass, name.ptr, null)
 
+                                val ext = if(OS.isWindows) "dll" else "so"
+                                val pref = if(OS.isWindows) "" else "lib"
 
                                 //fixme do it via recursive call...
                                 if (name.value?.toKString() == agentPluginPartClass) {
                                     val getMethodID = GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
                                     NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
-                                        l = NewStringUTF(targetFile.parent["nativePart"]["main.dll"].absolutePath)
+                                        l = NewStringUTF(targetFile.parent["nativePart"]["${pref}main.$ext"].absolutePath)
                                     })
 
 
