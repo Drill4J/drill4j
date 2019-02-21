@@ -10,7 +10,6 @@ import io.ktor.auth.authenticate
 import io.ktor.html.respondHtml
 import io.ktor.locations.get
 import io.ktor.response.respond
-import io.ktor.routing.get
 import io.ktor.routing.routing
 import kotlinx.html.*
 import org.kodein.di.Kodein
@@ -25,7 +24,7 @@ class DrillOtherHandlers(override val kodein: Kodein) : KodeinAware {
     init {
         app.routing {
             authenticate {
-                get("/plugin-info/getPluginsConfiguration") {
+                get<Routes.Api.PluginConfiguration> {
 
                     call.respond(plugins.plugins.keys.toTypedArray())
 
@@ -33,7 +32,7 @@ class DrillOtherHandlers(override val kodein: Kodein) : KodeinAware {
             }
 
             authenticate {
-                get<Routes.PluginContent> { ll ->
+                get<Routes.Api.PluginContent> { ll ->
 
                     call.respondHtml {
                         head {

@@ -49,7 +49,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
     private fun Routing.registerAgent() {
         authenticate {
-            get<Routes.UnloadPlugin> { up ->
+            get<Routes.Api.UnloadPlugin> { up ->
                 val drillAgent: DrillAgent? = agentStorage.agents[up.agentName]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${up.agentName}'")
@@ -76,7 +76,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.LoadPlugin> { lp ->
+            get<Routes.Api.LoadPlugin> { lp ->
                 val drillAgent: DrillAgent? = agentStorage.agents[lp.agentName]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${lp.agentName}'")
@@ -107,12 +107,12 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.Agents> {
+            get<Routes.Api.Agents> {
                 call.respond(agentStorage.agents.values.map { da -> da.agentInfo })
             }
         }
         authenticate {
-            get<Routes.Agent> { up ->
+            get<Routes.Api.Agent> { up ->
                 call.respond(agentStorage.agents[up.agentName]?.agentInfo!!)
             }
         }
@@ -123,7 +123,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
      */
     private fun Routing.registerDrillAdmin() {
         authenticate {
-            get<Routes.AllPlugins> {
+            get<Routes.Api.AllPlugins> {
                 call.respond(plugins.plugins.values.map { dp -> dp.serverInstance.id })
             }
         }

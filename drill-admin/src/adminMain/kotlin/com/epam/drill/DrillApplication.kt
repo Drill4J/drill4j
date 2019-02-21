@@ -35,6 +35,7 @@ import io.ktor.response.header
 import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.post
+import io.ktor.routing.route
 import io.ktor.routing.routing
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -117,25 +118,27 @@ fun Application.module(
         installation()
 
         routing {
-            post("/login") {
-                val username = "guest"
-                val password = ""
-                val credentials = UserPasswordCredential(username, password)
-                val user = userSource.findUserByCredentials(credentials)
-                val token = JwtConfig.makeToken(user)
-                call.response.header(HttpHeaders.Authorization, token)
-                call.respond(HttpStatusCode.OK)
-            }
-
-            authenticate {
-                get("/plugin/{xx}/{x1}") {
+            route("/api") {
+                post("/login") {
+                    val username = "guest"
+                    val password = ""
+                    val credentials = UserPasswordCredential(username, password)
+                    val user = userSource.findUserByCredentials(credentials)
+                    val token = JwtConfig.makeToken(user)
+                    call.response.header(HttpHeaders.Authorization, token)
                     call.respond(HttpStatusCode.OK)
                 }
-            }
 
-            static {
+                authenticate {
+                    get("/plugin/{xx}/{x1}") {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
 
-                resources("public")
+                static {
+
+                    resources("public")
+                }
             }
         }
         import(storage)
