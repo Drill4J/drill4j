@@ -27,6 +27,7 @@ include(":nativeprojects:drill-kni")
 include(":nativeprojects:drill-kasm")
 include(":nativeprojects:drill-logger")
 include(":plugins:drill-exception-plugin-native")
+include(":plugins:drill-custom-plugin")
 
 includeBuild("./composite/spring-petclinic-kotlin")
 //includeBuild("./plugins/drill-exception-plugin")
