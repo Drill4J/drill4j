@@ -1,7 +1,20 @@
-version: '2'
+version: '3'
 services:
-  drillmongodb:
-    image: 'mongo'
-    restart: always
-    ports:
-      - 27017:27017
+    drillmongodb:
+        image: 'mongo'
+        restart: always
+        ports:
+            - 27017:27017
+    drill-admin:
+        build:
+            context: ../
+            dockerfile: ./docker-compose/Dockerfile
+        ports:
+            - 8090:90
+        networks:
+            - drill4j-dev-network
+        restart: always
+networks:
+    drill4j-dev-network:
+        external:
+            name: drill4j-dev-network

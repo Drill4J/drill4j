@@ -66,7 +66,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    @Location("/agent/updatePluginConfig/{agentName}/{pluginName}")
+    @Location("/api/agent/updatePluginConfig/{agentName}/{pluginName}")
     data class PluginConfig(val agentName: String, val pluginName: String)
 
     init {

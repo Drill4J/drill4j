@@ -67,7 +67,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     init {
         app.routing {
             authenticate {
-                webSocket("/drill-socket") {
+                webSocket("/api/drill-socket") {
 
                     incoming.consumeEach { frame ->
                         when (frame) {

@@ -20,31 +20,37 @@ val logger = LoggerFactory.getLogger(AgentPlugins::class.java)
 class AgentPlugins(override val kodein: Kodein) : KodeinAware {
     private val plugins: Plugins by kodein.instance()
     private val wsService: WsService by kodein.instance()
+    private val fileList: List<File> = listOf(File("../distr/adminStorage"), File(System.getenv("DRILL_HOME") + "/adminStorage"))
 
     init {
         try {
-            val file = File("../distr/adminStorage")
-            if (!file.exists()) {
-                logger.warn("didn't find plugin folder. Search directory: ${file.absolutePath}")
-            } else {
-                val files = file.listFiles() ?: arrayOf()
-                if (files.isNotEmpty()) {
-                    logger.info(
-                        "${files.size} were found.\n" +
-                                files.contentToString()
-                    )
+            fileList.forEach {
+                if (!it.exists()) {
+                    logger.warn("didn't find plugin folder. Search directories: ${it.absolutePath}")
                 } else {
-                    logger.warn("didn't find any plugins...")
-                }
-                for (pluginDir in files) {
-                    val jar = JarFile(pluginDir)
-                    val tempDir = File(System.getProperty("user.home"), ".drill")
-                    val tempDirectory = createTempDirectory(tempDir, pluginDir.nameWithoutExtension)
-                    val processAdminPart = processAdminPart(jar, tempDirectory)
-                    val processAgentPart = processAgentPart(jar, tempDirectory)
-                    val dp = DP(processAdminPart, processAgentPart)
-                    plugins.plugins[processAdminPart.id] = dp
-                    logger.info("plugin '${processAdminPart.id}' was loaded successfully")
+                    val files = it.listFiles() ?: arrayOf()
+                    if (files.isNotEmpty()) {
+                        logger.info(
+                            "${files.size} were found.\n" +
+                                    files.contentToString()
+                        )
+                    } else {
+                        logger.warn("didn't find any plugins...")
+                    }
+                    for (pluginDir in files) {
+                        val jar = JarFile(pluginDir)
+                        val tempDir = File(System.getProperty("user.home"), ".drill")
+                        val tempDirectory = createTempDirectory(tempDir, pluginDir.nameWithoutExtension)
+                        val processAdminPart = processAdminPart(jar, tempDirectory)
+                        val loadedPlugins = plugins.plugins.keys
+
+                        if (loadedPlugins.contains(processAdminPart.id)) {
+                            val processAgentPart = processAgentPart(jar, tempDirectory)
+                            val dp = DP(processAdminPart, processAgentPart)
+                            plugins.plugins[processAdminPart.id] = dp
+                            logger.info("plugin '${processAdminPart.id}' was loaded successfully")
+                        }
+                    }
                 }
             }
         } catch (ex: Exception) {
