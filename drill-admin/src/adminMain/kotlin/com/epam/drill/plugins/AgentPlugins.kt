@@ -44,7 +44,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
                         val processAdminPart = processAdminPart(jar, tempDirectory)
                         val loadedPlugins = plugins.plugins.keys
 
-                        if (loadedPlugins.contains(processAdminPart.id)) {
+                        if (!loadedPlugins.contains(processAdminPart.id)) {
                             val processAgentPart = processAgentPart(jar, tempDirectory)
                             val dp = DP(processAdminPart, processAgentPart)
                             plugins.plugins[processAdminPart.id] = dp

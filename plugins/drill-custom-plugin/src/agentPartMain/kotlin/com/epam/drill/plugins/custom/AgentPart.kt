@@ -10,8 +10,16 @@ import com.epam.drill.plugin.api.processing.Sender.sendMessage
  */
 class AgentPart(override val id: String) : AgentPluginPart() {
     override fun load() {
-        sendMessage(id, "hello from custom plugin")
         println("Plugin $id loaded")
+
+        // send message every 10 seconds
+        Thread(Runnable {
+            while (true) {
+                Thread.sleep(10_000)
+                sendMessage(id, "Hello from custom plugin! I'm still alive!")
+            }
+        }).start()
+
     }
 
 
