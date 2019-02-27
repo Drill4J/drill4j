@@ -11,7 +11,7 @@ WORKDIR /app
 
 USER $APPLICATION_USER
 
-COPY /drill-admin/build/libs/drill-admin-admin-0.0.1.jar /app/drill-admin-admin-0.0.1.jar
+COPY /drill-admin/build/libs/drillAdmin.jar /app/drillAdmin.jar
 
 EXPOSE 90
 

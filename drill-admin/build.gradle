@@ -97,4 +97,5 @@ adminJar {
         kotlin.targets['admin'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }
     }
 
+    getArchiveFileName().set("drillAdmin.jar")
 }
