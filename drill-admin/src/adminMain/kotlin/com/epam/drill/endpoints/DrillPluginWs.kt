@@ -8,6 +8,7 @@ import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.storage.MongoClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
+import com.google.gson.JsonParseException
 import io.ktor.application.Application
 import io.ktor.auth.authenticate
 import io.ktor.http.cio.websocket.Frame
@@ -54,10 +55,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
     private fun getMessageForSocket(ogs: SeqMessage): String {
         val content = ogs.drillMessage.content
-        val map: Map<*, *>? = ObjectMapper().readValue(content, Map::class.java)
-        val hashMap = HashMap<Any, Any>(map)
-        hashMap["id"] = ogs.id ?: ""
-        return Gson().toJson(hashMap)
+        return try {
+            val map: Map<*, *>? = ObjectMapper().readValue(content, Map::class.java)
+            val hashMap = HashMap<Any, Any>(map)
+            hashMap["id"] = ogs.id ?: ""
+            Gson().toJson(hashMap)
+        } catch (ignored: JsonParseException) {
+            content ?: ""
+        }
     }
 
     private val app: Application by instance()

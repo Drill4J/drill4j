@@ -99,19 +99,22 @@ suspend fun fake() {
                                 PluginManager.addPlugin(plugin)
                                 println(pluginName)
                                 println("added")
+                                plugin.load()
 
-                                val ext = if(OS.isWindows) "dll" else "so"
-                                val pref = if(OS.isWindows) "" else "lib"
+                                val ext = if (OS.isWindows) "dll" else "so"
+                                val pref = if (OS.isWindows) "" else "lib"
+                                val vfsFile = jar.parent["nativePart"]["${pref}main.$ext"]
+                                if (vfsFile.exists())
+                                    CallVoidMethodA(
+                                        userPlugin,
+                                        GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
+                                        nativeHeap.allocArray(1.toLong()) {
 
-                                CallVoidMethodA(
-                                    userPlugin,
-                                    GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
-                                    nativeHeap.allocArray(1.toLong()) {
-                                        val newStringUTF =
-                                            NewStringUTF(jar.parent["nativePart"]["${pref}main.$ext"].absolutePath)
-                                        l = newStringUTF
+                                            val newStringUTF =
+                                                NewStringUTF(vfsFile.absolutePath)
+                                            l = newStringUTF
 
-                                    })
+                                        })
                             }
                         }
 
