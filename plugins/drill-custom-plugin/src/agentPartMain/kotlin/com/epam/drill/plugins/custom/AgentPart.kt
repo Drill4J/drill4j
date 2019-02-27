@@ -10,7 +10,7 @@ import com.epam.drill.plugin.api.processing.Sender.sendMessage
  */
 class AgentPart(override val id: String) : AgentPluginPart() {
     override fun load() {
-        sendMessage("provet from custom plugin")
+        sendMessage(id, "hello from custom plugin")
         println("Plugin $id loaded")
     }
 

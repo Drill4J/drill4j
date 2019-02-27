@@ -53,7 +53,7 @@ fun exceptionCallback(): CPointer<CFunction<(CPointer<jvmtiEnvVar>?, CPointer<JN
                         occurredTime = DateTime.now().toString()
                     )
                 )
-                sendToSocket(exceptionData)
+                sendToSocket("except-ions", exceptionData)
             }
         } catch (ex: Throwable) {
             println("Error during process an exceptions: ${ex.message}")

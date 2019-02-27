@@ -22,6 +22,6 @@ fun checkEx(errCode: jvmtiError, funName: String): jvmtiError {
 }
 
 @CName("Java_com_epam_drill_plugin_api_processing_Sender_sendMessage")
-fun sendFromJava(env: JNIEnv, thiz: jobject, message: jstring) {
-    sendToSocket(message.toKString() ?: "empty...")
+fun sendFromJava(env: JNIEnv, thiz: jobject, pluginId: jstring, message: jstring) {
+    sendToSocket(pluginId.toKString()!!, message.toKString() ?: "empty...")
 }

@@ -60,7 +60,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
             val hashMap = HashMap<Any, Any>(map)
             hashMap["id"] = ogs.id ?: ""
             Gson().toJson(hashMap)
-        } catch (ignored: JsonParseException) {
+        } catch (ignored: Exception) {
             content ?: ""
         }
     }

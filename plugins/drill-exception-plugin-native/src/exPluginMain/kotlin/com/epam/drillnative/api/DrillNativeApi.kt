@@ -28,7 +28,7 @@ internal external fun jvmtix(): CPointer<jvmtiEnvVar>?
 
 
 @SymbolName("sendToSocket")
-internal external fun sendToSocket(message: String)
+internal external fun sendToSocket(pluginId:String, message: String)
 
 
 @SymbolName("enableJvmtiEventException")

@@ -69,8 +69,8 @@ fun JNIEn(): JNIEnvPointer {
 
 
 @CName("sendToSocket")
-fun sendToSocket(message: String) {
-    MessageQueue.sendMessage(message)
+fun sendToSocket(pluginId:String, message: String) {
+    MessageQueue.sendMessage(pluginId, message)
 }
 
 

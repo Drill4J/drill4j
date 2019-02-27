@@ -21,7 +21,7 @@ object MessageQueue {
     }
 
 
-    fun sendMessage(content: String) {
+    fun sendMessage(pluginId: String, content: String) {
         //fixme create global Arena scope
         val message =
             Json.stringify(
@@ -31,7 +31,7 @@ object MessageQueue {
                     Json.stringify(
                         MessageWrapper.serializer(),
                         MessageWrapper(
-                            "except-ions", DrillMessage(
+                            pluginId, DrillMessage(
                                 drillRequest()?.drillSessionId ?: "", content
                             )
                         )
