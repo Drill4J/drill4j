@@ -10,6 +10,7 @@ import com.epam.drill.jwt.user.source.UserSourceImpl
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
+import com.epam.drill.router.Routes
 import com.epam.drill.storage.MongoClient
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -31,6 +32,8 @@ import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
+import io.ktor.locations.post
+import io.ktor.locations.get
 import io.ktor.response.header
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -118,29 +121,21 @@ fun Application.module(
         installation()
 
         routing {
-            route("/api") {
-                post("/login") {
-                    val username = "guest"
-                    val password = ""
-                    val credentials = UserPasswordCredential(username, password)
-                    val user = userSource.findUserByCredentials(credentials)
-                    val token = JwtConfig.makeToken(user)
-                    call.response.header(HttpHeaders.Authorization, token)
-                    call.respond(HttpStatusCode.OK)
-                }
+            post<Routes.Api.Login> {
+                val username = "guest"
+                val password = ""
+                val credentials = UserPasswordCredential(username, password)
+                val user = userSource.findUserByCredentials(credentials)
+                val token = JwtConfig.makeToken(user)
+                call.response.header(HttpHeaders.Authorization, token)
+                call.respond(HttpStatusCode.OK)
+            }
 
-                authenticate {
-                    get("/plugin/{xx}/{x1}") {
-                        call.respond(HttpStatusCode.OK)
-                    }
-                }
-
-                static {
-
-                    resources("public")
-                }
+            static {
+                resources("public")
             }
         }
+
         import(storage)
         import(handlers)
         import(pluginServices)
