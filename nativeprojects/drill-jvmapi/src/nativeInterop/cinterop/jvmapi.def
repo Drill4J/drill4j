@@ -76,11 +76,14 @@ jint agentSetup(JavaVM vm)
    return JNI_OK;
    }
 
+extern void jvmtiEventVMInitEvent(jvmtiEnv *jvmti_env,
+     JNIEnv* jni_env,
+     jthread thread);
 
 jvmtiEventCallbacks generateDefaultCallbacks() {
 	jvmtiEventCallbacks callbacks = {NULL};
 	memset(&callbacks, 0, sizeof(callbacks));
-//    callbacks.VMInit = &jvmtiEventVMInitEvent;
+    callbacks.VMInit = &jvmtiEventVMInitEvent;
 //    callbacks.MethodExit = &jvmtiEventMethodExitEvent;
 //    callbacks.SingleStep = &jvmtiEventSingleStepEvent;
 //    callbacks.ClassFileLoadHook = &jvmtiEventClassFileLoadHookEvent;

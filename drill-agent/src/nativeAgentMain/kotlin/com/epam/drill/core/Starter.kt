@@ -1,7 +1,6 @@
 package com.epam.drill.core
 
 
-import com.epam.drill.core.callbacks.vminit.initVmEvent
 import com.epam.drill.core.ws.startWs
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
@@ -77,7 +76,7 @@ private fun callbackRegister() {
         SetEventCallbacks(this.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
         null
     }
-    gjavaVMGlob?.pointed?.callbackss?.VMInit = initVmEvent
+//    gjavaVMGlob?.pointed?.callbackss?.VMInit = initVmEvent
 //    gjavaVMGlob?.pointed?.callbackss?.NativeMethodBind = staticCFunction { x1, x2, x3, x4, x5, x6
 //        ->
 //        initRuntimeIfNeeded()

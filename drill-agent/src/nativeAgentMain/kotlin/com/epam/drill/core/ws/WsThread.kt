@@ -5,20 +5,15 @@ import com.epam.drill.common.*
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.core.agentGroupName
 import com.epam.drill.core.agentName
+import com.epam.drill.core.callbacks.vminit.loadPlugin
 import com.epam.drill.core.drillAdminUrl
 import com.epam.drill.core.drillInstallationDir
-import com.epam.drill.iterateThrougthPlugins
 import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.api.processing.AgentPluginPart
 import com.soywiz.korio.file.baseName
-import com.soywiz.korio.file.extension
 import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.file.std.openAsZip
 import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.lang.Thread_sleep
 import com.soywiz.korio.net.ws.WebSocketClient
-import com.soywiz.korio.util.OS
 import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
@@ -111,106 +106,45 @@ private fun unload(pluginName: String) {
 
 }
 
-fun load(it: ByteArray) {
+fun load(it: ByteArray) = runBlocking {
     try {
         val (pluginName, rawFileData) = parseRawPluginFromAdminStorage(it)
-        val vfsFile = localVfs(drillInstallationDir)["drill-plugins"][pluginName]
-        runBlocking {
-            val targetFile: JarVfsFile = vfsFile["agent-part.jar"]
-            vfsFile.mkdir()
-            rawFileData.writeToFile(targetFile)
-            try {
-                targetFile.extractPluginFacilitiesTo(localVfs(targetFile.parent.absolutePath)) { vf ->
-                    !vf.baseName.contains("nativePart") &&
-                            !vf.baseName.contains("static")
-                }
-                //init env...
-                currentEnvs()
-
-                val agentPluginPartClass = "Lcom/epam/drill/plugin/api/processing/AgentPluginPart;"
-                AddToSystemClassLoaderSearch(targetFile.absolutePath)
-
-
-                targetFile.openAsZip {
-                        for (x in it.listRecursive()) {
-
-                            if (x.extension == "class") {
-                                val className = x.absolutePath.replace(".class", "").drop(1)
-                                val findClass = FindClass(className)
-                                val getSuperclass = GetSuperclass(findClass)
-                                memScoped {
-                                    val name = alloc<CPointerVar<ByteVar>>()
-                                    GetClassSignature(getSuperclass, name.ptr, null)
-
-                                    val agentPluginPartClass = "Lcom/epam/drill/plugin/api/processing/AgentPluginPart;"
-                                    //fixme do it via recursive call...
-                                    if (name.value?.toKString() == agentPluginPartClass) {
-                                        val getMethodID =
-                                            GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
-                                        val pluginName = targetFile.parent.baseName
-                                        val userPlugin =
-                                            NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
-                                                l = NewStringUTF(pluginName)
-                                            })
-                                        val plugin = object : AgentPluginPart() {
-                                            override fun load() {
-
-                                                CallVoidMethodA(
-                                                    userPlugin, GetMethodID(findClass, "load", "()V"), null
-                                                )
-
-                                            }
-
-                                            override fun unload() {
-                                                CallVoidMethodA(
-                                                    userPlugin, GetMethodID(findClass, "unload", "()V"), null
-                                                )
-                                            }
-
-                                            override lateinit var id: String
-
-                                        }
-                                        plugin.id = pluginName
-                                        PluginManager.addPlugin(plugin)
-                                        println(pluginName)
-                                        println("added")
-                                        plugin.load()
-
-                                        val ext = if (OS.isWindows) "dll" else "so"
-                                        val pref = if (OS.isWindows) "" else "lib"
-                                        val vfsFile = targetFile.parent["nativePart"]["${pref}main.$ext"]
-                                        if (vfsFile.exists())
-                                            CallVoidMethodA(
-                                                userPlugin,
-                                                GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
-                                                nativeHeap.allocArray(1.toLong()) {
-
-                                                    val newStringUTF =
-                                                        NewStringUTF(vfsFile.absolutePath)
-                                                    l = newStringUTF
-
-                                                })
-                                    }
-                                }
-
-                            }
-                        }
-
-                    }
-
-
-                wsLogger.info { "load $pluginName" }
-            } catch (ex: Exception) {
-                wsLogger.error { "cant load the plugin..." }
-                ex.printStackTrace()
-            }
+        val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
+        if (!pluginsDir.exists()) {
+            pluginsDir.mkdir()
         }
+        val vfsFile = pluginsDir[pluginName]
+        if (!vfsFile.exists()) {
+            vfsFile.mkdir()
+        }
+        val targetFile: JarVfsFile = vfsFile["agent-part.jar"]
+        rawFileData.writeToFile(targetFile)
+        try {
+            targetFile.extractPluginFacilitiesTo(localVfs(targetFile.parent.absolutePath)) { vf ->
+                !vf.baseName.contains("nativePart") &&
+                        !vf.baseName.contains("static")
+            }
+            //init env...
+            currentEnvs()
+
+            AddToSystemClassLoaderSearch(targetFile.absolutePath)
+
+
+            loadPlugin(targetFile)
+
+
+            wsLogger.info { "load $pluginName" }
+        } catch (ex: Exception) {
+            wsLogger.error { "cant load the plugin..." }
+            ex.printStackTrace()
+        }
+
     } catch (ex: Throwable) {
         ex.printStackTrace()
     }
 }
 
- fun parseRawPluginFromAdminStorage(it: ByteArray): Pair<String, ByteArray> {
+fun parseRawPluginFromAdminStorage(it: ByteArray): Pair<String, ByteArray> {
     val pluginName = it.sliceArray(0 until 20).stringFromUtf8().replace("!", "")
     val rawFileData = it.sliceArray(20 until it.size)
     return Pair(pluginName, rawFileData)

@@ -1,5 +1,8 @@
+@file:Suppress("unused")
+
 package com.epam.drill.core.callbacks.vminit
 
+import com.epam.drill.JarVfsFile
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.iterateThrougthPlugins
 import com.epam.drill.logger.DLogger
@@ -19,36 +22,11 @@ import kotlinx.coroutines.runBlocking
 val initLogger: Logger
     get() = DLogger("initLogger")
 
-@CName("xx")
-fun xxs(x1: COpaquePointer?, x2: COpaquePointer?) {
-    println("LLLLLLLLLLLLLLLLLLOOOLS")
-
-}
-
-val initVmEvent = staticCFunction<CPointer<jvmtiEnvVar>?, CPointer<JNIEnvVar>?, jthread?, Unit> { x1, x2, x3 ->
-    runBlocking {
-        initRuntimeIfNeeded()
-//    com.epam.drill.core.currentEnvs()
-//    val findClass = FindClass("com/epam/drill/ws/Ws")
-//
-//
-//    val allocArray = nativeHeap.allocArray<JNINativeMethod>(1.toLong()) {
-//        name = "asdasd".cstr.getPointer(Arena()).reinterpret()
-//        signature = "()V".cstr.getPointer(Arena()).reinterpret()
-//        fnPtr = nrTest
-//    }
-//
-//    RegisterNatives(findClass, allocArray, 1)
-//    val instanceField = GetStaticFieldID(findClass, "INSTANCE", "Lcom/epam/drill/ws/Ws;")
-//    val pluginLoader = GetStaticObjectField(findClass, instanceField)
-//    val registerMethodId = GetMethodID(findClass, "asdasd", "()V")
-//    CallVoidMethod(pluginLoader, registerMethodId)
-
-
-        fake()
-        Unit
-    }
-
+@Suppress("UNUSED_PARAMETER")
+@CName("jvmtiEventVMInitEvent")
+fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVar>?, thread: jthread?) = runBlocking {
+    initRuntimeIfNeeded()
+    fake()
 }
 
 suspend fun fake() {
@@ -56,75 +34,79 @@ suspend fun fake() {
     addPluginsToSystemClassLoader()
     try {
         iterateThrougthPlugins { jar ->
-            jar.openAsZip {
-                for (x in it.listRecursive()) {
+            loadPlugin(jar)
+        }
+    } catch (ex: Throwable) {
+        initLogger.warn { "Can't run javaPluginLoader" }
+    }
+}
 
-                    if (x.extension == "class") {
-                        val className = x.absolutePath.replace(".class", "").drop(1)
-                        val findClass = FindClass(className)
-                        val getSuperclass = GetSuperclass(findClass)
-                        memScoped {
-                            val name = alloc<CPointerVar<ByteVar>>()
-                            GetClassSignature(getSuperclass, name.ptr, null)
+suspend fun loadPlugin(jar: JarVfsFile) {
+    jar.openAsZip {
+        for (x in it.listRecursive()) {
 
-                            val agentPluginPartClass = "Lcom/epam/drill/plugin/api/processing/AgentPluginPart;"
-                            //fixme do it via recursive call...
-                            if (name.value?.toKString() == agentPluginPartClass) {
-                                val getMethodID =
-                                    GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
-                                val pluginName = jar.parent.baseName
-                                val userPlugin =
-                                    NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
-                                        l = NewStringUTF(pluginName)
-                                    })
-                                val plugin = object : AgentPluginPart() {
-                                    override fun load() {
+            if (x.extension == "class") {
+                val className = x.absolutePath.replace(".class", "").drop(1)
+                val findClass = FindClass(className)
+                val getSuperclass = GetSuperclass(findClass)
+                memScoped {
+                    val name = alloc<CPointerVar<ByteVar>>()
+                    GetClassSignature(getSuperclass, name.ptr, null)
 
-                                        CallVoidMethodA(
-                                            userPlugin, GetMethodID(findClass, "load", "()V"), null
-                                        )
+                    val agentPluginPartClass = "Lcom/epam/drill/plugin/api/processing/AgentPluginPart;"
+                    //fixme do it via recursive call...
+                    if (name.value?.toKString() == agentPluginPartClass) {
+                        val getMethodID =
+                            GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
+                        val pluginName = jar.parent.baseName
+                        val userPlugin =
+                            NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
+                                l = NewStringUTF(pluginName)
+                            })
+                        val plugin = object : AgentPluginPart() {
+                            override fun load() {
 
-                                    }
+                                CallVoidMethodA(
+                                    userPlugin, GetMethodID(findClass, "load", "()V"), null
+                                )
 
-                                    override fun unload() {
-                                        CallVoidMethodA(
-                                            userPlugin, GetMethodID(findClass, "unload", "()V"), null
-                                        )
-                                    }
-
-                                    override lateinit var id: String
-
-                                }
-                                plugin.id = pluginName
-                                PluginManager.addPlugin(plugin)
-                                println(pluginName)
-                                println("added")
-                                plugin.load()
-
-                                val ext = if (OS.isWindows) "dll" else "so"
-                                val pref = if (OS.isWindows) "" else "lib"
-                                val vfsFile = jar.parent["nativePart"]["${pref}main.$ext"]
-                                if (vfsFile.exists())
-                                    CallVoidMethodA(
-                                        userPlugin,
-                                        GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
-                                        nativeHeap.allocArray(1.toLong()) {
-
-                                            val newStringUTF =
-                                                NewStringUTF(vfsFile.absolutePath)
-                                            l = newStringUTF
-
-                                        })
                             }
-                        }
 
+                            override fun unload() {
+                                CallVoidMethodA(
+                                    userPlugin, GetMethodID(findClass, "unload", "()V"), null
+                                )
+                            }
+
+                            override lateinit var id: String
+
+                        }
+                        plugin.id = pluginName
+                        PluginManager.addPlugin(plugin)
+                        println(pluginName)
+                        println("added")
+                        plugin.load()
+
+                        val ext = if (OS.isWindows) "dll" else "so"
+                        val pref = if (OS.isWindows) "" else "lib"
+                        val vfsFile = jar.parent["nativePart"]["${pref}main.$ext"]
+                        if (vfsFile.exists())
+                            CallVoidMethodA(
+                                userPlugin,
+                                GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
+                                nativeHeap.allocArray(1.toLong()) {
+
+                                    val newStringUTF =
+                                        NewStringUTF(vfsFile.absolutePath)
+                                    l = newStringUTF
+
+                                })
                     }
                 }
 
             }
         }
-    } catch (ex: Throwable) {
-        initLogger.warn { "Can't run javaPluginLoader" }
+
     }
 }
 
