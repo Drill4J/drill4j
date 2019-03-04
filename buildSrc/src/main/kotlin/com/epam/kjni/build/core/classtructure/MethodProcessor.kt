@@ -31,8 +31,8 @@ fun generateMethods(methods: List<Method>): List<FunSpec> {
             .joinToString(",") { "com.epam.kjni.core.util.X(p${it.first}, ${primitives.contains(getClassName(it.second))})" }
 
         builder
-            .addStatement("val methodName = \"${it.name}\".cstr.getPointer(%T())", arena)
-            .addStatement("val methodSignature = \"${it.signature}\".cstr.getPointer(%T())", arena)
+            .addStatement("val methodName = \"${it.name}\"")
+            .addStatement("val methodSignature = \"${it.signature}\"")
 
         if (className != null)
             builder.addStatement(

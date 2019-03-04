@@ -25,6 +25,7 @@ object AgentInfo {
         //todo defaultAgentNameAsHostAddress
         config.agentName = run { readProperties["agentName"] ?: "undefinedName" }.cstr.getPointer(Arena())
         config.agentGroupName = run { readProperties["agentGroupName"] ?: "undefinedGroup" }.cstr.getPointer(Arena())
+        config.agentDescription = run { readProperties["agentDescription"] ?: "undefinedDescr" }.cstr.getPointer(Arena())
 
         config.loggerConfig =
             StableRef.create(
@@ -45,6 +46,9 @@ val agentName: String
 
 val agentGroupName: String
     get() = config.agentGroupName?.toKString() ?: "undefinedName"
+
+val agentDescription: String
+    get() = config.agentDescription?.toKString() ?: "undefinedName"
 
 val drillInstallationDir: String
     get() = config.drillInstallationDir?.toKString()!!

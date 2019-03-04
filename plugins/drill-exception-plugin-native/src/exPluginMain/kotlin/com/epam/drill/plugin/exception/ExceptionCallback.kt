@@ -53,7 +53,10 @@ fun exceptionCallback(): CPointer<CFunction<(CPointer<jvmtiEnvVar>?, CPointer<JN
                         occurredTime = DateTime.now().toString()
                     )
                 )
-                sendToSocket("except-ions", exceptionData)
+                //fixme
+                val scope = Arena()
+                val pluginId: CPointer<ByteVar> = "except-ions".cstr.getPointer(scope)
+                sendToSocket(pluginId, exceptionData.cstr.getPointer(scope))
             }
         } catch (ex: Throwable) {
             println("Error during process an exceptions: ${ex.message}")

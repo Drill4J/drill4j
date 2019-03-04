@@ -2,20 +2,23 @@ package com.epam.drill.core.ws
 
 import com.epam.drill.JarVfsFile
 import com.epam.drill.common.*
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.core.*
 import com.epam.drill.extractPluginFacilitiesTo
-import com.epam.drill.core.agentGroupName
-import com.epam.drill.core.agentName
-import com.epam.drill.core.callbacks.vminit.loadPlugin
-import com.epam.drill.core.drillAdminUrl
-import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.logger.DLogger
+import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.PluginManager.pluginsState
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.lang.Thread_sleep
 import com.soywiz.korio.net.ws.WebSocketClient
-import jvmapi.*
-import kotlinx.cinterop.*
+import com.soywiz.korio.util.OS
+import drillInternal.addMessage
+import jvmapi.AddToSystemClassLoaderSearch
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.memScoped
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -29,29 +32,39 @@ val wsLogger
     get() = DLogger("DrillWebsocket")
 
 
-suspend fun register(wsClient: WebSocketClient) = memScoped {
-    val agentInfo = AgentInfo(
-        agentName, agentGroupName,
-        mutableSetOf(),
+fun register() = memScoped {
+    try {
 
-        //todo remove this hardcode
-        AgentAdditionalInfo(
-            listOf(),
-            4,
-            "x64",
-            "windows",
-            "10",
-            mapOf()
+        val rawPluginNames = pluginsState()
+
+        val agentInfo = AgentInfo(
+            agentName,
+            "127.0.0.1", // - ipconfig or ifconfig. depends on Platform
+            agentGroupName,
+            agentDescription,
+            rawPluginNames,
+
+            AgentAdditionalInfo(
+                listOf(),
+                4,
+                "x64",
+                OS.platformNameLC + ":" + OS.platformName,
+                "10",
+                mapOf()
+            )
         )
-    )
 
-    val message = Json.stringify(
-        Message.serializer(),
-        Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
-    )
 
-    wsClient.send(message)
+        val message = Json.stringify(
+            Message.serializer(),
+            Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
+        )
 
+        addMessage(message.cstr.getPointer(Arena()))
+
+    } catch (ex: Throwable) {
+        ex.printStackTrace()
+    }
 }
 
 fun ws() = runBlocking {
@@ -61,20 +74,41 @@ fun ws() = runBlocking {
         val wsClient = WebSocketClient(url)
         wsLogger.debug { "WS created" }
 
+        wsClient.onAnyMessage.add { rawMessage ->
+
+        }
         wsClient.onStringMessage.add { rawMessage ->
+            initRuntimeIfNeeded()
             val message = Json().parse(Message.serializer(), rawMessage)
-            val action = Json().parse(AgentEvent.serializer(), message.message)
-            when (action.event) {
-                DrillEvent.UNLOAD_PLUGIN -> unload(action.data)
-                DrillEvent.AGENT_LOAD_SUCCESSFULLY -> wsLogger.info { "connected with DrillConsole" }
-                DrillEvent.LOAD_PLUGIN -> wsLogger.info { "'${DrillEvent.LOAD_PLUGIN}' event waiting for a file" }
+            if (message.destination == "/") {
+                val action = Json().parse(AgentEvent.serializer(), message.message)
+                when (action.event) {
+                    DrillEvent.UNLOAD_PLUGIN -> {
+                        runBlocking {
+                            unload(action.data)
+                            register()
+                        }
+                    }
+                    DrillEvent.AGENT_LOAD_SUCCESSFULLY -> wsLogger.info { "connected with DrillConsole" }
+                    DrillEvent.LOAD_PLUGIN -> wsLogger.info { "'${DrillEvent.LOAD_PLUGIN}' event waiting for a file" }
+                }
+            } else if (message.destination.startsWith("updatePluginConfig")) {
+
+                val pluginName = message.destination.split("/")[1]
+
+                val agentPluginPart = PluginManager[pluginName]
+
+                agentPluginPart?.updateRawConfig(message.message)
             }
 
 
         }
         wsClient.onBinaryMessage.add {
-
             load(it)
+
+            register()
+
+
         }
         wsClient.onError.add {
             wsLogger.error { "WS error: ${it.message}" }
@@ -84,7 +118,7 @@ fun ws() = runBlocking {
             //todo thing about this throwing...
             throw RuntimeException("close")
         }
-        register(wsClient)
+        register()
         launch {
             while (true) {
                 delay(5)
@@ -98,12 +132,8 @@ fun ws() = runBlocking {
 }
 
 
-private fun unload(pluginName: String) {
-    //disable the plugin
-//fixme think about physical deletion
-//    wsLogger.info { "$pluginName unloaded" }
-//    PluginLoader.loadedPluginsHandler[pluginName]?.tryUnload()
-
+private suspend fun unload(pluginName: String) {
+    PluginManager[pluginName]?.unload()
 }
 
 fun load(it: ByteArray) = runBlocking {
@@ -125,7 +155,7 @@ fun load(it: ByteArray) = runBlocking {
                         !vf.baseName.contains("static")
             }
             //init env...
-            currentEnvs()
+            com.epam.drill.jvmapi.currentEnvs()
 
             AddToSystemClassLoaderSearch(targetFile.absolutePath)
 
@@ -153,6 +183,8 @@ fun parseRawPluginFromAdminStorage(it: ByteArray): Pair<String, ByteArray> {
 fun startWs(): Future<Unit> {
     val worker = Worker.start(true)
     return worker.execute(TransferMode.UNSAFE, {}) {
+        initRuntimeIfNeeded()
+        pluginLoadCommand()
         while (true) {
             wsLogger.debug { "create new Connection" }
             Thread_sleep(5000)

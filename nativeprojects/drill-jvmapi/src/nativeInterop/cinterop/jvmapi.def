@@ -49,6 +49,7 @@ static GlobalAgentData *gdata;
 typedef struct {
  JavaVM *jvm;
  jvmtiEventCallbacks callbackss;
+ void* tes;
 } javaVMGlob;
 
 static javaVMGlob *gjavaVMGlob;

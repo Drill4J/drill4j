@@ -58,6 +58,7 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation project(":drill-plugin-api:drill-agent-part")
                 implementation project(":drill-common")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.0"
             }
         }
         adminPartMain {
@@ -67,10 +68,15 @@ kotlin {
                 implementation project(":drill-common")
             }
         }
+        commonMain {
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1"
+            }
+        }
 
     }
 }
-
 
 
 adminPartJar {

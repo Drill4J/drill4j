@@ -40,6 +40,9 @@ kotlin {
             kotlin {
                 srcDir("src/kjniMain/basicprimitive")
             }
+            kotlin {
+                srcDir("src/kjniMain/gen")
+            }
             dependencies{
                 api  project(":nativeprojects:drill-jvmapi")
             }

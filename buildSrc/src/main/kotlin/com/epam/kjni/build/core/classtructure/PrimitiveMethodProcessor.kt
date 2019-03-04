@@ -19,8 +19,8 @@ fun generatePrimitiveMethods(className: String): FunSpec {
     val s = oh[className]!!
     builder
         .addStatement("memScoped{")
-        .addStatement("val methodName = \"${s.second}\".cstr.getPointer(this)")
-        .addStatement("val methodSignature = \"${s.first}\".cstr.getPointer(this)")
+        .addStatement("val methodName = \"${s.second}\"")
+        .addStatement("val methodSignature = \"${s.first}\"")
         .addStatement(
             "return %T(\n" +
                     "            javaObject,\n" +

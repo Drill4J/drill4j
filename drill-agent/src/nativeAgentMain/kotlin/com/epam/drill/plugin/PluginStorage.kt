@@ -6,8 +6,8 @@ import kotlinx.cinterop.asStableRef
 
 actual object PluginStorage {
 
-    actual val storage: MutableMap<String, AgentPluginPart>
-        get() = config.pstorage?.asStableRef<MutableMap<String, AgentPluginPart>>()?.get()!!
+    actual val storage: MutableMap<String, AgentPluginPart<*>>
+        get() = config.pstorage?.asStableRef<MutableMap<String, AgentPluginPart<*>>>()?.get()!!
 
 
 }

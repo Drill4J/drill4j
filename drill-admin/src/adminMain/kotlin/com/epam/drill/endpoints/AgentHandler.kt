@@ -58,6 +58,8 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                         )
                                     )
                                     println("agent registered.")
+                                    println("AgentInfo: $agentInfo")
+
                                 }
                                 MessageType.PLUGIN_DATA -> {
                                     logger.info(message.message)

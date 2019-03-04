@@ -1,23 +1,11 @@
 package com.epam.kjni.core.util
 
-import com.epam.kjni.core.GlobState.env
 import com.epam.kjni.core.Synthetic
-import jvmapi.jclass
-import jvmapi.jmethodID
-import jvmapi.jobject
-import jvmapi.jstring
-import jvmapi.jvalue
-import kotlinx.cinterop.Arena
-import kotlinx.cinterop.ByteVar
+import jvmapi.*
 import kotlinx.cinterop.CArrayPointer
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.invoke
 import kotlinx.cinterop.nativeHeap
-import kotlinx.cinterop.pointed
 import kotlinx.cinterop.toKString
-import kotlinx.cinterop.value
 
 
 data class X(val value: Any, val primitive: Boolean)
@@ -26,13 +14,12 @@ data class X(val value: Any, val primitive: Boolean)
 abstract class JavaMethod(
     val jO: jobject?,
     val javaClass: jclass?,
-    val methodName: CPointer<ByteVar>,
-    val methodSignature: CPointer<ByteVar>
+    val methodName: String,
+    val methodSignature: String
 ) {
 
     fun getMethod(): jmethodID? {
-        val jniEnv = env!!.pointed.value?.pointed
-        return jniEnv?.GetMethodID!!(env, javaClass, methodName, methodSignature)
+        return GetMethodID(javaClass, methodName, methodSignature)
     }
 
     abstract operator fun invoke(vararg raw: X): Any
@@ -121,24 +108,23 @@ fun toJObjectArray(raw: Array<out X>): CArrayPointer<jvalue> {
 
 class JavaConstructor(
     val javaClass: jclass?,
-    val methodName: CPointer<ByteVar>,
-    val methodSignature: CPointer<ByteVar>
+    val methodName: String,
+    val methodSignature: String
 ) {
 
     fun getMethod(): jmethodID? {
-        val jniEnv = env!!.pointed.value?.pointed
-        return jniEnv?.GetMethodID!!(env, javaClass, methodName, methodSignature)
+        return GetMethodID( javaClass, methodName, methodSignature)
     }
 }
 
 fun getJString(value: String): jstring? {
     //fixme deallocate
-    val newStringUTF = env?.pointed?.value?.pointed?.NewStringUTF!!(env, value.cstr.getPointer(Arena()))
+    val newStringUTF = NewStringUTF(value)
     return newStringUTF
 }
 
 fun getKString(value: jobject?): String {
     //fixme deallocate
-    val getStringUTFChars = env?.pointed?.value?.pointed?.GetStringUTFChars!!(env, value, null)
+    val getStringUTFChars = GetStringUTFChars(value, null)
     return getStringUTFChars?.toKString()!!
 }

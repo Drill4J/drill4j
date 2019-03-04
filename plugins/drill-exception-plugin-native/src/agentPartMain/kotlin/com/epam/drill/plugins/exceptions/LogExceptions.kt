@@ -7,7 +7,13 @@ import com.epam.drill.plugin.api.processing.AgentPluginPart
 /**
  * @author Igor Kuzminykh on 8/8/17.
  */
-class LogExceptions(override val id: String) : AgentPluginPart() {
+class LogExceptions(override val id: String) : AgentPluginPart<Any>() {
+    override fun updateConfig(config: Any) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override var confSerializer: kotlinx.serialization.KSerializer<Any>? = null
+
     override fun load() {
         println("Plugin $id loaded")
     }
