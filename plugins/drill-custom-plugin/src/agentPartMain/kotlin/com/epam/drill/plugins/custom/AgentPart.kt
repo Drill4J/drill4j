@@ -16,20 +16,24 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 
     override var confSerializer: kotlinx.serialization.KSerializer<TestD>? = TestD.serializer()
 
+    var thread: Thread? = null
+
     override fun load() {
         println("Plugin $id loaded")
-
-        // send message every 10 seconds
-        Thread(Runnable {
+        thread = Thread(Runnable {
             while (true) {
+                // send message every 10 seconds
                 Thread.sleep(10_000)
                 sendMessage(id, "Hello from custom plugin! I'm still alive!")
             }
-        }).start()
+        })
+        thread?.start()
 
     }
 
     override fun unload() {
+        thread?.stop()
+        thread = null
         println("JAVA SIDE: Plugin '$id' unloaded")
     }
 
