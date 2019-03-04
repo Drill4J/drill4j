@@ -22,7 +22,7 @@ fun createFile(packageName: String, fileName: String) = FileSpec.builder(package
         "CallJavaVoidMethod"
     )
     .addImport(
-        "com.epam.kjni.core.GlobState", "env", "jni"
+        "jvmapi", "FindClass", "NewObjectA"
     )
 
 

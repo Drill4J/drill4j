@@ -6,10 +6,23 @@ import com.epam.drillnative.api.disableJvmtiEventException
 import com.epam.drillnative.api.enableJvmtiEventException
 import com.epam.drillnative.api.jvmtiCallback
 import jvmapi.jvmtiEventCallbacks
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.sizeOf
+import kotlinx.cinterop.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
-class ExNativePlugin(override var id: String) : NativePluginPart() {
+class ExNativePlugin(override var id: CPointer<ByteVar>) : NativePluginPart<TestExConf>() {
+    override fun restring(someText: String): String {
+        return String(someText.toCharArray())
+    }
+
+
+    override val confSerializer: KSerializer<TestExConf>
+        get() {
+            println("runtime calc")
+            return TestExConf.serializer()
+        }
+
 
     override fun unload(id: Long) {
         disableJvmtiEventException()
@@ -22,10 +35,16 @@ class ExNativePlugin(override var id: String) : NativePluginPart() {
         message?.Exception = exceptionCallback()
         SetEventCallbacksP(message?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
         enableJvmtiEventException()
-        println("enabled")
+
     }
 
-    override fun update(someText: String) {
-        println("message from drillNativeCore: $someText")
+    override fun updateConfig(someText: TestExConf) {
+        println("asdhahdahsd")
+        println(String(someText.st.toCharArray()) == "asdasd")
+        println(someText)
+
     }
 }
+
+@Serializable
+data class TestExConf(val st: String)

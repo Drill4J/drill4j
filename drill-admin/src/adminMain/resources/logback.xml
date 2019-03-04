@@ -5,13 +5,6 @@
         </encoder>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>test.log</file>
-        <encoder>
-            <pattern>{ "date_time":"%date", "thread":"[%thread]", "log_level":"%-5level", "class_name":"%logger{0}", "log_message":"%msg" }%n</pattern>
-        </encoder>
-    </appender>
-
     <root level="OFF">
         <appender-ref ref="STDOUT"/>
     </root>

@@ -1,0 +1,4 @@
+build/
+/.gradle/
+/drill-api/mingwX64/main.dll
+/drill-api/mingwX64/drill4j.klib

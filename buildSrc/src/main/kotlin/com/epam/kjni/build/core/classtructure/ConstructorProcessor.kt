@@ -30,12 +30,12 @@ fun generateDefaultWrapConstructors(constructors: List<Method>): List<FunSpec> {
             )})"
         }
 
-        constructorBuilder.addStatement("memScoped {").addStatement("javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!")
+        constructorBuilder.addStatement("memScoped {").addStatement("javaClass = FindClass(className)!!")
             .addStatement("val toJObjectArray = toJObjectArray(arrayOf($joinToString))")
-            .addStatement("val methodName = \"${method.name}\".cstr.getPointer(this)")
-            .addStatement("val methodSignature = \"${method.signature}\".cstr.getPointer(this)")
+            .addStatement("val methodName = \"${method.name}\"")
+            .addStatement("val methodSignature = \"${method.signature}\"")
             .addStatement("val jconstructor = %T(javaClass, methodName, methodSignature).getMethod()", javaConstructor)
-            .addStatement("javaObject = jni.NewObjectA!!(env, javaClass, jconstructor, toJObjectArray)!!")
+            .addStatement("javaObject = NewObjectA(javaClass, jconstructor, toJObjectArray)")
             //            .addStatement("jni.DeleteLocalRef!!(env, javaObject)")
             //            .addStatement("jni.DeleteLocalRef!!(env, javaClass)")
             .addStatement("nativeHeap.free(toJObjectArray)").addStatement("}")
@@ -45,7 +45,8 @@ fun generateDefaultWrapConstructors(constructors: List<Method>): List<FunSpec> {
 
 fun generateDefaultWrapConstructors(): FunSpec {
     val constructorBuilder = FunSpec.constructorBuilder().addParameter("jobj", jobject).addStatement("memScoped {")
-        .addStatement("javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!").addStatement("javaObject = jobj")
+        .addStatement("javaClass = FindClass(className.cstr.getPointer(this))!!")
+        .addStatement("javaObject = jobj")
         .addStatement("}")
     return constructorBuilder.build()
 }

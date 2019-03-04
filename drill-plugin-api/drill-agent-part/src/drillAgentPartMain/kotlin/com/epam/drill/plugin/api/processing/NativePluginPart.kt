@@ -1,17 +1,21 @@
 package com.epam.drill.plugin.api.processing
 
 import com.epam.drill.plugin.api.DrillPlugin
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JSON
 
-actual abstract class NativePluginPart {
+actual abstract class NativePluginPart<T> {
 
-    actual abstract var id: String
-    actual abstract fun update(someText: String)
+    abstract var id: String
+    actual abstract fun updateConfig(someText: T)
+    actual abstract val confSerializer: KSerializer<T>
+    actual fun updateRawConfig(someText: String) {
+    }
 
 }
 
-actual abstract class AgentPluginPart : DrillPlugin(), SwitchablePlugin {
-
-
+actual abstract class AgentPluginPart<T> : DrillPlugin(), SwitchablePlugin {
+    actual var enabled: Boolean = false
     //    external fun nativePart(): NativePluginPart
     actual open fun init(nativePluginPartPath: String) {
         loadNativePart(nativePluginPartPath)
@@ -23,6 +27,15 @@ actual abstract class AgentPluginPart : DrillPlugin(), SwitchablePlugin {
 
 
     external fun loadNative(ss: Long)
-    actual var np: NativePluginPart? = null
+    actual var np: NativePluginPart<T>? = null
 
+
+    fun updateRawConfig(config: String) {
+        if (confSerializer != null)
+            updateConfig(JSON().parse(confSerializer!!, config))
+    }
+
+    actual abstract fun updateConfig(config: T)
+
+    actual abstract var confSerializer: kotlinx.serialization.KSerializer<T>?
 }

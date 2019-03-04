@@ -1,15 +1,16 @@
 package com.epam.drill.plugin.exception
 
 import com.epam.drillnative.api.addPluginToRegistry
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.cstr
 
 
 @Suppress("FunctionName", "UNUSED_PARAMETER", "unused")
 @CName("JNI_OnLoad")
 fun pluginSetup(vm: Long, reservedPtr: Long): Int {
-//    val findClass = FindClass("java/lang/Object")
 
     //fixme fix this hardcode...!!!!
-    val cls = ExNativePlugin("except-ions")
+    val cls = ExNativePlugin("except-ions".cstr.getPointer(Arena()))
     cls.load(1)
     addPluginToRegistry(cls)
 

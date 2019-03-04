@@ -154,3 +154,13 @@ task buildAgent {
     dependsOn deleteAndCopyAgent
     group = "application"
 }
+
+task testGenerate{
+
+    doFirst {
+        kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }.forEach{
+            println it
+        }
+        com.epam.kjni.build.NativeBridgeGeneratorKt.generate(null, file("src/kjniMain/gen"))
+    }
+}

@@ -2,16 +2,14 @@
 
 package com.epam.drill.api
 
+//import com.epam.drill.plugin.api.NativePluginPart
 import com.epam.drill.core.request.DrillRequest
 import com.epam.drill.core.ws.MessageQueue
+import com.epam.drill.jvmapi.JNI
+import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.AgentPluginPart
 import com.epam.drill.plugin.api.processing.NativePluginPart
-//import com.epam.drill.plugin.api.NativePluginPart
-import com.epam.kjni.core.GlobState
-import com.epam.kjni.core.JNI
-import com.epam.kjni.core.JNIEnvPointer
-import drillInternal.config
 import jvmapi.*
 import kotlinx.cinterop.*
 
@@ -22,12 +20,12 @@ import kotlinx.cinterop.*
 
 @CName("JNIFun")
 fun JNIFun(): JNI {
-    return GlobState.jni
+    return jni
 }
 
 @CName("JNIEn")
-fun JNIEn(): JNIEnvPointer {
-    return GlobState.env
+fun JNIEn(): JNI {
+    return jni
 }
 
 //
@@ -69,8 +67,9 @@ fun JNIEn(): JNIEnvPointer {
 
 
 @CName("sendToSocket")
-fun sendToSocket(message: String) {
-    MessageQueue.sendMessage(message)
+fun sendToSocket(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) {
+    println(pluginId.toKString())
+    MessageQueue.sendMessage(pluginId.toKString(), message.toKString())
 }
 
 
@@ -156,7 +155,6 @@ fun enableJvmtiEventDynamicCodeGenerated(thread: jthread? = null) {
 
 @CName("enableJvmtiEventException")
 fun enableJvmtiEventException(thread: jthread? = null) {
-    println("allo")
     SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, thread)
     gdata?.pointed?.IS_JVMTI_EVENT_EXCEPTION = true
 }
@@ -483,32 +481,16 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
 
 
 @CName("addPluginToRegistry")
-fun addPluginToRegistry(plugin: NativePluginPart) {
+fun addPluginToRegistry(plugin: NativePluginPart<*>) {
     println("Hi From Register")
     try {
-        val agentPluginPart: AgentPluginPart? = PluginManager["except-ions"]
+        val agentPluginPart: AgentPluginPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPluginPart<Any>?
         if (agentPluginPart != null) {
-            agentPluginPart.np = plugin
-
+            agentPluginPart.np = plugin as NativePluginPart<Any>
+            println("native part added.")
         }
-        agentPluginPart?.np?.update("Hellow")
-        agentPluginPart?.unload()
+
     } catch (ex: Throwable) {
         ex.printStackTrace()
     }
-}
-
-
-//workaround for mutableMap.get...
-fun MutableMap<String, NativePluginPart>.pluginOf(id: String): NativePluginPart? {
-//    val iterator = pluginsManager.iterator()
-//    while (iterator.hasNext()) {
-//        val next = iterator.next()
-//        val key = next.key
-//
-//        if (key.toUtf8().stringFromUtf8() === id.toUtf8().stringFromUtf8()) {
-//            return next.value
-//        }
-//    }
-    return null
 }

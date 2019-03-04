@@ -1,7 +1,6 @@
 package com.epam.drill.core
 
 
-import com.epam.drill.core.callbacks.vminit.initVmEvent
 import com.epam.drill.core.ws.startWs
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
@@ -48,7 +47,6 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         logger.info { "Pid is: " + getpid() }
         printAllowedCapabilities()
         createQueue()
-        startWs()
         AddCapabilities(GetPotentialCapabilities())
         AddToSystemClassLoaderSearch("${args["drillInstallationDir"]}/drillRuntime.jar")
         SetNativeMethodPrefix("xxx_")
@@ -57,7 +55,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, null)
 
 
-        config.pstorage = StableRef.create(mutableMapOf<String, AgentPluginPart>()).asCPointer()
+        config.pstorage = StableRef.create(mutableMapOf<String, AgentPluginPart<*>>()).asCPointer()
 
     } catch (ex: Throwable) {
         ex.printStackTrace()
@@ -77,7 +75,7 @@ private fun callbackRegister() {
         SetEventCallbacks(this.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
         null
     }
-    gjavaVMGlob?.pointed?.callbackss?.VMInit = initVmEvent
+//    gjavaVMGlob?.pointed?.callbackss?.VMInit = initVmEvent
 //    gjavaVMGlob?.pointed?.callbackss?.NativeMethodBind = staticCFunction { x1, x2, x3, x4, x5, x6
 //        ->
 //        initRuntimeIfNeeded()

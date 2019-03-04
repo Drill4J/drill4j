@@ -4,8 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AgentInfo(
+    val agentName: String,
     val agentAddress: String,
     val agentGroup: String,
+    val description: String,
     val rawPluginNames: MutableSet<PluginBean>,
     val agentAdditionalInfo: AgentAdditionalInfo
 

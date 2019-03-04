@@ -112,6 +112,7 @@ typedef struct {
  char* drillAdminUrl;
  char* agentName;
  char* agentGroupName;
+ char* agentDescription;
  char* drillInstallationDir;
  void* pstorage;
 } configStruct;
