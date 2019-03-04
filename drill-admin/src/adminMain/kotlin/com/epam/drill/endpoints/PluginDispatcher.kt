@@ -75,7 +75,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 post<PluginConfig> { ll ->
                     val text = Message(MessageType.MESSAGE, "updatePluginConfig/${ll.pluginName}", call.receive())
                     agentStorage.agents[ll.agentName]?.agentWsSession?.send(Frame.Text(Gson().toJson(text)))
-                    call.respondText { "xxx" }
+                    call.respondText { "Update sent" }
                 }
             }
         }
