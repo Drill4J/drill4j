@@ -10,7 +10,11 @@ import kotlinx.serialization.Serializable
  * @author Denis Domashenko on 2/22/19.
  */
 class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
+
+    var config = TestD("Hello from custom plugin! I'm still alive!", 10_000)
+
     override fun updateConfig(config: TestD) {
+        this.config = config
         println("we got some update: $config")
     }
 
@@ -22,9 +26,9 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
         println("Plugin $id loaded")
         thread = Thread(Runnable {
             while (true) {
-                // send message every 10 seconds
-                Thread.sleep(10_000)
-                sendMessage(id, "Hello from custom plugin! I'm still alive!")
+                // send message every config.delayTime seconds (10 by default)
+                Thread.sleep(config.delayTime)
+                sendMessage(id, config.message)
             }
         })
         thread?.start()
@@ -41,4 +45,4 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 }
 
 @Serializable
-data class TestD(val st: String)
+data class TestD(val message: String, val delayTime: Long = 10_000)
