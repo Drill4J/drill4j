@@ -3,15 +3,18 @@ package com.epam.drill.endpoints
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
+import com.epam.drill.router.Routes
 import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
-import io.ktor.locations.Location
-import io.ktor.locations.post
+import io.ktor.locations.patch
 import io.ktor.request.receive
+import io.ktor.response.respond
 import io.ktor.response.respondText
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -61,20 +64,16 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         }
     }
 
-
-    @Location("/api/agent/updatePluginConfig/{agentName}/{pluginName}")
-    data class PluginConfig(val agentName: String, val pluginName: String)
-
     init {
         app.routing {
             authenticate {
-                post<PluginConfig> { ll ->
+                patch<Routes.Api.Agent.Agent> { ll ->
                     val message = call.receive<String>()
-                    agentStorage.agents[ll.agentName]?.agentWsSession
+                    agentStorage.agents[ll.agentId]?.agentWsSession
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
-                    call.respondText { "Update sent" }
+                    call.respond { HttpStatusCode.OK }
                 }
             }
         }

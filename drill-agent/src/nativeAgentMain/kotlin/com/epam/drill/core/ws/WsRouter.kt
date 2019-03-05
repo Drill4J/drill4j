@@ -1,6 +1,7 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.JarVfsFile
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.loadPlugin
 import com.epam.drill.extractPluginFacilitiesTo
@@ -51,6 +52,12 @@ fun topicRegister() =
                 agentPluginPart.updateRawConfig(config.content)
             else
                 wsLogger.warn { "Plugin ${config.pluginId} not loaded to agent" }
+        }
+
+
+
+        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) {
+
         }
     }
 
