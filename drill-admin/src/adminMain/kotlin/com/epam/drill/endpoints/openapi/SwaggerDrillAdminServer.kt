@@ -8,15 +8,18 @@ import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.serverInstance
+import com.epam.drill.router.DevRoutes
 import com.epam.drill.router.Routes
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.send
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
+import io.ktor.locations.patch
+import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
@@ -42,10 +45,30 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         app.routing {
             registerAgent()
             registerDrillAdmin()
+            if (app.environment.config.property("ktor.dev").getString().toBoolean()) {
+                registerDevDrillAdmin()
+            }
         }
     }
 
     private fun Routing.registerAgent() {
+        authenticate {
+            patch<Routes.Api.Agent.Agent> {config ->
+                agentStorage.agents[config.agentName]?.agentWsSession?.send(
+                    Frame.Text(
+                        Gson().toJson(
+                            Message(
+                                MessageType.MESSAGE,
+                                "/agent/updateAgentConfig",
+                                call.receive()
+                            )
+                        )
+                    )
+                )
+                call.respond { HttpStatusCode.OK }
+            }
+        }
+
         authenticate {
             get<Routes.Api.Agent.UnloadPlugin> { up ->
                 val drillAgent: DrillAgent? = agentStorage.agents[up.agentName]
@@ -110,13 +133,19 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.Api.Agent.Agents> {
-                call.respond(agentStorage.agents.values.map { da -> da.agentInfo })
-            }
-        }
-        authenticate {
             get<Routes.Api.Agent.Agent> { up ->
                 call.respond(agentStorage.agents[up.agentName]?.agentInfo!!)
+            }
+        }
+
+        authenticate {
+            get<Routes.Api.Agent.AgentToggleStandby> {
+                val agentId = call.receive<String>()
+                agentStorage.agents[agentId]?.agentWsSession
+                    ?.send(
+                        agentWsMessage("agent/toggleStandBy", agentId)
+                    )
+                call.respond { HttpStatusCode.OK }
             }
         }
     }
@@ -128,6 +157,17 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         authenticate {
             get<Routes.Api.AllPlugins> {
                 call.respond(plugins.plugins.values.map { dp -> dp.serverInstance.id })
+            }
+        }
+    }
+
+    /**
+     * drill-admin-dev
+     */
+    private fun Routing.registerDevDrillAdmin() {
+        authenticate {
+            get<DevRoutes.Api.Agent.Agents> {
+                call.respond(agentStorage.agents.values.map { da -> da.agentInfo })
             }
         }
     }

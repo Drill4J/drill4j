@@ -36,14 +36,22 @@ private suspend fun fillMainProperties() {
         mapOf()
     )
 
+    any.agentAddress = "127.0.0.1"
+
     config.loggerConfig =
         StableRef.create(
             resourcesVfs["${"$path/"}logger.properties"].readProperties()
         ).asCPointer()
 }
 
-val agentInfo: AgentInfo
+var agentInfo: AgentInfo
     get() = config.agentInfo?.asStableRef<AgentInfo>()?.get()!!
+    set(value) {
+        config.agentInfo?.asStableRef<AgentInfo>()?.dispose()
+        config.agentInfo = StableRef.create(
+            value
+        ).asCPointer()
+    }
 
 val drillInstallationDir: String
     get() = config.drillInstallationDir?.toKString()!!

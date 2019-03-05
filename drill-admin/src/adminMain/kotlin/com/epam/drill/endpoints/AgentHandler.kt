@@ -43,6 +43,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                             when (message.type) {
                                 MessageType.AGENT_REGISTER -> {
                                     val jsonInString = message.message
+                                    println(jsonInString)
                                     val agentInfo =
                                         DJSON.parse(jsonInString, AgentInfo::class as KClass<Any>) as AgentInfo
                                     agentId = agentInfo.agentAddress

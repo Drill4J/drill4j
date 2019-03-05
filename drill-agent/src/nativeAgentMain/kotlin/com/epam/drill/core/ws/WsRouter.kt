@@ -1,12 +1,15 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.JarVfsFile
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.core.agentInfo
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.loadPlugin
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.plugin.PluginManager
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korio.file.writeToFile
 import jvmapi.AddToSystemClassLoaderSearch
 import kotlinx.coroutines.runBlocking
@@ -52,6 +55,38 @@ fun topicRegister() =
             else
                 wsLogger.warn { "Plugin ${config.pluginId} not loaded to agent" }
         }
+
+        topic("/plugins/togglePlugin").rawMessage { pluginId ->
+            println(pluginId)
+            val agentPluginPart = PluginManager[pluginId]
+            if (agentPluginPart != null)
+                agentPluginPart.enabled = !agentPluginPart.enabled!!
+//                agentPluginPart.updateRawConfig(pluginId)
+            else
+                wsLogger.warn { "Plugin $pluginId not loaded to agent" }
+        }
+
+        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) {info ->
+            runBlocking {
+                println(info)
+                agentInfo = info
+                val data = Json().stringify(
+                    AgentInfo.serializer(),
+                    agentInfo
+                )
+                resourcesVfs["$drillInstallationDir/configs/drillConfig.json"].writeString(data)
+                println(data)
+            }
+        }
+
+        topic("agent/toggleStandBy").rawMessage {agentId ->
+            val agentEnabled = PluginManager[agentId]?.enabled
+            if (agentEnabled != null) {
+                PluginManager[agentId]?.enabled = !PluginManager[agentId]?.enabled!!
+            } else {
+                wsLogger.warn { "Plugin $agentId not loaded to agent" }
+            }
+        }
     }
 
 
@@ -70,6 +105,7 @@ object WsRouter {
     @Suppress("ClassName")
     open class inners(open val destination: String) {
         fun <T> withGenericTopic(des: DeserializationStrategy<T>, block: (T) -> Unit): GenericTopic<T> {
+            println(destination)
             val genericTopic = GenericTopic(destination, des, block)
             mapper[destination] = genericTopic
             return genericTopic
