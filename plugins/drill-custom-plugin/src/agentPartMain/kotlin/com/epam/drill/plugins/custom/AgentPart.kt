@@ -3,6 +3,7 @@ package com.epam.drill.plugins.custom
 import com.epam.drill.plugin.api.processing.AgentPluginPart
 import com.epam.drill.plugin.api.processing.Sender.sendMessage
 import kotlinx.serialization.Serializable
+import java.util.concurrent.Executors
 
 
 @Suppress("unused")
@@ -11,7 +12,8 @@ import kotlinx.serialization.Serializable
  */
 class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 
-    var config = TestD("Hello from custom plugin! I'm still alive!", 10_000)
+    private var config = TestD("Hello from custom plugin! I'm still alive!", 10_000)
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun updateConfig(config: TestD) {
         this.config = config
@@ -20,24 +22,21 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 
     override var confSerializer: kotlinx.serialization.KSerializer<TestD>? = TestD.serializer()
 
-    var thread: Thread? = null
-
     override fun load() {
         println("Plugin $id loaded")
-        thread = Thread(Runnable {
-            while (true) {
+        executor.execute(Thread(Runnable {
+            while (!executor.isShutdown) {
                 // send message every config.delayTime seconds (10 by default)
                 Thread.sleep(config.delayTime)
                 sendMessage(id, config.message)
             }
-        })
-        thread?.start()
+        }))
+
 
     }
 
     override fun unload() {
-        thread?.stop()
-        thread = null
+        executor.shutdown()
         println("JAVA SIDE: Plugin '$id' unloaded")
     }
 
