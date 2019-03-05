@@ -1,7 +1,6 @@
 package com.epam.drill.core
 
 
-import com.epam.drill.core.ws.startWs
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.api.processing.AgentPluginPart

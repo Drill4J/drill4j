@@ -1,4 +1,4 @@
-package com.epam.drill.core.request
+package com.epam.drill.core.plugin.dto
 
 import kotlinx.serialization.Serializable
 

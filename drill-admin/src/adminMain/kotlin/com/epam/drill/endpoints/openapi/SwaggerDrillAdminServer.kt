@@ -2,8 +2,6 @@ package com.epam.drill.endpoints.openapi
 
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.DrillAgent
-import com.epam.drill.common.AgentEvent
-import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.plugins.Plugins
@@ -20,7 +18,6 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
 import io.ktor.response.respond
 import io.ktor.routing.Routing
-import io.ktor.routing.get
 import io.ktor.routing.routing
 import kotlinx.serialization.toUtf8Bytes
 import org.kodein.di.Kodein
@@ -63,11 +60,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
                 drillAgent.agentWsSession.send(
                     Gson().toJson(
-                        Message(
-                            MessageType.MESSAGE,
-                            "/",
-                            Gson().toJson(AgentEvent(DrillEvent.UNLOAD_PLUGIN, data = up.pluginName))
-                        )
+                        Message(MessageType.MESSAGE, "/plugins/unload", up.pluginName)
                     )
                 )
 //            drillAgent.agentInfo.rawPluginNames.removeIf { x -> x.id == up.pluginName }
@@ -91,16 +84,29 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                 val fileSize: Long = inChannel.size()
                 val buffer: ByteBuffer = ByteBuffer.allocate(fileSize.toInt())
 
+                val message = Gson().toJson(
+                    Message(MessageType.MESSAGE, "/plugins/load", lp.pluginName)
+                ).toUtf8Bytes()
 
-                val title: ByteBuffer = ByteBuffer.allocate(20)
-                title.put(lp.pluginName.toUtf8Bytes())
-                while (title.hasRemaining())
-                    title.put("!".toUtf8Bytes())
-                title.flip()
+                val messagePosition = ByteBuffer.allocate(4).putInt(message.size)
+                val filePosition = ByteBuffer.allocate(4).putInt(message.size)
+                messagePosition.flip()
+                filePosition.flip()
+
                 inChannel.read(buffer)
                 buffer.flip()
-                val put = ByteBuffer.allocate(20 + fileSize.toInt()).put(title).put(buffer)
+
+
+                val put = ByteBuffer.allocate(8 + message.size + fileSize.toInt())
+                    .put(messagePosition)
+                    .put(filePosition)
+                    .put(message)
+                    .put(buffer)
+
+
                 put.flip()
+//                println(put.array().contentToString())
+//                put.flip()
                 drillAgent.agentWsSession.send(Frame.Binary(true, put))
                 call.respond("event 'load' and plugin's file(${lp.agentName}) was sent to AGENT")
             }

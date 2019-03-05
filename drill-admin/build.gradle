@@ -43,7 +43,6 @@ kotlin {
                 //fixme temp solution
                 implementation(fileTree(file("testLib/kodein-di-generic-jvm-6.0.1.jar")))
                 implementation(fileTree(file("testLib/kodein-di-core-jvm-6.0.1.jar")))
-//                implementation("org.kodein.di:kodein-di-generic-jvm:5.2.0")
                 implementation("io.ktor:ktor-server-netty:1.1.2")
                 implementation("io.ktor:ktor-locations:1.1.2")
                 implementation("io.ktor:ktor-gson:1.1.2")

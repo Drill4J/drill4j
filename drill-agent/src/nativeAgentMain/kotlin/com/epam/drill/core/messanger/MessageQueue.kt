@@ -3,8 +3,8 @@ package com.epam.drill.core.ws
 import com.epam.drill.api.drillRequest
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.core.request.DrillMessage
-import com.epam.drill.core.request.MessageWrapper
+import com.epam.drill.core.plugin.dto.DrillMessage
+import com.epam.drill.core.plugin.dto.MessageWrapper
 import drillInternal.addMessage
 
 import drillInternal.getMessage

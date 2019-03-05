@@ -129,7 +129,6 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
     }
 
     private fun notifyNativePart(config: String) {
-        println("native part! = $np")
         np?.updateRawConfig(config)
     }
 
@@ -144,6 +143,7 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
                 l = newStringUTF
 
             })
+        ExceptionDescribe()
     }
 
 

@@ -15,7 +15,6 @@ object PluginManager {
     }
 
     fun pluginsState(): HashSet<PluginBean> {
-        println("pronlem here")
         return storage.map {
             val id = it.key
             val enabled = it.value.enabled

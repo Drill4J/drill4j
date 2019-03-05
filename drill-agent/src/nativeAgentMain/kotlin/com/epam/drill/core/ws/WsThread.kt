@@ -1,21 +1,16 @@
 package com.epam.drill.core.ws
 
-import com.epam.drill.JarVfsFile
-import com.epam.drill.common.*
+import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.Message
+import com.epam.drill.common.MessageType
 import com.epam.drill.core.*
-import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.PluginManager.pluginsState
-import com.soywiz.korio.file.baseName
-import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.lang.Thread_sleep
 import com.soywiz.korio.net.ws.WebSocketClient
 import com.soywiz.korio.util.OS
 import drillInternal.addMessage
-import jvmapi.AddToSystemClassLoaderSearch
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
@@ -32,82 +27,62 @@ val wsLogger
     get() = DLogger("DrillWebsocket")
 
 
-fun register() = memScoped {
-    try {
-
-        val rawPluginNames = pluginsState()
-
-        val agentInfo = AgentInfo(
-            agentName,
-            "127.0.0.1", // - ipconfig or ifconfig. depends on Platform
-            agentGroupName,
-            agentDescription,
-            rawPluginNames,
-
-            AgentAdditionalInfo(
-                listOf(),
-                4,
-                "x64",
-                OS.platformNameLC + ":" + OS.platformName,
-                "10",
-                mapOf()
-            )
-        )
-
-
-        val message = Json.stringify(
-            Message.serializer(),
-            Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
-        )
-
-        addMessage(message.cstr.getPointer(Arena()))
-
-    } catch (ex: Throwable) {
-        ex.printStackTrace()
+fun startWs(): Future<Unit> {
+    return Worker.start(true).execute(TransferMode.UNSAFE, {}) {
+        initRuntimeIfNeeded()
+        pluginLoadCommand()
+        topicRegister()
+        while (true) {
+            wsLogger.debug { "create new Connection" }
+            Thread_sleep(5000)
+            try {
+                websocket()
+            } catch (sx: Throwable) {
+                wsLogger.error { sx.message }
+            }
+        }
     }
 }
 
-fun ws() = runBlocking {
+private fun websocket() = runBlocking {
     launch {
         val url = "ws://$drillAdminUrl/agent/attach"
-        wsLogger.debug { "try to create ws $url" }
+        wsLogger.debug { "try to create websocket $url" }
         val wsClient = WebSocketClient(url)
         wsLogger.debug { "WS created" }
 
         wsClient.onAnyMessage.add { rawMessage ->
-
+            println("[DEBUG] got message to the wsocket: $rawMessage")
         }
         wsClient.onStringMessage.add { rawMessage ->
             initRuntimeIfNeeded()
-            val message = Json().parse(Message.serializer(), rawMessage)
-            if (message.destination == "/") {
-                val action = Json().parse(AgentEvent.serializer(), message.message)
-                when (action.event) {
-                    DrillEvent.UNLOAD_PLUGIN -> {
-                        runBlocking {
-                            unload(action.data)
-                            register()
-                        }
-                    }
-                    DrillEvent.AGENT_LOAD_SUCCESSFULLY -> wsLogger.info { "connected with DrillConsole" }
-                    DrillEvent.LOAD_PLUGIN -> wsLogger.info { "'${DrillEvent.LOAD_PLUGIN}' event waiting for a file" }
+            val message = rawMessage.toWsMessage()
+            val destination = message.destination
+            val topic = WsRouter[destination]
+            if (topic != null) {
+                when (topic) {
+                    is FileTopic -> throw RuntimeException("We can't use File topic in not binary retriever")
+                    is InfoTopic -> topic.block(message.message)
+                    is GenericTopic<*> -> topic.deserializeAndRun(message.message)
                 }
-            } else if (message.destination.startsWith("updatePluginConfig")) {
-
-                val pluginName = message.destination.split("/")[1]
-
-                val agentPluginPart = PluginManager[pluginName]
-
-                agentPluginPart?.updateRawConfig(message.message)
+            } else {
+                wsLogger.warn { "topic with name '$destination' didn't register" }
             }
-
 
         }
         wsClient.onBinaryMessage.add {
-            load(it)
-
-            register()
-
+            val readBinary = readBinary(it)
+            val rawMessage = readBinary.first
+            val rawFileData = readBinary.second
+            println(rawMessage.stringFromUtf8())
+            val message = rawMessage.stringFromUtf8().toWsMessage()
+            val topic = WsRouter[message.destination]
+            if (topic != null) {
+                when (topic) {
+                    is FileTopic -> topic.block(message.message, rawFileData)
+                    else -> throw RuntimeException("We can't use any topics except FileTopic in binary retriever")
+                }
+            }
 
         }
         wsClient.onError.add {
@@ -131,69 +106,51 @@ fun ws() = runBlocking {
     }.join()
 }
 
+private fun String.toWsMessage() = Json().parse(Message.serializer(), this)
 
-private suspend fun unload(pluginName: String) {
-    PluginManager[pluginName]?.unload()
-}
-
-fun load(it: ByteArray) = runBlocking {
+private fun register() = memScoped {
     try {
-        val (pluginName, rawFileData) = parseRawPluginFromAdminStorage(it)
-        val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
-        if (!pluginsDir.exists()) {
-            pluginsDir.mkdir()
-        }
-        val vfsFile = pluginsDir[pluginName]
-        if (!vfsFile.exists()) {
-            vfsFile.mkdir()
-        }
-        val targetFile: JarVfsFile = vfsFile["agent-part.jar"]
-        rawFileData.writeToFile(targetFile)
-        try {
-            targetFile.extractPluginFacilitiesTo(localVfs(targetFile.parent.absolutePath)) { vf ->
-                !vf.baseName.contains("nativePart") &&
-                        !vf.baseName.contains("static")
-            }
-            //init env...
-            com.epam.drill.jvmapi.currentEnvs()
+        val rawPluginNames = pluginsState()
+        val agentInfo = AgentInfo(
+            agentName,
+            "127.0.0.1", // - ipconfig or ifconfig. depends on Platform
+            agentGroupName,
+            agentDescription,
+            rawPluginNames,
+            AgentAdditionalInfo(
+                listOf(),
+                4,
+                "x64",
+                OS.platformNameLC + ":" + OS.platformName,
+                "10",
+                mapOf()
+            )
+        )
+        val message = Json.stringify(
+            Message.serializer(),
+            Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
+        )
 
-            AddToSystemClassLoaderSearch(targetFile.absolutePath)
-
-
-            loadPlugin(targetFile)
-
-
-            wsLogger.info { "load $pluginName" }
-        } catch (ex: Exception) {
-            wsLogger.error { "cant load the plugin..." }
-            ex.printStackTrace()
-        }
+        addMessage(message.cstr.getPointer(Arena()))
 
     } catch (ex: Throwable) {
         ex.printStackTrace()
     }
 }
 
-fun parseRawPluginFromAdminStorage(it: ByteArray): Pair<String, ByteArray> {
-    val pluginName = it.sliceArray(0 until 20).stringFromUtf8().replace("!", "")
-    val rawFileData = it.sliceArray(20 until it.size)
-    return Pair(pluginName, rawFileData)
+
+fun readBinary(x: ByteArray): Pair<ByteArray, ByteArray> {
+    val readInt = x.readInt(0)
+    val indices = 8 until 8 + readInt
+    println(indices)
+    val message = x.sliceArray(indices)
+    val indices1 = 8 + readInt until x.size
+    println(indices1)
+    val file = x.sliceArray(indices1)
+    return message to file
 }
 
-fun startWs(): Future<Unit> {
-    val worker = Worker.start(true)
-    return worker.execute(TransferMode.UNSAFE, {}) {
-        initRuntimeIfNeeded()
-        pluginLoadCommand()
-        while (true) {
-            wsLogger.debug { "create new Connection" }
-            Thread_sleep(5000)
-            try {
-                ws()
-            } catch (sx: Throwable) {
-                wsLogger.error { sx.message }
-            }
-        }
-    }
+private fun ByteArray.readInt(index: Int): Int {
+    return (this[index].toInt() and 0xFF shl 24 or (this[index + 1].toInt() and 0xFF shl 16)
+            or (this[index + 2].toInt() and 0xFF shl 8) or (this[index + 3].toInt() and 0xFF))
 }
-

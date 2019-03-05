@@ -31,8 +31,10 @@ actual abstract class AgentPluginPart<T> : DrillPlugin(), SwitchablePlugin {
 
 
     fun updateRawConfig(config: String) {
-        if (confSerializer != null)
+        if (confSerializer != null) {
+            println(config)
             updateConfig(JSON().parse(confSerializer!!, config))
+        }
     }
 
     actual abstract fun updateConfig(config: T)
