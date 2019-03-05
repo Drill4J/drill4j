@@ -4,6 +4,7 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.DrillAgent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.serverInstance
@@ -58,11 +59,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                     return@get
                 }
 
-                drillAgent.agentWsSession.send(
-                    Gson().toJson(
-                        Message(MessageType.MESSAGE, "/plugins/unload", up.pluginName)
-                    )
-                )
+                drillAgent.agentWsSession.send(agentWsMessage("/plugins/unload", up.pluginName))
 //            drillAgent.agentInfo.rawPluginNames.removeIf { x -> x.id == up.pluginName }
                 call.respond("event 'unload' was sent to AGENT")
             }

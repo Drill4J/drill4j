@@ -48,11 +48,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     agentId = agentInfo.agentAddress
                                     val drillAgent = DrillAgent(agentInfo, agentStorage, this)
                                     agentStorage.addAgent(drillAgent)
-                                    send(
-                                        Gson().toJson(
-                                            Message(MessageType.MESSAGE, "/plugins/agent-attached", "")
-                                        )
-                                    )
+                                    send(agentWsMessage("/plugins/agent-attached",""))
                                     println("agent registered.")
                                     println("AgentInfo: $agentInfo")
 

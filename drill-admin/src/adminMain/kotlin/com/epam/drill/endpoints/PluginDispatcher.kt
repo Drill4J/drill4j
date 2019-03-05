@@ -1,17 +1,13 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.serverInstance
 import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
-import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Location
 import io.ktor.locations.post
@@ -73,8 +69,11 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         app.routing {
             authenticate {
                 post<PluginConfig> { ll ->
-                    val text = Message(MessageType.MESSAGE, "/plugins/updatePluginConfig", call.receive())
-                    agentStorage.agents[ll.agentName]?.agentWsSession?.send(Frame.Text(Gson().toJson(text)))
+                    val message = call.receive<String>()
+                    agentStorage.agents[ll.agentName]?.agentWsSession
+                        ?.send(
+                            agentWsMessage("/plugins/updatePluginConfig", message)
+                        )
                     call.respondText { "Update sent" }
                 }
             }

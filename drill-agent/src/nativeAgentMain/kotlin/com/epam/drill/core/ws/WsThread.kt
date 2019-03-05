@@ -68,6 +68,7 @@ private fun websocket() = runBlocking {
             } else {
                 wsLogger.warn { "topic with name '$destination' didn't register" }
             }
+            register()
 
         }
         wsClient.onBinaryMessage.add {
@@ -83,6 +84,7 @@ private fun websocket() = runBlocking {
                     else -> throw RuntimeException("We can't use any topics except FileTopic in binary retriever")
                 }
             }
+            register()
 
         }
         wsClient.onError.add {
