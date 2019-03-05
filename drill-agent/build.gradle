@@ -58,8 +58,8 @@ kotlin {
         }
     }
     sourceSets {
-        commonMain{
-            dependencies{
+        commonMain {
+            dependencies {
                 implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1"
                 implementation(project(":drill-plugin-api:drill-agent-part"))
@@ -113,11 +113,13 @@ javaAgentJar {
     destinationDirectory = file("../distr")
     archiveFileName = "drillRuntime.jar"
     from {
-        configurations.javaAgentMainCompileOnly.forEach{
+        configurations.javaAgentMainCompileOnly.forEach {
             println(it)
         }
 
-        kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }
+        kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
     }
 }
 
@@ -153,12 +155,29 @@ task buildAgent {
     dependsOn javaAgentJar
     dependsOn deleteAndCopyAgent
     group = "application"
+
+    doLast {
+        if (!new File("../distr/configs", "drillConfig.json").exists()) {
+            copy{
+                from file("../resources/drillConfig.json")
+                into file("../distr/configs")
+            }
+        }
+     if (!new File("../distr/configs", "logger.properties").exists()) {
+            copy{
+                from file("../resources/logger.properties")
+                into file("../distr/configs")
+            }
+        }
+    }
 }
 
-task testGenerate{
+task testGenerate {
 
     doFirst {
-        kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }.forEach{
+        kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }.forEach {
             println it
         }
         com.epam.kjni.build.NativeBridgeGeneratorKt.generate(null, file("src/kjniMain/gen"))

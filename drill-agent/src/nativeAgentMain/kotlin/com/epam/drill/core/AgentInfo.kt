@@ -1,54 +1,49 @@
 package com.epam.drill.core
 
 
-import com.epam.drill.logger.Properties
+import com.epam.drill.common.AgentAdditionalInfo
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.logger.readProperties
 import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.util.OS
 import drillInternal.config
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.cstr
+import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.toKString
-
-object AgentInfo {
-    suspend fun parseConfigs(folder: String?) {
-        fillMainProperties(folder)
-    }
-
-    private suspend fun fillMainProperties(path: String?) {
-
-        val readProperties = if (path != null)
-            resourcesVfs["${"$path/"}drillConfig.properties"].readProperties()
-        else Properties(mutableMapOf())
-        config.drillAdminUrl =
-            readProperties["drillAdminUrl"]?.cstr?.getPointer(Arena()) ?: "localhost:8090".cstr.getPointer(Arena())
-        //todo defaultAgentNameAsHostAddress
-        config.agentName = run { readProperties["agentName"] ?: "undefinedName" }.cstr.getPointer(Arena())
-        config.agentGroupName = run { readProperties["agentGroupName"] ?: "undefinedGroup" }.cstr.getPointer(Arena())
-        config.agentDescription = run { readProperties["agentDescription"] ?: "undefinedDescr" }.cstr.getPointer(Arena())
-
-        config.loggerConfig =
-            StableRef.create(
-                if (path != null) resourcesVfs["${"$path/"}logger.properties"].readProperties() else Properties(
-                    mutableMapOf()
-                )
-            ).asCPointer()
-    }
+import kotlinx.serialization.json.Json
 
 
+suspend fun parseConfigs() {
+    fillMainProperties()
 }
 
-val drillAdminUrl: String?
-    get() = config.drillAdminUrl?.toKString()
+private suspend fun fillMainProperties() {
+    val path = "$drillInstallationDir/configs"
 
-val agentName: String
-    get() = config.agentName?.toKString() ?: "undefinedGroup"
+    val any = Json().parse(
+        AgentInfo.serializer(),
+        resourcesVfs["${"$path/"}drillConfig.json"].readString()
+    )
+    config.agentInfo = StableRef.create(
+        any
+    ).asCPointer()
+    any.agentAdditionalInfo = AgentAdditionalInfo(
+        listOf(),
+        4,
+        "x64",
+        OS.platformNameLC + ":" + OS.platformName,
+        "10",
+        mapOf()
+    )
 
-val agentGroupName: String
-    get() = config.agentGroupName?.toKString() ?: "undefinedName"
+    config.loggerConfig =
+        StableRef.create(
+            resourcesVfs["${"$path/"}logger.properties"].readProperties()
+        ).asCPointer()
+}
 
-val agentDescription: String
-    get() = config.agentDescription?.toKString() ?: "undefinedName"
+val agentInfo: AgentInfo
+    get() = config.agentInfo?.asStableRef<AgentInfo>()?.get()!!
 
 val drillInstallationDir: String
     get() = config.drillInstallationDir?.toKString()!!

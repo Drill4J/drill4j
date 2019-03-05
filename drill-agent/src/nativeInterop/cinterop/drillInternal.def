@@ -109,10 +109,7 @@ char *getMessage() {
 typedef struct {
  void* loggers;
  void* loggerConfig;
- char* drillAdminUrl;
- char* agentName;
- char* agentGroupName;
- char* agentDescription;
+ void* agentInfo;
  char* drillInstallationDir;
  void* pstorage;
 } configStruct;

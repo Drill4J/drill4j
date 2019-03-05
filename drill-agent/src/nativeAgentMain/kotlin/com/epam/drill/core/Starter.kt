@@ -27,8 +27,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
             split[0] to split[1]
         }!!
 
-        val folder = args["configsFolder"]
-        if (folder == null || args["drillInstallationDir"] == null) {
+        if (args["drillInstallationDir"] == null) {
             println("________________________________________________________________")
             println(
                 "NATIVE WARNING: Please fill the config folder in agent args.\n" +
@@ -39,9 +38,9 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         }
         config.drillInstallationDir = args.getValue("drillInstallationDir").cstr.getPointer(Arena())
         intiLoggers()
-        AgentInfo.parseConfigs(folder)
+        parseConfigs()
         val logger = DLogger("StartLogger")
-        logger.info { drillAdminUrl }
+        logger.info { agentInfo.drillAdminUrl }
         logger.info { "The native agent was loaded" }
         logger.info { "Pid is: " + getpid() }
         printAllowedCapabilities()

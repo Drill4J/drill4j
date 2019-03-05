@@ -1,15 +1,14 @@
 package com.epam.drill.core.ws
 
-import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.core.*
+import com.epam.drill.core.agentInfo
+import com.epam.drill.core.pluginLoadCommand
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager.pluginsState
 import com.soywiz.korio.lang.Thread_sleep
 import com.soywiz.korio.net.ws.WebSocketClient
-import com.soywiz.korio.util.OS
 import drillInternal.addMessage
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.cstr
@@ -46,7 +45,7 @@ fun startWs(): Future<Unit> {
 
 private fun websocket() = runBlocking {
     launch {
-        val url = "ws://$drillAdminUrl/agent/attach"
+        val url = "ws://${agentInfo.drillAdminUrl}/agent/attach"
         wsLogger.debug { "try to create websocket $url" }
         val wsClient = WebSocketClient(url)
         wsLogger.debug { "WS created" }
@@ -68,14 +67,14 @@ private fun websocket() = runBlocking {
             } else {
                 wsLogger.warn { "topic with name '$destination' didn't register" }
             }
-            register()
+            if (destination != "/plugins/agent-attached")
+                register()
 
         }
         wsClient.onBinaryMessage.add {
             val readBinary = readBinary(it)
             val rawMessage = readBinary.first
             val rawFileData = readBinary.second
-            println(rawMessage.stringFromUtf8())
             val message = rawMessage.stringFromUtf8().toWsMessage()
             val topic = WsRouter[message.destination]
             if (topic != null) {
@@ -112,22 +111,9 @@ private fun String.toWsMessage() = Json().parse(Message.serializer(), this)
 
 private fun register() = memScoped {
     try {
-        val rawPluginNames = pluginsState()
-        val agentInfo = AgentInfo(
-            agentName,
-            "127.0.0.1", // - ipconfig or ifconfig. depends on Platform
-            agentGroupName,
-            agentDescription,
-            rawPluginNames,
-            AgentAdditionalInfo(
-                listOf(),
-                4,
-                "x64",
-                OS.platformNameLC + ":" + OS.platformName,
-                "10",
-                mapOf()
-            )
-        )
+        agentInfo.rawPluginNames.clear()
+        agentInfo.rawPluginNames.addAll(pluginsState())
+
         val message = Json.stringify(
             Message.serializer(),
             Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))

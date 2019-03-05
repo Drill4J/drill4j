@@ -1,0 +1,7 @@
+{
+  "drillAdminUrl": "localhost:8090",
+  "agentName": "MyTestApp",
+  "agentGroupName": "TestGroup",
+  "agentDescription": "This agent configured only for petclinic",
+  "isEnable": true
+}
