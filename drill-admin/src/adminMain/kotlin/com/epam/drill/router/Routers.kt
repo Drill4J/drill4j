@@ -10,31 +10,31 @@ object Routes {
     class Api {
         @Location("/agent")
         class Agent {
-                @Location("/loadPlugin/{agentName}/{pluginName}")
-                data class LoadPlugin(override val agentName: String, override val pluginName: String) : PluginManageLink()
+            @Location("/{agentId}/toggle-standby")
+            class AgentToggleStandby
 
-                @Location("/unloadPlugin/{agentName}/{pluginName}")
-                data class UnloadPlugin(override val agentName: String, override val pluginName: String) : PluginManageLink()
+            @Location("/load-plugin/{agentId}/{pluginName}")
+            data class LoadPlugin(override val agentId: String, override val pluginName: String) : PluginManageLink()
 
-                @Location("/agent-info/getAllAgents")
-                class Agents
+            @Location("/unload-plugin/{agentId}/{pluginName}")
+            data class UnloadPlugin(override val agentId: String, override val pluginName: String) : PluginManageLink()
 
-                @Location("/agent-info/{agentName}")
-                data class Agent(val agentName: String)
+            @Location("{agentId}")
+            data class Agent(val agentId: String)
 
-                abstract class PluginManageLink {
-                        abstract val agentName: String
-                        abstract val pluginName: String
-                }
+            abstract class PluginManageLink {
+                abstract val agentId: String
+                abstract val pluginName: String
+            }
         }
 
-        @Location("/pluginContent/{pluginId}")
+        @Location("/plugin-content/{pluginId}")
         data class PluginContent(val pluginId: String)
 
-        @Location("/drill-admin/plugin/getAllPlugins")
+        @Location("/drill-admin/plugin/get-all-plugins")
         class AllPlugins
 
-        @Location("/plugin-info/getPluginsConfiguration")
+        @Location("/plugin-info/get-plugins-configuration")
         class PluginConfiguration
 
         @Location("/login")
