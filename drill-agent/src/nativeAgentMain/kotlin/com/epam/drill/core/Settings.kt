@@ -5,6 +5,7 @@ import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.logger.readProperties
 import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.file.std.tempVfs
 import com.soywiz.korio.util.OS
 import drillInternal.config
 import kotlinx.cinterop.StableRef
@@ -27,6 +28,9 @@ private suspend fun fillMainProperties() {
     config.agentInfo = StableRef.create(
         any
     ).asCPointer()
+
+    //fixme retrieve a real IP
+    any.agentAddress = "127.0.0.1"
     any.agentAdditionalInfo = AgentAdditionalInfo(
         listOf(),
         4,

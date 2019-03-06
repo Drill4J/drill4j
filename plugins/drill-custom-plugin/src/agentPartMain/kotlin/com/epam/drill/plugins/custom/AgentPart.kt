@@ -22,7 +22,7 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 
     var thread: Thread? = null
 
-    override fun load() {
+    override fun on() {
         println("Plugin $id loaded")
         thread = Thread(Runnable {
             while (true) {
@@ -35,7 +35,7 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 
     }
 
-    override fun unload() {
+    override fun off() {
         thread?.stop()
         thread = null
         println("JAVA SIDE: Plugin '$id' unloaded")

@@ -4,7 +4,7 @@ package com.epam.drill.api
 
 //import com.epam.drill.plugin.api.NativePluginPart
 import com.epam.drill.core.request.DrillRequest
-import com.epam.drill.core.ws.MessageQueue
+import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.jvmapi.JNI
 import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager

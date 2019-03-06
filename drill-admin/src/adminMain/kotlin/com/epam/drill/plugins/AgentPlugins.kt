@@ -67,7 +67,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         val jarFile = JarFile(f)
         val entrySet = jarFile.entries().iterator().asSequence().toSet()
         val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
-        val constructor = pluginApiClass.getConstructor(WsService::class.java, String::class.java)
+        val constructor = pluginApiClass!!.getConstructor(WsService::class.java, String::class.java)
         return constructor.newInstance(wsService, extractPluginBean(jarFile, tempDirectory).id) as AdminPluginPart
     }
 

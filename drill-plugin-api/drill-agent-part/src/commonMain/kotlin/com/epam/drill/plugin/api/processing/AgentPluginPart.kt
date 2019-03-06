@@ -12,21 +12,24 @@ expect abstract class AgentPluginPart<T>() : DrillPlugin, SwitchablePlugin {
     open fun init(nativePluginPartPath: String)
 
 
-    abstract override fun load()
-    abstract override fun unload()
+    override fun load()
+    override fun unload()
     abstract fun updateConfig(config: T)
 
 //    external fun nativePart(): NativePluginPart
+    abstract override fun on()
+    abstract override fun off()
 }
 
 
 interface SwitchablePlugin {
     fun load()
     fun unload()
+    fun on()
+    fun off()
 }
 
 expect abstract class NativePluginPart<T> {
     actual abstract val confSerializer: KSerializer<T>
-    abstract fun updateConfig(someText: T)
     fun updateRawConfig(someText: String)
 }

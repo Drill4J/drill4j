@@ -13,7 +13,7 @@ data class AgentInfo(
     @Optional
     val drillAdminUrl: String = "",
     @Optional
-    val agentAddress: String = "",
+    var agentAddress: String = "",
     @Optional
     val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
     @Optional

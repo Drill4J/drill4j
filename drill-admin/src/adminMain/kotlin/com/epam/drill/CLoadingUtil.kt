@@ -13,18 +13,21 @@ private fun getClassName(je: JarEntry): String {
     return className
 }
 
-fun retrieveApiClass(targetClass: Class<*>, entrySet: Set<JarEntry>, cl: ClassLoader): Class<*> {
+fun retrieveApiClass(targetClass: Class<*>, entrySet: Set<JarEntry>, cl: ClassLoader): Class<*>? {
 
-    //fixme
-    return entrySet.filter { it.name.endsWith(".class") && !it.name.contains("$") }.map { je ->
+    entrySet.filter { it.name.endsWith(".class") && !it.name.contains("$") }.map { je ->
         val className = getClassName(je)
         val basClass = cl.loadClass(className)
         var parentClass = basClass
-        while (parentClass != null && parentClass != targetClass) {
+        while (parentClass != null) {
+            if (parentClass == targetClass) {
+                return basClass
+            }
             parentClass = parentClass.superclass
         }
-        basClass
-    }.first()
+        return@map
+    }
+    return null
 }
 
 

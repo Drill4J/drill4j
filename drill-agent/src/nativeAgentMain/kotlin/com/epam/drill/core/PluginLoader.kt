@@ -27,6 +27,7 @@ fun pluginLoadCommand() = runBlocking {
             loadPlugin(jar)
         }
     } catch (ex: Throwable) {
+        ex.printStackTrace()
         initLogger.warn { "Can't run javaPluginLoader" }
     }
 }
@@ -72,6 +73,11 @@ suspend fun loadPlugin(jar: JarVfsFile) {
                                     l = newStringUTF
 
                                 })
+println("____________________")
+                        val someText = jar.parent["static"]["plugin_config.json"].readString()
+//                        println(someText)
+//                        plugin.np?.updateRawConfig(someText)
+
                     }
                 }
 
@@ -103,6 +109,20 @@ suspend fun retrieveFacilitiesFromPlugin() {
 
 class PluginNativeStub(override val id: String, val findClass: jclass, val userPlugin: jobject) :
     AgentPluginPart<Any>() {
+    override fun on() {
+        PluginManager.activate(id)
+        CallVoidMethodA(
+            userPlugin, GetMethodID(findClass, "on", "()V"), null
+        )
+    }
+
+    override fun off() {
+        PluginManager.deactivate(id)
+        CallVoidMethodA(
+            userPlugin, GetMethodID(findClass, "off", "()V"), null
+        )
+    }
+
     override var confSerializer: KSerializer<Any>? = null
 
     override fun load() {
@@ -117,6 +137,7 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
         CallVoidMethodA(
             userPlugin, GetMethodID(findClass, "unload", "()V"), null
         )
+        np?.unload(1)
     }
 
     override fun updateConfig(config: Any) {

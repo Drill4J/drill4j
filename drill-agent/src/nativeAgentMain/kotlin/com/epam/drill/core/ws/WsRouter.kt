@@ -20,32 +20,45 @@ fun topicRegister() =
     WsRouter {
         topic("/plugins/load").withPluginFileTopic { pluginId, plugin ->
             runBlocking {
-                try {
-                    plugin.extractPluginFacilitiesTo(localVfs(plugin.parent.absolutePath)) { vf ->
-                        !vf.baseName.contains("nativePart") &&
-                                !vf.baseName.contains("static")
+                if (PluginManager[pluginId] != null) {
+                    wsLogger.warn { "plugin '$pluginId' already is loaded" }
+                } else
+                    try {
+                        plugin.extractPluginFacilitiesTo(localVfs(plugin.parent.absolutePath)) { vf ->
+                            !vf.baseName.contains("nativePart") &&
+                                    !vf.baseName.contains("static")
+                        }
+                        //init env...
+                        com.epam.drill.jvmapi.currentEnvs()
+                        AddToSystemClassLoaderSearch(plugin.absolutePath)
+                        loadPlugin(plugin)
+                        wsLogger.info { "load $pluginId" }
+                    } catch (ex: Exception) {
+                        wsLogger.error { "cant load the plugin..." }
+                        ex.printStackTrace()
                     }
-                    //init env...
-                    com.epam.drill.jvmapi.currentEnvs()
-                    AddToSystemClassLoaderSearch(plugin.absolutePath)
-                    loadPlugin(plugin)
-                    wsLogger.info { "load $pluginId" }
-                } catch (ex: Exception) {
-                    wsLogger.error { "cant load the plugin..." }
-                    ex.printStackTrace()
-                }
             }
 
         }
+
         topic("/plugins/unload").rawMessage { pluginId ->
             PluginManager[pluginId]?.unload()
+            //fixme physical deletion
         }
+
+        topic("/plugins/on").rawMessage { pluginId ->
+            PluginManager[pluginId]?.on()
+        }
+
+        topic("/plugins/of").rawMessage { pluginId ->
+            PluginManager[pluginId]?.off()
+        }
+
         topic("/plugins/agent-attached").rawMessage {
             println("Agent is attached")
         }
 
         topic("/plugins/updatePluginConfig").withGenericTopic(Config.serializer()) { config ->
-            println(config)
             val agentPluginPart = PluginManager[config.pluginId]
             if (agentPluginPart != null)
                 agentPluginPart.updateRawConfig(config.content)

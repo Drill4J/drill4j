@@ -1,4 +1,16 @@
 {
   "id": "except-ions",
-  "apiVersion": "v1"
+  "blackList": [
+    "Ljava/",
+    "Ljavax/",
+    "Lorg/apache/",
+    "Lsun/",
+    "Lorg/springframework/core/",
+    "Lorg/springframework/cglib/",
+    "Lorg/springframework/util",
+    "Lorg/springframework/beans/",
+    "Lorg/springframework/data/",
+    "Lorg/hibernate/",
+    "Lorg/hibernate/internal"
+  ]
 }

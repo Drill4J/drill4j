@@ -14,7 +14,7 @@ class LogExceptions(override val id: String) : AgentPluginPart<Any>() {
 
     override var confSerializer: kotlinx.serialization.KSerializer<Any>? = null
 
-    override fun load() {
+    override fun on() {
         println("Plugin $id loaded")
     }
 
@@ -23,7 +23,7 @@ class LogExceptions(override val id: String) : AgentPluginPart<Any>() {
         super.init(nativePluginPartPath)
     }
 
-    override fun unload() {
+    override fun off() {
         println("JAVA SIDE: Plugin '$id' unloaded")
     }
 
