@@ -10,8 +10,8 @@ import kotlinx.cinterop.cstr
 fun pluginSetup(vm: Long, reservedPtr: Long): Int {
 
     //fixme fix this hardcode...!!!!
-    val cls = ExNativePlugin("except-ions".cstr.getPointer(Arena()))
-    cls.load(1)
+    val cls = ExNative("except-ions".cstr.getPointer(Arena()))
+    cls.load()
     addPluginToRegistry(cls)
 
     return 65542

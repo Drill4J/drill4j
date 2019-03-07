@@ -6,6 +6,7 @@ import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.loadPlugin
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
@@ -43,7 +44,7 @@ fun topicRegister() =
         }
 
         topic("/plugins/unload").rawMessage { pluginId ->
-            PluginManager[pluginId]?.unload()
+            PluginManager[pluginId]?.unload(Reason.ACTION_FROM_ADMIN)
             //fixme physical deletion
         }
 
@@ -61,9 +62,10 @@ fun topicRegister() =
 
         topic("/plugins/updatePluginConfig").withGenericTopic(Config.serializer()) { config ->
             val agentPluginPart = PluginManager[config.pluginId]
-            if (agentPluginPart != null)
+            if (agentPluginPart != null) {
                 agentPluginPart.updateRawConfig(config.content)
-            else
+                agentPluginPart.np?.updateRawConfig(config.content)
+            } else
                 wsLogger.warn { "Plugin ${config.pluginId} not loaded to agent" }
         }
 

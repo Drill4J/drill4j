@@ -5,7 +5,7 @@ import kotlinx.cinterop.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-actual abstract class NativePluginPart<T> {
+actual abstract class NativePart<T> : Switchable, Lifecycle {
     var rawConfig: CPointer<ByteVar>? = null
 
     val config: T?
@@ -15,11 +15,15 @@ actual abstract class NativePluginPart<T> {
             else null
         }
 
-    open fun load(id: Long) {
-        this.id = "test".cstr.getPointer(Arena())
+    fun load() {
+        initPlugin()
+        on()
     }
 
-    abstract fun unload(id: Long)
+    fun unload(reason: Reason) {
+        off()
+        destroyPlugin(reason)
+    }
 
     abstract var id: CPointer<ByteVar>
     actual abstract val confSerializer: KSerializer<T>
@@ -42,7 +46,23 @@ actual abstract class NativePluginPart<T> {
 
 }
 
-actual abstract class AgentPluginPart<T> : DrillPlugin(), SwitchablePlugin {
+abstract class PluginRepresenter :AgentPart<Any>(){
+    override var confSerializer: KSerializer<Any>
+        get() = TODO("stubValue") //To change initializer of created properties use File | Settings | File Templates.
+        set(value) {}
+
+    override fun initPlugin() {
+        TODO("stubValue") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun destroyPlugin(reason: Reason) {
+        TODO("stubValue") //To change body of created functions use File | Settings | File Templates.
+    }
+
+}
+
+
+actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
 
     actual var enabled: Boolean = false
 
@@ -50,18 +70,20 @@ actual abstract class AgentPluginPart<T> : DrillPlugin(), SwitchablePlugin {
     }
 
 
-    actual override fun load() {
+    actual open fun load() {
+        initPlugin()
         on()
     }
 
-    actual override fun unload() {
+    actual open fun unload(reason: Reason) {
         off()
+        destroyPlugin(reason)
     }
 
-    actual var np: NativePluginPart<T>? = null
+    actual var np: NativePart<T>? = null
 
-    actual abstract var confSerializer: KSerializer<T>?
+    actual abstract var confSerializer: KSerializer<T>
 
     abstract fun updateRawConfig(config: String)
-    actual abstract fun updateConfig(config: T)
+
 }

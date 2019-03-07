@@ -1,6 +1,44 @@
 GET http://localhost:8090/api/agent/unloadPlugin/127.0.0.1/except-ions
 Accept: */*
 Cache-Control: no-cache
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTkyNjAwNn0.xxrM3BbfyOnsLPGEmj_wWLuC7gS9YjqLtpA95I_xCjGwY8WjjXIpnj1Duvk8xKtXUaQShnSRlLRr4mzFI5dgcw
+
+###
+
+GET http://localhost:8090/api/agent/unloadPlugin/127.0.0.1/except-ions
+Accept: */*
+Cache-Control: no-cache
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTkyNjAwNn0.xxrM3BbfyOnsLPGEmj_wWLuC7gS9YjqLtpA95I_xCjGwY8WjjXIpnj1Duvk8xKtXUaQShnSRlLRr4mzFI5dgcw
+
+<> 2019-03-06T073905.200.txt
+
+###
+
+GET http://localhost:8090/api/agent/unloadPlugin/127.0.0.1/except-ions
+Accept: */*
+Cache-Control: no-cache
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTkyNjAwNn0.xxrM3BbfyOnsLPGEmj_wWLuC7gS9YjqLtpA95I_xCjGwY8WjjXIpnj1Duvk8xKtXUaQShnSRlLRr4mzFI5dgcw
+
+<> 2019-03-06T073340.200.txt
+
+###
+
+POST http://localhost:8090/api/login
+Accept: */*
+Cache-Control: no-cache
+
+###
+
+GET http://localhost:8090/api/agent/unloadPlugin/127.0.0.1/except-ions
+Accept: */*
+Cache-Control: no-cache
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTg1MTQ3MX0.6pQgQujze79EDaujXX1FXEZ005Z_bZLDey__93u3-lCL4vlCFcqiQ2iFxxvnfVd4iwx0cB1Mr-SKh-siUmgBoQ
+
+###
+
+GET http://localhost:8090/api/agent/unloadPlugin/127.0.0.1/except-ions
+Accept: */*
+Cache-Control: no-cache
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTg1MTQ3MX0.6pQgQujze79EDaujXX1FXEZ005Z_bZLDey__93u3-lCL4vlCFcqiQ2iFxxvnfVd4iwx0cB1Mr-SKh-siUmgBoQ
 
 ###
@@ -437,70 +475,6 @@ delayTime:1000
 }
 
 <> 2019-03-05T023331.200.txt
-
-###
-
-POST http://localhost:8090/api/agent/updatePluginConfig/127.0.0.1/custom
-Accept: */*
-Cache-Control: no-cache
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTgxMzA5MH0.3IVN195spQ7ZlbLfa-TOr3dlNcyn4RRXO1BDy1mDkzSVPCVXvJ8gHAADOGeCVtCt-4dLn_7Y-Ushc7wIkPvMfg
-
-{pluginId:"custom",
-content: "{
-message:\"asdasdasd\",
-delayTime:1000
-}"
-}
-
-<> 2019-03-05T023308.200.txt
-
-###
-
-POST http://localhost:8090/api/agent/updatePluginConfig/127.0.0.1/custom
-Accept: */*
-Cache-Control: no-cache
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTgxMzA5MH0.3IVN195spQ7ZlbLfa-TOr3dlNcyn4RRXO1BDy1mDkzSVPCVXvJ8gHAADOGeCVtCt-4dLn_7Y-Ushc7wIkPvMfg
-
-{pluginId:"custom",
-content: "asdasdasd"
-}
-
-<> 2019-03-05T023150.200.txt
-
-###
-
-GET http://localhost:8090/api/agent/loadPlugin/127.0.0.1/custom
-Accept: */*
-Cache-Control: no-cache
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTgxMzA5MH0.3IVN195spQ7ZlbLfa-TOr3dlNcyn4RRXO1BDy1mDkzSVPCVXvJ8gHAADOGeCVtCt-4dLn_7Y-Ushc7wIkPvMfg
-
-<> 2019-03-05T023127.200.txt
-
-###
-
-POST http://localhost:8090/api/agent/updatePluginConfig/127.0.0.1/custom
-Accept: */*
-Cache-Control: no-cache
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTgxMzA5MH0.3IVN195spQ7ZlbLfa-TOr3dlNcyn4RRXO1BDy1mDkzSVPCVXvJ8gHAADOGeCVtCt-4dLn_7Y-Ushc7wIkPvMfg
-
-{pluginId:"custom",
-content: "asdasdasd"
-}
-
-<> 2019-03-05T023113.200.txt
-
-###
-
-POST http://localhost:8090/api/agent/updatePluginConfig/127.0.0.1/custom
-Accept: */*
-Cache-Control: no-cache
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsInJvbGUiOiJhZG1pbiIsImlzcyI6Imh0dHA6Ly9kcmlsbC00LWovIiwiaWQiOjEsImV4cCI6MTU1MTgxMzA5MH0.3IVN195spQ7ZlbLfa-TOr3dlNcyn4RRXO1BDy1mDkzSVPCVXvJ8gHAADOGeCVtCt-4dLn_7Y-Ushc7wIkPvMfg
-
-{pluginId:"custom",
-content: "asdasdasd"
-}
-
-<> 2019-03-05T021524.200.txt
 
 ###
 

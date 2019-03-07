@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.exception
 
-import com.epam.drill.exception.ExceptionConfig
-import com.epam.drill.plugin.api.processing.NativePluginPart
+import com.epam.drill.plugin.api.processing.NativePart
+import com.epam.drill.plugin.api.processing.Reason
 import com.epam.drillnative.api.SetEventCallbacksP
 import com.epam.drillnative.api.disableJvmtiEventException
 import com.epam.drillnative.api.enableJvmtiEventException
@@ -12,22 +12,37 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.sizeOf
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Optional
+import kotlinx.serialization.Serializable
 
-class ExNativePlugin(override var id: CPointer<ByteVar>) : NativePluginPart<ExceptionConfig>() {
-
+class ExNative(override var id: CPointer<ByteVar>) : NativePart<ExceptionConfig>() {
     override val confSerializer: KSerializer<ExceptionConfig> = ExceptionConfig.serializer()
 
-    override fun unload(id: Long) {
-        disableJvmtiEventException()
-        println("exception disabled")
-        println(config?.blackList)
-    }
 
-    override fun load(id: Long) {
+    override fun initPlugin() {
         val jvmtiCallback = jvmtiCallback()
         jvmtiCallback?.Exception = exceptionCallback()
         SetEventCallbacksP(jvmtiCallback?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
+    }
+
+    override fun destroyPlugin(reason: Reason) {
+        val jvmtiCallback = jvmtiCallback()
+        jvmtiCallback?.Exception = null
+        SetEventCallbacksP(jvmtiCallback?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
+    }
+
+
+    override fun off() {
+        disableJvmtiEventException()
+    }
+
+    override fun on() {
         enableJvmtiEventException()
     }
 
+
 }
+
+
+@Serializable
+data class ExceptionConfig(@Optional val id: String = "", val blackList: Set<String>, @Optional val enabled: Boolean = false)

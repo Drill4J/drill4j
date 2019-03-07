@@ -5,7 +5,8 @@ import com.epam.drill.core.callbacks.vminit.initLogger
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.iterateThrougthPlugins
 import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.api.processing.AgentPluginPart
+import com.epam.drill.plugin.api.processing.PluginRepresenter
+import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.extension
 import com.soywiz.korio.file.std.localVfs
@@ -14,7 +15,6 @@ import com.soywiz.korio.util.OS
 import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.KSerializer
 
 
 fun pluginLoadCommand() = runBlocking {
@@ -37,47 +37,13 @@ suspend fun loadPlugin(jar: JarVfsFile) {
         for (x in it.listRecursive()) {
 
             if (x.extension == "class") {
-                val className = x.absolutePath.replace(".class", "").drop(1)
-                val findClass = FindClass(className)
-                val getSuperclass = GetSuperclass(findClass)
+                println(x)
                 memScoped {
-                    val name = alloc<CPointerVar<ByteVar>>()
-                    GetClassSignature(getSuperclass, name.ptr, null)
-
-                    val agentPluginPartClass = "Lcom/epam/drill/plugin/api/processing/AgentPluginPart;"
-                    //fixme do it via recursive call...
-                    if (name.value?.toKString() == agentPluginPartClass) {
-                        val getMethodID =
-                            GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
-                        val pluginName = jar.parent.baseName
-                        val userPlugin =
-                            NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
-                                l = NewStringUTF(pluginName)
-                            })
-                        val plugin = PluginNativeStub(pluginName, findClass!!, userPlugin!!)
-                        PluginManager.addPlugin(plugin)
-                        println(pluginName)
-                        plugin.load()
-
-                        val ext = if (OS.isWindows) "dll" else "so"
-                        val pref = if (OS.isWindows) "" else "lib"
-                        val vfsFile = jar.parent["nativePart"]["${pref}main.$ext"]
-                        if (vfsFile.exists())
-                            CallVoidMethodA(
-                                userPlugin,
-                                GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
-                                nativeHeap.allocArray(1.toLong()) {
-
-                                    val newStringUTF =
-                                        NewStringUTF(vfsFile.absolutePath)
-                                    l = newStringUTF
-
-                                })
-println("____________________")
-                        val someText = jar.parent["static"]["plugin_config.json"].readString()
-//                        println(someText)
-//                        plugin.np?.updateRawConfig(someText)
-
+                    val className = x.absolutePath.replace(".class", "").drop(1)
+                    val findClass = FindClass(className)!!
+                    println(findClass)
+                    if (isSutablePluginClass(findClass)) {
+                        createPluginAndLoad(findClass, jar)
                     }
                 }
 
@@ -85,6 +51,64 @@ println("____________________")
         }
 
     }
+}
+
+fun isSutablePluginClass(findClass: jclass) = memScoped {
+
+    val targetClass = "Lcom/epam/drill/plugin/api/processing/AgentPart;"
+    var parentClass = GetSuperclass(findClass)
+    var name = alloc<CPointerVar<ByteVar>>()
+    GetClassSignature(parentClass, name.ptr, null)
+    var isApiClassFound = false
+    while (parentClass != null) {
+        val toKString = name.value?.toKString()
+        println(toKString)
+        if (toKString == targetClass) {
+            isApiClassFound = true
+            break
+        }
+        parentClass = GetSuperclass(parentClass)
+        name = alloc()
+        GetClassSignature(parentClass, name.ptr, null)
+    }
+    isApiClassFound
+}
+
+private suspend fun createPluginAndLoad(findClass: jclass?, jar: JarVfsFile) {
+    val getMethodID =
+        GetMethodID(findClass, "<init>", "(Ljava/lang/String;)V")
+    val pluginName = jar.parent.baseName
+    val userPlugin =
+        NewObjectA(findClass, getMethodID, nativeHeap.allocArray(1.toLong()) {
+            l = NewStringUTF(pluginName)
+        })
+    println("sss")
+    val plugin = NativeStub(pluginName, findClass!!, userPlugin!!)
+    println("sss1")
+    PluginManager.addPlugin(plugin)
+    println(pluginName)
+    val pluginContent = jar.parent["static"]["plugin_config.json"].readString()
+    plugin.updateRawConfig(pluginContent)
+    plugin.load()
+
+    val ext = if (OS.isWindows) "dll" else "so"
+    val pref = if (OS.isWindows) "" else "lib"
+    val vfsFile = jar.parent["nativePart"]["${pref}main.$ext"]
+    if (vfsFile.exists())
+        CallVoidMethodA(
+            userPlugin,
+            GetMethodID(findClass, "init", "(Ljava/lang/String;)V"),
+            nativeHeap.allocArray(1.toLong()) {
+
+                val newStringUTF =
+                    NewStringUTF(vfsFile.absolutePath)
+                l = newStringUTF
+
+            })
+    println("____________________")
+
+    println(pluginContent)
+    plugin.np?.updateRawConfig(pluginContent)
 }
 
 
@@ -107,8 +131,8 @@ suspend fun retrieveFacilitiesFromPlugin() {
 }
 
 
-class PluginNativeStub(override val id: String, val findClass: jclass, val userPlugin: jobject) :
-    AgentPluginPart<Any>() {
+class NativeStub(override val id: String, val findClass: jclass, val userPlugin: jobject) : PluginRepresenter() {
+
     override fun on() {
         PluginManager.activate(id)
         CallVoidMethodA(
@@ -123,7 +147,6 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
         )
     }
 
-    override var confSerializer: KSerializer<Any>? = null
 
     override fun load() {
         PluginManager.activate(id)
@@ -132,25 +155,17 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
         )
     }
 
-    override fun unload() {
+    override fun unload(reason: Reason) {
         PluginManager.deactivate(id)
-        CallVoidMethodA(
-            userPlugin, GetMethodID(findClass, "unload", "()V"), null
-        )
-        np?.unload(1)
-    }
-
-    override fun updateConfig(config: Any) {
-
+//        CallVoidMethodA(
+//            fixme!!!!
+//            userPlugin, GetMethodID(findClass, "unload", "()V"), null
+//        )
+        np?.unload(reason)
     }
 
     override fun updateRawConfig(config: String) {
         notifyJavaPart(config)
-        notifyNativePart(config)
-    }
-
-    private fun notifyNativePart(config: String) {
-        np?.updateRawConfig(config)
     }
 
     private fun notifyJavaPart(config: String) {
@@ -158,7 +173,6 @@ class PluginNativeStub(override val id: String, val findClass: jclass, val userP
             userPlugin,
             GetMethodID(findClass, "updateRawConfig", "(Ljava/lang/String;)V"),
             nativeHeap.allocArray(1.toLong()) {
-
                 val newStringUTF =
                     NewStringUTF(config)
                 l = newStringUTF

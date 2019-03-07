@@ -1,43 +1,46 @@
 package com.epam.drill.plugins.custom
 
-import com.epam.drill.plugin.api.processing.AgentPluginPart
+import com.epam.drill.plugin.api.processing.AgentPart
+import com.epam.drill.plugin.api.processing.DConf
+import com.epam.drill.plugin.api.processing.Reason
 import com.epam.drill.plugin.api.processing.Sender.sendMessage
+import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 @Suppress("unused")
 /**
  * @author Denis Domashenko on 2/22/19.
  */
-class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
+class AgentPart(override val id: String) : AgentPart<TestD>() {
 
-    var config = TestD("Hello from custom plugin! I'm still alive!", 10_000)
+    var thread: ExecutorService? = null
 
-    override fun updateConfig(config: TestD) {
-        this.config = config
-        println("we got some update: $config")
+    override fun initPlugin() {
+        thread = Executors.newSingleThreadExecutor()
     }
 
-    override var confSerializer: kotlinx.serialization.KSerializer<TestD>? = TestD.serializer()
+    override fun destroyPlugin(reason: Reason) {
+        thread = null
+    }
 
-    var thread: Thread? = null
+    override var confSerializer: kotlinx.serialization.KSerializer<TestD> = TestD.serializer()
+
 
     override fun on() {
-        println("Plugin $id loaded")
-        thread = Thread(Runnable {
+        thread?.submit {
             while (true) {
-                // send message every config.delayTime seconds (10 by default)
-                Thread.sleep(config.delayTime)
-                sendMessage(id, config.message)
+                Thread.sleep(config!!.delayTime)
+                sendMessage(id, config!!.message)
             }
-        })
-        thread?.start()
+        }
 
     }
 
     override fun off() {
-        thread?.stop()
-        thread = null
+        thread?.shutdown()
         println("JAVA SIDE: Plugin '$id' unloaded")
     }
 
@@ -45,4 +48,7 @@ class AgentPart(override val id: String) : AgentPluginPart<TestD>() {
 }
 
 @Serializable
-data class TestD(val message: String, val delayTime: Long = 10_000)
+data class TestD(
+    @Optional val id: String = "", @Optional val enabled: Boolean = false, val message: String,
+    val delayTime: Long = 10_000
+)
