@@ -8,7 +8,7 @@ data class AgentInfo(
     val agentName: String,
     val agentGroupName: String,
     val agentDescription: String,
-    val isEnable: Boolean,
+    var isEnable: Boolean,
 
     @Optional
     val drillAdminUrl: String = "",

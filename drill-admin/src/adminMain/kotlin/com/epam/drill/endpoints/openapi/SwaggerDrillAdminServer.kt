@@ -146,11 +146,10 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.Api.Agent.AgentToggleStandby> {
-                val agentId = call.receive<String>()
-                agentStorage.agents[agentId]?.agentWsSession
+            post<Routes.Api.Agent.AgentToggleStandby> {agent ->
+                agentStorage.agents[agent.agentId]?.agentWsSession
                     ?.send(
-                        agentWsMessage("agent/toggleStandBy", agentId)
+                        agentWsMessage("agent/toggleStandBy", agent.agentId)
                     )
                 call.respond { HttpStatusCode.OK }
             }

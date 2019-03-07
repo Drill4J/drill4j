@@ -77,12 +77,10 @@ fun topicRegister() =
             println("pluginId = $pluginId")
             val agentPluginPart = PluginManager[pluginId]
             if (agentPluginPart != null) {
-                println(agentPluginPart.enabled)
-                println(PluginStorage.storage[pluginId]!!.id)
                 if (agentPluginPart.enabled) {
-                    PluginStorage.storage[pluginId]!!.off()
+                    agentPluginPart.off()
                 } else {
-                    PluginStorage.storage[pluginId]!!.on()
+                    agentPluginPart.on()
                 }
             }
             else
@@ -102,12 +100,19 @@ fun topicRegister() =
             }
         }
 
-        topic("agent/toggleStandBy").rawMessage {agentId ->
-            val agentEnabled = PluginManager[agentId]?.enabled
-            if (agentEnabled != null) {
-                PluginManager[agentId]?.enabled = !PluginManager[agentId]?.enabled!!
+        topic("agent/toggleStandBy").rawMessage {
+            if (agentInfo.isEnable) {
+                agentInfo.rawPluginNames.forEach {
+                    //todo save state to cofig file
+                    PluginManager[it.id]?.off()
+                }
+                agentInfo.isEnable = false
             } else {
-                wsLogger.warn { "Plugin $agentId not loaded to agent" }
+                agentInfo.rawPluginNames.forEach {
+                    //todo load state from cofig file
+                    PluginManager[it.id]?.on()
+                }
+                agentInfo.isEnable = true
             }
         }
     }
