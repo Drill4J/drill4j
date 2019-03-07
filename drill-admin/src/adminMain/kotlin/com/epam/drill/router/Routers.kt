@@ -10,28 +10,23 @@ object Routes {
     class Api {
         @Location("/agent")
         class Agent {
-            @Location("/{agentName}/toggle-standby")
-            class AgentToggleStandby
+            @Location("/{agentId}/toggle-standby")
+            data class AgentToggleStandby(val agentId: String)
 
-            @Location("/load-plugin/{agentName}/{pluginName}")
-            data class LoadPlugin(override val agentName: String, override val pluginName: String) : PluginManageLink()
+            @Location("/load-plugin/{agentId}")
+            data class LoadPlugin(val agentId: String)
 
-            @Location("/unload-plugin/{agentName}/{pluginName}")
-            data class UnloadPlugin(override val agentName: String, override val pluginName: String) : PluginManageLink()
+            @Location("/unload-plugin/{agentId}")
+            data class UnloadPlugin(val agentId: String)
 
-            @Location("/{agentName}")
-            data class Agent(val agentName: String)
+            @Location("/{agentId}")
+            data class Agent(val agentId: String)
 
-            @Location("/{agentName}/update-plugin")
-            data class UpdatePlugin(val agentName: String)
+            @Location("/{agentId}/update-plugin")
+            data class UpdatePlugin(val agentId: String)
 
-            @Location("/{agentName}/{pluginId}/toggle-plugin")
-            data class TogglePlugin(val agentName: String, val pluginId: String)
-
-            abstract class PluginManageLink {
-                abstract val agentName: String
-                abstract val pluginName: String
-            }
+            @Location("/{agentId}/{pluginId}/toggle-plugin")
+            data class TogglePlugin(val agentId: String, val pluginId: String)
         }
 
         @Location("/plugin-content/{pluginId}")

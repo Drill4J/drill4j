@@ -2,15 +2,15 @@ package com.epam.drill.plugin
 
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.PluginStorage.storage
-import com.epam.drill.plugin.api.processing.AgentPluginPart
+import com.epam.drill.plugin.api.processing.AgentPart
 
 object PluginManager {
 
-    fun addPlugin(plugin: AgentPluginPart<*>) {
+    fun addPlugin(plugin: AgentPart<*>) {
         storage[plugin.id] = plugin
     }
 
-    operator fun get(id: String): AgentPluginPart<*>? {
+    operator fun get(id: String): AgentPart<*>? {
         return storage[id]
     }
 

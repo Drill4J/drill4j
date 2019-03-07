@@ -7,6 +7,8 @@ import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.loadPlugin
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.PluginStorage
+import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.std.resourcesVfs
@@ -23,50 +25,71 @@ fun topicRegister() =
     WsRouter {
         topic("/plugins/load").withPluginFileTopic { pluginId, plugin ->
             runBlocking {
-                try {
-                    plugin.extractPluginFacilitiesTo(localVfs(plugin.parent.absolutePath)) { vf ->
-                        !vf.baseName.contains("nativePart") &&
-                                !vf.baseName.contains("static")
+                if (PluginManager[pluginId] != null) {
+                    wsLogger.warn { "plugin '$pluginId' already is loaded" }
+                } else
+                    try {
+                        plugin.extractPluginFacilitiesTo(localVfs(plugin.parent.absolutePath)) { vf ->
+                            !vf.baseName.contains("nativePart") &&
+                                    !vf.baseName.contains("static")
+                        }
+                        //init env...
+                        com.epam.drill.jvmapi.currentEnvs()
+                        AddToSystemClassLoaderSearch(plugin.absolutePath)
+                        loadPlugin(plugin)
+                        wsLogger.info { "load $pluginId" }
+                    } catch (ex: Exception) {
+                        wsLogger.error { "cant load the plugin..." }
+                        ex.printStackTrace()
                     }
-                    //init env...
-                    com.epam.drill.jvmapi.currentEnvs()
-                    AddToSystemClassLoaderSearch(plugin.absolutePath)
-                    loadPlugin(plugin)
-                    wsLogger.info { "load $pluginId" }
-                } catch (ex: Exception) {
-                    wsLogger.error { "cant load the plugin..." }
-                    ex.printStackTrace()
-                }
             }
 
         }
+
         topic("/plugins/unload").rawMessage { pluginId ->
-            PluginManager[pluginId]?.unload()
+            PluginManager[pluginId]?.unload(Reason.ACTION_FROM_ADMIN)
+            //fixme physical deletion
         }
+
+        topic("/plugins/on").rawMessage { pluginId ->
+            PluginManager[pluginId]?.on()
+        }
+
+        topic("/plugins/off").rawMessage { pluginId ->
+            PluginManager[pluginId]?.off()
+        }
+
         topic("/plugins/agent-attached").rawMessage {
             println("Agent is attached")
         }
 
         topic("/plugins/updatePluginConfig").withGenericTopic(Config.serializer()) { config ->
-            println(config)
             val agentPluginPart = PluginManager[config.pluginId]
-            if (agentPluginPart != null)
+            if (agentPluginPart != null) {
                 agentPluginPart.updateRawConfig(config.content)
-            else
+                agentPluginPart.np?.updateRawConfig(config.content)
+            } else
                 wsLogger.warn { "Plugin ${config.pluginId} not loaded to agent" }
         }
 
+
         topic("/plugins/togglePlugin").rawMessage { pluginId ->
-            println(pluginId)
+            println("pluginId = $pluginId")
             val agentPluginPart = PluginManager[pluginId]
-            if (agentPluginPart != null)
-                agentPluginPart.enabled = !agentPluginPart.enabled!!
-//                agentPluginPart.updateRawConfig(pluginId)
+            if (agentPluginPart != null) {
+                println(agentPluginPart.enabled)
+                println(PluginStorage.storage[pluginId]!!.id)
+                if (agentPluginPart.enabled) {
+                    PluginStorage.storage[pluginId]!!.off()
+                } else {
+                    PluginStorage.storage[pluginId]!!.on()
+                }
+            }
             else
                 wsLogger.warn { "Plugin $pluginId not loaded to agent" }
         }
 
-        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) {info ->
+        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
             runBlocking {
                 println(info)
                 agentInfo = info
@@ -105,7 +128,6 @@ object WsRouter {
     @Suppress("ClassName")
     open class inners(open val destination: String) {
         fun <T> withGenericTopic(des: DeserializationStrategy<T>, block: (T) -> Unit): GenericTopic<T> {
-            println(destination)
             val genericTopic = GenericTopic(destination, des, block)
             mapper[destination] = genericTopic
             return genericTopic

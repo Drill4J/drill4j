@@ -2,14 +2,14 @@
 
 package com.epam.drill.api
 
-//import com.epam.drill.plugin.api.NativePluginPart
+//import com.epam.drill.plugin.api.NativePart
 import com.epam.drill.core.request.DrillRequest
-import com.epam.drill.core.ws.MessageQueue
+import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.jvmapi.JNI
 import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.api.processing.AgentPluginPart
-import com.epam.drill.plugin.api.processing.NativePluginPart
+import com.epam.drill.plugin.api.processing.AgentPart
+import com.epam.drill.plugin.api.processing.NativePart
 import jvmapi.*
 import kotlinx.cinterop.*
 
@@ -481,12 +481,12 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
 
 
 @CName("addPluginToRegistry")
-fun addPluginToRegistry(plugin: NativePluginPart<*>) {
+fun addPluginToRegistry(plugin: NativePart<*>) {
     println("Hi From Register")
     try {
-        val agentPluginPart: AgentPluginPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPluginPart<Any>?
+        val agentPluginPart: AgentPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any>?
         if (agentPluginPart != null) {
-            agentPluginPart.np = plugin as NativePluginPart<Any>
+            agentPluginPart.np = plugin as NativePart<Any>
             println("native part added.")
         }
 

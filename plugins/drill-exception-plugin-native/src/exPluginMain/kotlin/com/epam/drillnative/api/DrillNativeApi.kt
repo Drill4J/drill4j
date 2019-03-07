@@ -2,7 +2,7 @@
 
 package com.epam.drillnative.api
 
-import com.epam.drill.plugin.api.processing.NativePluginPart
+import com.epam.drill.plugin.api.processing.NativePart
 import jvmapi.*
 import kotlinx.cinterop.*
 
@@ -37,6 +37,6 @@ internal external fun enableJvmtiEventException(thread: jthread? = null)
 internal external fun disableJvmtiEventException(thread: jthread? = null)
 
 @SymbolName("addPluginToRegistry")
-internal external fun addPluginToRegistry(plugin: NativePluginPart<*>)
+internal external fun addPluginToRegistry(plugin: NativePart<*>)
 
 

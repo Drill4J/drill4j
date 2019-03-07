@@ -19,10 +19,12 @@ import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
 import io.ktor.locations.patch
+import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.toUtf8Bytes
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -41,6 +43,9 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private val agentStorage: AgentStorage by instance()
     private val plugins: Plugins by kodein.instance()
 
+    @Serializable
+    data class PluginId(val pluginId: String)
+
     init {
         app.routing {
             registerAgent()
@@ -54,7 +59,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerAgent() {
         authenticate {
             patch<Routes.Api.Agent.Agent> {config ->
-                agentStorage.agents[config.agentName]?.agentWsSession?.send(
+                agentStorage.agents[config.agentId]?.agentWsSession?.send(
                     Frame.Text(
                         Gson().toJson(
                             Message(
@@ -70,42 +75,44 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.Api.Agent.UnloadPlugin> { up ->
-                val drillAgent: DrillAgent? = agentStorage.agents[up.agentName]
+            post<Routes.Api.Agent.UnloadPlugin> { up ->
+                val pluginId = call.receive<PluginId>()
+                val drillAgent: DrillAgent? = agentStorage.agents[up.agentId]
                 if (drillAgent == null) {
-                    call.respond("can't find the agent '${up.agentName}'")
-                    return@get
+                    call.respond("can't find the agent '${up.agentId}'")
+                    return@post
                 }
-                val agentPluginPartFile = plugins.plugins[up.pluginName]?.agentPluginPart
+                val agentPluginPartFile = plugins.plugins[pluginId.pluginId]?.agentPluginPart
                 if (agentPluginPartFile == null) {
-                    call.respond("can't find the plugin '${up.pluginName}' in the agent '${up.agentName}'")
-                    return@get
+                    call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${up.agentId}'")
+                    return@post
                 }
 
-                drillAgent.agentWsSession.send(agentWsMessage("/plugins/unload", up.pluginName))
+                drillAgent.agentWsSession.send(agentWsMessage("/plugins/unload", pluginId.pluginId))
 //            drillAgent.agentInfo.rawPluginNames.removeIf { x -> x.id == up.pluginName }
                 call.respond("event 'unload' was sent to AGENT")
             }
         }
 
         authenticate {
-            get<Routes.Api.Agent.LoadPlugin> { lp ->
-                val drillAgent: DrillAgent? = agentStorage.agents[lp.agentName]
+            post<Routes.Api.Agent.LoadPlugin> { lp ->
+                val pluginId = call.receive<PluginId>()
+                val drillAgent: DrillAgent? = agentStorage.agents[lp.agentId]
                 if (drillAgent == null) {
-                    call.respond("can't find the agent '${lp.agentName}'")
-                    return@get
+                    call.respond("can't find the agent '${lp.agentId}'")
+                    return@post
                 }
-                val agentPluginPartFile = plugins.plugins[lp.pluginName]?.agentPluginPart
+                val agentPluginPartFile = plugins.plugins[pluginId.pluginId]?.agentPluginPart
                 if (agentPluginPartFile == null) {
-                    call.respond("can't find the plugin '${lp.pluginName}' in the agent '${lp.agentName}'")
-                    return@get
+                    call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${lp.agentId}'")
+                    return@post
                 }
                 val inChannel: FileChannel = agentPluginPartFile.inputStream().channel
                 val fileSize: Long = inChannel.size()
                 val buffer: ByteBuffer = ByteBuffer.allocate(fileSize.toInt())
 
                 val message = Gson().toJson(
-                    Message(MessageType.MESSAGE, "/plugins/load", lp.pluginName)
+                    Message(MessageType.MESSAGE, "/plugins/load", pluginId.pluginId)
                 ).toUtf8Bytes()
 
                 val messagePosition = ByteBuffer.allocate(4).putInt(message.size)
@@ -128,13 +135,13 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 //                println(put.array().contentToString())
 //                put.flip()
                 drillAgent.agentWsSession.send(Frame.Binary(true, put))
-                call.respond("event 'load' and plugin's file(${lp.agentName}) was sent to AGENT")
+                call.respond("event 'load' and plugin's file(${lp.agentId}) was sent to AGENT")
             }
         }
 
         authenticate {
             get<Routes.Api.Agent.Agent> { up ->
-                call.respond(agentStorage.agents[up.agentName]?.agentInfo!!)
+                call.respond(agentStorage.agents[up.agentId]?.agentInfo!!)
             }
         }
 

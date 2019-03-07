@@ -10,12 +10,11 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.patch
+import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.kodein.di.Kodein
@@ -69,7 +68,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
                     val message = call.receive<String>()
-                    agentStorage.agents[ll.agentName]?.agentWsSession
+                    agentStorage.agents[ll.agentId]?.agentWsSession
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
@@ -78,8 +77,8 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
 
             authenticate {
-                patch<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentStorage.agents[ll.agentName]?.agentWsSession
+                post<Routes.Api.Agent.TogglePlugin> { ll ->
+                    agentStorage.agents[ll.agentId]?.agentWsSession
                         ?.send(
                             agentWsMessage("/plugins/togglePlugin", ll.pluginId)
                         )

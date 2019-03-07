@@ -3,7 +3,7 @@ package com.epam.drill.core
 
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.api.processing.AgentPluginPart
+import com.epam.drill.plugin.api.processing.AgentPart
 import com.soywiz.klogger.Logger
 import drillInternal.config
 import drillInternal.createQueue
@@ -53,7 +53,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, null)
 
 
-        config.pstorage = StableRef.create(mutableMapOf<String, AgentPluginPart<*>>()).asCPointer()
+        config.pstorage = StableRef.create(mutableMapOf<String, AgentPart<*>>()).asCPointer()
 
     } catch (ex: Throwable) {
         ex.printStackTrace()

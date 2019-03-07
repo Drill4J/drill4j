@@ -1,4 +1,5 @@
 {
   "id": "custom",
-  "apiVersion": "v1"
+  "message": "hello from default plugin config... This is 'plugin_config.json file",
+  "delayTime": 15000
 }

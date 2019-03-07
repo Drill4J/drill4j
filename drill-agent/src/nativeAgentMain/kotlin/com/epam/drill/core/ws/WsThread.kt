@@ -4,6 +4,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.core.agentInfo
+import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.core.pluginLoadCommand
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager.pluginsState

@@ -1,4 +1,4 @@
-package com.epam.drill.core.ws
+package com.epam.drill.core.messanger
 
 import com.epam.drill.api.drillRequest
 import com.epam.drill.common.Message
