@@ -5,7 +5,7 @@ package com.epam.drill.router
 import io.ktor.locations.Location
 
 object DevRoutes {
-    @Location("/api")
+    @Location("/api-dev")
     class Api {
         @Location("/agent")
         class Agent {

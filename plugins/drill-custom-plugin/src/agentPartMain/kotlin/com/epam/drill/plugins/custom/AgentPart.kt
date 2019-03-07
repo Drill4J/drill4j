@@ -17,12 +17,14 @@ import java.util.concurrent.Executors
 class AgentPart(override val id: String) : AgentPart<TestD>() {
 
     var thread: ExecutorService? = null
+    var isAlive = false
 
     override fun initPlugin() {
         thread = Executors.newSingleThreadExecutor()
     }
 
     override fun destroyPlugin(reason: Reason) {
+        thread?.shutdown()
         thread = null
     }
 
@@ -30,8 +32,9 @@ class AgentPart(override val id: String) : AgentPart<TestD>() {
 
 
     override fun on() {
+        isAlive = true
         thread?.submit {
-            while (true) {
+            while (isAlive) {
                 Thread.sleep(config!!.delayTime)
                 sendMessage(id, config!!.message)
             }
@@ -40,7 +43,7 @@ class AgentPart(override val id: String) : AgentPart<TestD>() {
     }
 
     override fun off() {
-        thread?.shutdown()
+        isAlive = false
         println("JAVA SIDE: Plugin '$id' unloaded")
     }
 

@@ -2,13 +2,16 @@ package com.epam.drill.core.ws
 
 import com.epam.drill.JarVfsFile
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.core.agentInfo
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.loadPlugin
 import com.epam.drill.extractPluginFacilitiesTo
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.PluginStorage
 import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korio.file.writeToFile
 import jvmapi.AddToSystemClassLoaderSearch
 import kotlinx.coroutines.runBlocking
@@ -52,7 +55,7 @@ fun topicRegister() =
             PluginManager[pluginId]?.on()
         }
 
-        topic("/plugins/of").rawMessage { pluginId ->
+        topic("/plugins/off").rawMessage { pluginId ->
             PluginManager[pluginId]?.off()
         }
 
@@ -70,9 +73,42 @@ fun topicRegister() =
         }
 
 
+        topic("/plugins/togglePlugin").rawMessage { pluginId ->
+            println("pluginId = $pluginId")
+            val agentPluginPart = PluginManager[pluginId]
+            if (agentPluginPart != null) {
+                println(agentPluginPart.enabled)
+                println(PluginStorage.storage[pluginId]!!.id)
+                if (agentPluginPart.enabled) {
+                    PluginStorage.storage[pluginId]!!.off()
+                } else {
+                    PluginStorage.storage[pluginId]!!.on()
+                }
+            }
+            else
+                wsLogger.warn { "Plugin $pluginId not loaded to agent" }
+        }
 
-        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) {
+        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
+            runBlocking {
+                println(info)
+                agentInfo = info
+                val data = Json().stringify(
+                    AgentInfo.serializer(),
+                    agentInfo
+                )
+                resourcesVfs["$drillInstallationDir/configs/drillConfig.json"].writeString(data)
+                println(data)
+            }
+        }
 
+        topic("agent/toggleStandBy").rawMessage {agentId ->
+            val agentEnabled = PluginManager[agentId]?.enabled
+            if (agentEnabled != null) {
+                PluginManager[agentId]?.enabled = !PluginManager[agentId]?.enabled!!
+            } else {
+                wsLogger.warn { "Plugin $agentId not loaded to agent" }
+            }
         }
     }
 

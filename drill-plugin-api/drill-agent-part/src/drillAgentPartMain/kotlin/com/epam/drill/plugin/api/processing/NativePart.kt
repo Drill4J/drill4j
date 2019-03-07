@@ -72,6 +72,7 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
 
     open fun updateRawConfig(configs: String) {
         config = JSON().parse(confSerializer, configs)
+        //save to json.
     }
 
 

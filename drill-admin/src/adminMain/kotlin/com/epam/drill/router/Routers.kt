@@ -11,21 +11,22 @@ object Routes {
         @Location("/agent")
         class Agent {
             @Location("/{agentId}/toggle-standby")
-            class AgentToggleStandby
+            data class AgentToggleStandby(val agentId: String)
 
-            @Location("/load-plugin/{agentId}/{pluginName}")
-            data class LoadPlugin(override val agentId: String, override val pluginName: String) : PluginManageLink()
+            @Location("/load-plugin/{agentId}")
+            data class LoadPlugin(val agentId: String)
 
-            @Location("/unload-plugin/{agentId}/{pluginName}")
-            data class UnloadPlugin(override val agentId: String, override val pluginName: String) : PluginManageLink()
+            @Location("/unload-plugin/{agentId}")
+            data class UnloadPlugin(val agentId: String)
 
-            @Location("{agentId}")
+            @Location("/{agentId}")
             data class Agent(val agentId: String)
 
-            abstract class PluginManageLink {
-                abstract val agentId: String
-                abstract val pluginName: String
-            }
+            @Location("/{agentId}/update-plugin")
+            data class UpdatePlugin(val agentId: String)
+
+            @Location("/{agentId}/{pluginId}/toggle-plugin")
+            data class TogglePlugin(val agentId: String, val pluginId: String)
         }
 
         @Location("/plugin-content/{pluginId}")

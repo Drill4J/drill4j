@@ -9,5 +9,6 @@ fun agentWsMessage(destination: String, message: Any): Frame.Text {
     val toJson = Gson().toJson(
         Message(MessageType.MESSAGE, destination, if (message is String) message else Gson().toJson(message))
     )
+    println(toJson)
     return Frame.Text(toJson)
 }
