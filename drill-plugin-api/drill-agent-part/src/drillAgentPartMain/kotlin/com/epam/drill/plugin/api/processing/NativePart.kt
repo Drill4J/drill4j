@@ -1,14 +1,14 @@
 package com.epam.drill.plugin.api.processing
 
+import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.DrillPlugin
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Optional
 import kotlinx.serialization.json.JSON
 
 actual abstract class NativePart<T> {
 
     actual abstract val confSerializer: KSerializer<T>
-    actual fun updateRawConfig(someText: String) {
+    actual fun updateRawConfig(someText: PluginBean) {
     }
 
 }
@@ -52,9 +52,10 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
     }
 
 
-    actual fun load() {
+    actual fun load(onImmediately: Boolean) {
         initPlugin()
-        on()
+        if (onImmediately)
+            on()
     }
 
     actual fun unload(reason: Reason) {
@@ -80,4 +81,7 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
     actual abstract override fun initPlugin()
 
     actual abstract override fun destroyPlugin(reason: Reason)
+    actual fun rawConfig(): String {
+        return JSON.stringify(confSerializer, config!!)
+    }
 }

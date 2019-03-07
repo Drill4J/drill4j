@@ -1,5 +1,5 @@
 {
   "id": "custom",
-  "message": "hello from default plugin config... This is 'plugin_config.json file",
-  "delayTime": 15000
+  "enabled": true,
+  "config": "{\n    \"message\": \"hello from default plugin config... This is 'plugin_config.json file\",\n    \"delayTime\": 15000\n  }"
 }

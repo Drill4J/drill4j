@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 val initLogger: Logger
     get() = DLogger("initLogger")
 
+@ExperimentalUnsignedTypes
 @Suppress("UNUSED_PARAMETER")
 @CName("jvmtiEventVMInitEvent")
 fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVar>?, thread: jthread?) = runBlocking {

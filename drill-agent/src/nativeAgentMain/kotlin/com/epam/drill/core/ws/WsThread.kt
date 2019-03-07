@@ -5,7 +5,7 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.core.agentInfo
 import com.epam.drill.core.messanger.MessageQueue
-import com.epam.drill.core.pluginLoadCommand
+import com.epam.drill.core.plugin.loader.pluginLoadCommand
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager.pluginsState
 import com.soywiz.korio.lang.Thread_sleep
@@ -27,6 +27,7 @@ val wsLogger
     get() = DLogger("DrillWebsocket")
 
 
+@ExperimentalUnsignedTypes
 fun startWs(): Future<Unit> {
     return Worker.start(true).execute(TransferMode.UNSAFE, {}) {
         initRuntimeIfNeeded()
@@ -55,22 +56,23 @@ private fun websocket() = runBlocking {
             println("[DEBUG] got message to the wsocket: $rawMessage")
         }
         wsClient.onStringMessage.add { rawMessage ->
-            initRuntimeIfNeeded()
-            val message = rawMessage.toWsMessage()
-            val destination = message.destination
-            val topic = WsRouter[destination]
-            if (topic != null) {
-                when (topic) {
-                    is FileTopic -> throw RuntimeException("We can't use File topic in not binary retriever")
-                    is InfoTopic -> topic.block(message.message)
-                    is GenericTopic<*> -> topic.deserializeAndRun(message.message)
+            runBlocking {
+                initRuntimeIfNeeded()
+                val message = rawMessage.toWsMessage()
+                val destination = message.destination
+                val topic = WsRouter[destination]
+                if (topic != null) {
+                    when (topic) {
+                        is FileTopic -> throw RuntimeException("We can't use File topic in not binary retriever")
+                        is InfoTopic -> topic.block(message.message)
+                        is GenericTopic<*> -> topic.deserializeAndRun(message.message)
+                    }
+                } else {
+                    wsLogger.warn { "topic with name '$destination' didn't register" }
                 }
-            } else {
-                wsLogger.warn { "topic with name '$destination' didn't register" }
+                if (destination != "/plugins/agent-attached")
+                    register()
             }
-            if (destination != "/plugins/agent-attached")
-                register()
-
         }
         wsClient.onBinaryMessage.add {
             val readBinary = readBinary(it)

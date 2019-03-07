@@ -1,5 +1,6 @@
 package com.epam.drill.plugin.api.processing
 
+import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.DrillPlugin
 import kotlinx.cinterop.*
 import kotlinx.serialization.KSerializer
@@ -29,24 +30,20 @@ actual abstract class NativePart<T> : Switchable, Lifecycle {
     actual abstract val confSerializer: KSerializer<T>
 
 
-    actual fun updateRawConfig(someText: String) {
-
+    actual fun updateRawConfig(someText: PluginBean) {
         try {
             try {
-                rawConfig = someText.cstr.getPointer(Arena())
+                rawConfig = someText.config.cstr.getPointer(Arena())
             } catch (ex: Throwable) {
                 ex.printStackTrace()
             }
-
-//            updateConfig(restring)
-
         } catch (ex: Throwable) {
         }
     }
 
 }
 
-abstract class PluginRepresenter :AgentPart<Any>(){
+abstract class PluginRepresenter : AgentPart<Any>() {
     override var confSerializer: KSerializer<Any>
         get() = TODO("stubValue") //To change initializer of created properties use File | Settings | File Templates.
         set(value) {}
@@ -70,9 +67,10 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
     }
 
 
-    actual open fun load() {
+    actual open fun load(onImmediately: Boolean) {
         initPlugin()
-        on()
+        if (onImmediately)
+            on()
     }
 
     actual open fun unload(reason: Reason) {
@@ -84,6 +82,11 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
 
     actual abstract var confSerializer: KSerializer<T>
 
-    abstract fun updateRawConfig(config: String)
+    abstract fun updateRawConfig(config: PluginBean)
+    actual fun rawConfig(): String {
+        return if (np != null)
+            Json().stringify(np!!.confSerializer, np!!.config!!)
+        else ""
+    }
 
 }

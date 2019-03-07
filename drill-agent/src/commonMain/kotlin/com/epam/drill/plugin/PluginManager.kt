@@ -21,6 +21,7 @@ object PluginManager {
             val pluginBean = PluginBean()
             pluginBean.id = id
             pluginBean.enabled = enabled
+            pluginBean.config = it.value.rawConfig()
             pluginBean
         }.toHashSet()
     }
