@@ -14,17 +14,18 @@ import java.util.concurrent.Executors
 /**
  * @author Denis Domashenko on 2/22/19.
  */
-class AgentPart(override val id: String) : AgentPart<TestD>() {
+class CustomAgentPart(override val id: String) : AgentPart<TestD>() {
 
     var thread: ExecutorService? = null
     var isAlive = false
 
     override fun initPlugin() {
+
         thread = Executors.newSingleThreadExecutor()
     }
 
     override fun destroyPlugin(reason: Reason) {
-        thread?.shutdown()
+        thread?.shutdownNow()
         thread = null
     }
 
@@ -35,6 +36,7 @@ class AgentPart(override val id: String) : AgentPart<TestD>() {
         isAlive = true
         thread?.submit {
             while (isAlive) {
+                println(isAlive)
                 Thread.sleep(config!!.delayTime)
                 sendMessage(id, config!!.message)
             }

@@ -31,6 +31,7 @@ kotlin {
                 implementation project(":drill-plugin-api:drill-agent-part")
                 implementation project(":drill-common")
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1"
+                
             }
         }
         adminPartMain {

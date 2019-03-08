@@ -14,6 +14,10 @@ actual abstract class NativePart<T> {
 }
 
 abstract class DummyAgentPart(override val id: String) : AgentPart<Any>() {
+    override var enabled: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        set(value) {}
+
     override fun initPlugin() {
         println("[JAVA SIDE] Plugin $id loaded")
     }
@@ -43,7 +47,7 @@ abstract class DummyAgentPart(override val id: String) : AgentPart<Any>() {
 
 actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
     var isStub = false
-    actual var enabled: Boolean = false
+    actual abstract var enabled: Boolean
     var config: T? = null
 
 

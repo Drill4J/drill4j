@@ -2,7 +2,12 @@ package com.epam.drill.core.plugin.loader
 
 import com.epam.drill.*
 import com.epam.drill.common.PluginBean
+import com.epam.drill.core.plugin.dumpConfigToFileSystem
+import com.epam.drill.core.plugin.pluginConfigById
+import com.epam.drill.jvmapi.jniName
+import com.epam.drill.jvmapi.jniParamName
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.PluginRepresenter
 import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.baseName
@@ -24,7 +29,7 @@ fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
 
 
 fun isSuitablePluginClass(findClass: jclass) = memScoped {
-    val targetClass = "Lcom/epam/drill/plugin/api/processing/AgentPart;"
+    val targetClass = AgentPart::class.jniParamName()
     var parentClass = GetSuperclass(findClass)
     var name = alloc<CPointerVar<ByteVar>>()
     GetClassSignature(parentClass, name.ptr, null)
@@ -60,9 +65,19 @@ suspend fun DrillPluginFile.retrieveFacilitiesFromPlugin() {
 
 @ExperimentalUnsignedTypes
 class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
+
     private val pluginApiClass: jclass = pf.retrievePluginApiClass()
     private val pluginConfig: PluginBean = pf.pluginConfig()
     override val id: String = pf.pluginId()
+
+    override var enabled: Boolean
+        get() = pluginConfigById(id).enabled
+        set(value) {
+            if (value) on() else off()
+            val pluginConfigById = pluginConfigById(id)
+            pluginConfigById.enabled = value
+            pluginConfigById.dumpConfigToFileSystem()
+        }
 
     private var userPlugin: jobject =
         NewObjectA(
@@ -80,16 +95,16 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
     }
 
     override fun on() {
-        PluginManager.activate(id)
+        println("on")
         CallVoidMethodA(
-            userPlugin, GetMethodID(pluginApiClass, "on", "()V"), null
+            userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::on.name, "()V"), null
         )
     }
 
     override fun off() {
-        PluginManager.deactivate(id)
+        println("off")
         CallVoidMethodA(
-            userPlugin, GetMethodID(pluginApiClass, "off", "()V"), null
+            userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::off.name, "()V"), null
         )
     }
 
@@ -98,18 +113,28 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
     override fun load(onImmediately: Boolean) {
         PluginManager.activate(id)
         CallVoidMethodA(
-            userPlugin, GetMethodID(pluginApiClass, "load", "(Z)V"), nativeHeap.allocArray(1.toLong()) {
+            userPlugin,
+            GetMethodID(pluginApiClass, AgentPart<*>::load.name, "(Z)V"),
+            nativeHeap.allocArray(1.toLong()) {
                 z = if (onImmediately) 1.toUByte() else 0.toUByte()
             })
 
     }
 
-    override fun unload(reason: Reason) {
+    override fun unload(reason: Reason) = memScoped<Unit> {
         PluginManager.deactivate(id)
-//        CallVoidMethodA(
-//            fixme!!!!
-//            userPlugin, GetMethodID(pluginApiClass, "unload", "()V"), null
-//        )
+        val findClass = FindClass(Reason::class.jniName())
+        val getStaticFieldID =
+            GetStaticFieldID(findClass, reason.name, Reason::class.jniParamName())
+        println(getStaticFieldID)
+        val getStaticObjectField = GetStaticObjectField(findClass, getStaticFieldID)
+        println(getStaticObjectField)
+        CallVoidMethodA(
+            userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::unload.name, "(${Reason::class.jniParamName()})V"),
+            allocArray(1.toLong()) {
+                l = getStaticObjectField
+            }
+        )
         np?.unload(reason)
     }
 
@@ -141,7 +166,7 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
     private fun notifyJavaPart(config: PluginBean) {
         CallVoidMethodA(
             userPlugin,
-            GetMethodID(pluginApiClass, "updateRawConfig", "(Ljava/lang/String;)V"),
+            GetMethodID(pluginApiClass, AgentPart<*>::updateRawConfig.name, "(Ljava/lang/String;)V"),
             nativeHeap.allocArray(1.toLong()) {
                 val newStringUTF =
                     NewStringUTF(config.config)

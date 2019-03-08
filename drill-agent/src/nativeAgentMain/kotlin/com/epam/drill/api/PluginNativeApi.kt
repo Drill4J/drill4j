@@ -480,14 +480,15 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
 }
 
 
+@Suppress("UNCHECKED_CAST")
 @CName("addPluginToRegistry")
 fun addPluginToRegistry(plugin: NativePart<*>) {
-    println("Hi From Register")
+    println("[TEMP] Try to addNativePluginPart to registry")
     try {
         val agentPluginPart: AgentPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any>?
         if (agentPluginPart != null) {
             agentPluginPart.np = plugin as NativePart<Any>
-            println("native part added.")
+            println("[TEMP] native part added.")
         }
 
     } catch (ex: Throwable) {

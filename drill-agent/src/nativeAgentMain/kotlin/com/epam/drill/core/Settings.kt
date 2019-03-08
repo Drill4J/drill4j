@@ -3,6 +3,7 @@ package com.epam.drill.core
 
 import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.logger.readProperties
 import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korio.file.std.tempVfs
@@ -55,6 +56,8 @@ var agentInfo: AgentInfo
         config.agentInfo = StableRef.create(
             value
         ).asCPointer()
+
+        value.dumpConfigToFileSystem()
     }
 
 val drillInstallationDir: String

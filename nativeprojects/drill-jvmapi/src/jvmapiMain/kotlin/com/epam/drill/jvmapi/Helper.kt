@@ -4,6 +4,7 @@ import com.epam.drill.logger.DLogger
 import jvmapi.*
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.SharedImmutable
+import kotlin.reflect.KClass
 
 val logger
     get() = DLogger("capabilities")
@@ -167,4 +168,13 @@ fun jlocation.toJLocation(methodId: jmethodID?): Int = kotlinx.cinterop.memScope
         lineNumber = locaTab[count.value - 1].line_number
     }
     return lineNumber ?: 0
+}
+
+
+fun KClass<out Any>.jniName(): String {
+    return (this.qualifiedName ?: "").replace(".", "/")
+}
+
+fun KClass<out Any>.jniParamName(): String {
+    return "L" + (this.qualifiedName ?: "").replace(".", "/") + ";"
 }

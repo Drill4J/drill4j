@@ -103,7 +103,6 @@ dependencies {
 //    javaAgentMainApi(project(":drill-plugin-api:drill-agent-part"))
 }
 
-
 //task buildPlugin {
 //    dependsOn(gradle.includedBuild("drill-exception-plugin-native").task(":buildNatvePlugin").resolveTask())
 //    group = "application"
@@ -113,9 +112,7 @@ javaAgentJar {
     destinationDirectory = file("../distr")
     archiveFileName = "drillRuntime.jar"
     from {
-        configurations.javaAgentMainCompileOnly.forEach {
-            println(it)
-        }
+
 
         kotlin.targets['javaAgent'].compilations.main.compileDependencyFiles.collect {
             it.isDirectory() ? it : zipTree(it)
@@ -158,13 +155,13 @@ task buildAgent {
 
     doLast {
         if (!new File("../distr/configs", "drillConfig.json").exists()) {
-            copy{
+            copy {
                 from file("../resources/drillConfig.json")
                 into file("../distr/configs")
             }
         }
-     if (!new File("../distr/configs", "logger.properties").exists()) {
-            copy{
+        if (!new File("../distr/configs", "logger.properties").exists()) {
+            copy {
                 from file("../resources/logger.properties")
                 into file("../distr/configs")
             }

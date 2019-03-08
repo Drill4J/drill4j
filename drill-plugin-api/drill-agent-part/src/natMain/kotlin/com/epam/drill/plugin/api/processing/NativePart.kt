@@ -7,7 +7,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
 actual abstract class NativePart<T> : Switchable, Lifecycle {
-    var rawConfig: CPointer<ByteVar>? = null
+    private var rawConfig: CPointer<ByteVar>? = null
 
     val config: T?
         get() {
@@ -44,6 +44,7 @@ actual abstract class NativePart<T> : Switchable, Lifecycle {
 }
 
 abstract class PluginRepresenter : AgentPart<Any>() {
+    @Suppress("UNUSED_PARAMETER")
     override var confSerializer: KSerializer<Any>
         get() = TODO("stubValue") //To change initializer of created properties use File | Settings | File Templates.
         set(value) {}
@@ -61,7 +62,7 @@ abstract class PluginRepresenter : AgentPart<Any>() {
 
 actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
 
-    actual var enabled: Boolean = false
+    actual abstract var enabled: Boolean
 
     actual open fun init(nativePluginPartPath: String) {
     }

@@ -5,105 +5,94 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.agentInfo
 import com.epam.drill.core.drillInstallationDir
+import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
+import com.epam.drill.core.plugin.pluginConfigById
+import com.epam.drill.core.util.dumpConfigToFileSystem
+import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.plugin.PluginStorage
 import com.epam.drill.plugin.api.processing.Reason
 import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korio.file.writeToFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 import kotlin.native.concurrent.ThreadLocal
 
+val topicLogger
+    get() = DLogger("topicLogger")
+
 
 @ExperimentalUnsignedTypes
 fun topicRegister() =
     WsRouter {
         topic("/plugins/load").withPluginFileTopic { pluginId, plugin ->
-            wsLogger.warn { "Load event. Plugin id is $pluginId" }
+            topicLogger.warn { "Load event. Plugin id is $pluginId" }
             if (PluginManager[pluginId] != null) {
-                wsLogger.warn { "plugin '$pluginId' already is loaded" }
-            } else
+                topicLogger.warn { "plugin '$pluginId' already is loaded" }
+            } else {
                 loadPlugin(plugin)
+            }
         }
 
         topic("/plugins/unload").rawMessage { pluginId ->
-            wsLogger.warn { "Unload event. Plugin id is $pluginId" }
+            topicLogger.warn { "Unload event. Plugin id is $pluginId" }
             PluginManager[pluginId]?.unload(Reason.ACTION_FROM_ADMIN)
             //fixme physical deletion
         }
 
-
         topic("/plugins/agent-attached").rawMessage {
-            wsLogger.warn { "Agent is attached" }
+            topicLogger.warn { "Agent is attached" }
         }
 
         topic("/plugins/updatePluginConfig").withGenericTopic(PluginBean.serializer()) { config ->
-            wsLogger.warn { "updatePluginConfig event: message is $config " }
+            topicLogger.warn { "updatePluginConfig event: message is $config " }
             val agentPluginPart = PluginManager[config.id]
             if (agentPluginPart != null) {
                 agentPluginPart.updateRawConfig(config)
                 agentPluginPart.np?.updateRawConfig(config)
-                val vfsFile =
-                    localVfs(drillInstallationDir)["drill-plugins"][config.id]["static"]["plugin_config.json"]
-                vfsFile.writeString(Json().stringify(PluginBean.serializer(), config))
-                wsLogger.warn { "new settings for ${config.id} was save to file" }
+                config.dumpConfigToFileSystem()
+                topicLogger.warn { "new settings for ${config.id} was save to file" }
             } else
-                wsLogger.warn { "Plugin ${config.id} not loaded to agent" }
+                topicLogger.warn { "Plugin ${config.id} not loaded to agent" }
 
         }
 
-
         topic("/plugins/togglePlugin").rawMessage { pluginId ->
-            wsLogger.warn { "togglePlugin event: PluginId is $pluginId" }
-            PluginManager[pluginId]?.on()
-            val vfsFile = localVfs(drillInstallationDir)["drill-plugins"][pluginId]["static"]["plugin_config.json"]
-            val content =
-                vfsFile.readString()
-            val data = Json().parse(PluginBean.serializer(), content)
+            topicLogger.warn { "togglePlugin event: PluginId is $pluginId" }
             val agentPluginPart = PluginManager[pluginId]
-            if (agentPluginPart != null) {
-                if (agentPluginPart.enabled) {
-                    agentPluginPart.off()
-                    data.enabled = false
-                } else {
-                    agentPluginPart.on()
-                    data.enabled = true
-                }
-                vfsFile.writeString(Json().stringify(PluginBean.serializer(), data))
-            } else
-                wsLogger.warn { "Plugin $pluginId not loaded to agent" }
+            if (agentPluginPart != null)
+                agentPluginPart.enabled = !agentPluginPart.enabled
+            else
+                topicLogger.warn { "Plugin $pluginId not loaded to agent" }
 
         }
 
         topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
-            wsLogger.warn { "updateAgentConfig event: Info is $info" }
+            topicLogger.warn { "updateAgentConfig event: Info is $info" }
             agentInfo = info
-            val data = Json().stringify(
-                AgentInfo.serializer(),
-                agentInfo
-            )
-            resourcesVfs["$drillInstallationDir/configs/drillConfig.json"].writeString(data)
-            println(data)
         }
 
         topic("agent/toggleStandBy").rawMessage {
-            wsLogger.warn { "toggleStandBy event" }
-            if (agentInfo.isEnable) {
-                agentInfo.rawPluginNames.forEach {
-                    PluginManager[it.id]?.off()
-                }
-                agentInfo.isEnable = false
-            } else {
-                agentInfo.rawPluginNames.forEach {
-                    //todo load state from cofig file
-                    PluginManager[it.id]?.on()
-                }
-                agentInfo.isEnable = true
-            }
+            topicLogger.warn { "toggleStandBy event" }
+            toggleStandby(agentInfo)
+            agentInfo.isEnable = !agentInfo.isEnable
+            agentInfo.dumpConfigToFileSystem()
         }
     }
+
+fun toggleStandby(agentInfo: AgentInfo) {
+    val isEnabled = agentInfo.isEnable
+    if (isEnabled)
+        PluginStorage.storage.forEach {
+            PluginManager[it.value.id]?.off()
+        }
+    else PluginStorage.storage.forEach {
+        if (pluginConfigById(it.value.id).enabled)
+            PluginManager[it.value.id]?.on()
+    }
+}
 
 
 @ThreadLocal

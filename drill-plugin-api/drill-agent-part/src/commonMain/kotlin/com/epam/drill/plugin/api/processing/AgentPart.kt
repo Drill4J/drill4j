@@ -9,7 +9,7 @@ expect abstract class AgentPart<T>() : DrillPlugin, Switchable, Lifecycle {
     var np: NativePart<T>?
 
 
-    var enabled: Boolean
+    abstract var enabled: Boolean
     abstract var confSerializer: KSerializer<T>
 
     open fun init(nativePluginPartPath: String)
