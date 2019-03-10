@@ -104,7 +104,6 @@ private fun websocket() = runBlocking {
                 MessageQueue.retrieveMessage()?.apply {
                     wsClient.send(this)
                 }
-
             }
         }
     }.join()
@@ -133,11 +132,8 @@ private fun register() = memScoped {
 fun readBinary(x: ByteArray): Pair<ByteArray, ByteArray> {
     val readInt = x.readInt(0)
     val indices = 8 until 8 + readInt
-    println(indices)
     val message = x.sliceArray(indices)
-    val indices1 = 8 + readInt until x.size
-    println(indices1)
-    val file = x.sliceArray(indices1)
+    val file = x.sliceArray(8 + readInt until x.size)
     return message to file
 }
 

@@ -1,9 +1,9 @@
 package com.epam.drill.core
 
 
+import com.epam.drill.api.enableJvmtiEventNativeMethodBind
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.api.processing.AgentPart
 import com.soywiz.klogger.Logger
 import drillInternal.config
 import drillInternal.createQueue
@@ -26,7 +26,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
             val split = it.split("=")
             split[0] to split[1]
         }!!
-
+        config.di = StableRef.create(DI()).asCPointer()
         if (args["drillInstallationDir"] == null) {
             println("________________________________________________________________")
             println(
@@ -51,9 +51,6 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         callbackRegister()
         SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null)
         SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, null)
-
-
-        config.pstorage = StableRef.create(mutableMapOf<String, AgentPart<*>>()).asCPointer()
 
     } catch (ex: Throwable) {
         ex.printStackTrace()
@@ -80,11 +77,11 @@ private fun callbackRegister() {
 //
 //    }
     SetEventCallbacks(gjavaVMGlob?.pointed?.callbackss?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
-//enableJvmtiEventNativeMethodBind()
+    enableJvmtiEventNativeMethodBind()
 }
 
 @Suppress("UNUSED_PARAMETER", "UNUSED")
 @CName("Agent_OnUnload")
 fun agentOnUnload(vmPtr: Long) {
-    println("hiiii there!")
+
 }

@@ -9,11 +9,23 @@ import kotlinx.cinterop.*
 import kotlinx.serialization.json.Json
 
 
-@Suppress("UNUSED_ANONYMOUS_PARAMETER")
-fun exceptionCallback(): CPointer<CFunction<(CPointer<jvmtiEnvVar>?, CPointer<JNIEnvVar>?, jthread?, jmethodID?, jlocation, jobject?, jmethodID?, jlocation) -> Unit>> {
-    return staticCFunction { jvmtiEnv, jniEnv, thread, method, location, exception, catchMethod, catchLocation ->
-        initRuntimeIfNeeded()
-        val declaringClassName = method?.getDeclaringClassName() ?: return@staticCFunction
+fun exceptionCallback(
+    jvmtiEnv: CPointer<jvmtiEnvVar>?,
+    jniEnv: CPointer<JNIEnvVar>?,
+    thread: jthread?,
+    method: jmethodID?,
+    location: jlocation,
+    exception: jobject?,
+    catchMethod: jmethodID?,
+    catchLocation: jlocation
+) {
+    initRuntimeIfNeeded()
+    val declaringClassName = method?.getDeclaringClassName() ?: return
+
+    PluginContext {
+
+        if(blackList.isEmpty()) return
+
         if (
             declaringClassName.startsWith("Ljava/") ||
             declaringClassName.startsWith("Ljavax/") ||
@@ -27,14 +39,14 @@ fun exceptionCallback(): CPointer<CFunction<(CPointer<jvmtiEnvVar>?, CPointer<JN
             declaringClassName.startsWith("Lorg/hibernate/") ||
             declaringClassName.startsWith("Lorg/hibernate/internal")
         )
-            return@staticCFunction
+            return
         memScoped {
             val getObjectClass = GetObjectClass(exception)
             val name = alloc<CPointerVar<ByteVar>>()
             DrillGetClassSignature(getObjectClass, name.ptr, null)
             val exType = name.value?.toKString() ?: "UnknownExType"
             if (exType == "Ljava/lang/ClassNotFoundException;")
-                return@staticCFunction
+                return
         }
         println(
             "className: $declaringClassName\n" +
@@ -63,3 +75,4 @@ fun exceptionCallback(): CPointer<CFunction<(CPointer<jvmtiEnvVar>?, CPointer<JN
         }
     }
 }
+

@@ -22,9 +22,6 @@ object RetrieveDrillSessionFromRequest {
                 requestHeaders[x.first] = x.second
             }
         }
-        requestHeaders.forEach { k ->
-            println(k.key + " _" + k.value)
-        }
 
         val cookie = requestHeaders["Cookie"]
         if (cookie != null) {
@@ -36,7 +33,7 @@ object RetrieveDrillSessionFromRequest {
             }
         }
 
-        return DrillRequest(cookies["DrillSessionId"], requestHeaders["Host"])
+        return DrillRequest(cookies["DrillSessionId"] ?: requestHeaders["DrillSessionId"], requestHeaders["Host"])
     }
 
     @Throws(RuntimeException::class)

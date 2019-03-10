@@ -12,7 +12,8 @@ import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.PluginStorage
-import com.epam.drill.plugin.api.processing.Reason
+import com.epam.drill.plugin.api.processing.AgentPart
+import com.epam.drill.plugin.api.processing.UnloadReason
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import kotlinx.coroutines.runBlocking
@@ -38,8 +39,16 @@ fun topicRegister() =
 
         topic("/plugins/unload").rawMessage { pluginId ->
             topicLogger.warn { "Unload event. Plugin id is $pluginId" }
-            PluginManager[pluginId]?.unload(Reason.ACTION_FROM_ADMIN)
-            //fixme physical deletion
+            PluginManager[pluginId]?.unload(UnloadReason.ACTION_FROM_ADMIN)
+            println(
+                """
+                |________________________________________________________
+                |Physical Deletion is not implemented yet.
+                |We should unload all resource e.g. classes, jars, .so/.dll
+                |Try to create custom classLoader. After this full GC.
+                |________________________________________________________
+            """.trimMargin()
+            )
         }
 
         topic("/plugins/agent-attached").rawMessage {
@@ -83,14 +92,12 @@ fun topicRegister() =
     }
 
 fun toggleStandby(agentInfo: AgentInfo) {
-    val isEnabled = agentInfo.isEnable
-    if (isEnabled)
-        PluginStorage.storage.forEach {
-            PluginManager[it.value.id]?.off()
-        }
-    else PluginStorage.storage.forEach {
+    val toggle: (AgentPart<*>) -> Unit =
+        if (agentInfo.isEnable) { plugin -> PluginManager[plugin.id]?.off() } else { x -> PluginManager[x.id]?.on() }
+
+    PluginStorage.storage.forEach {
         if (pluginConfigById(it.value.id).enabled)
-            PluginManager[it.value.id]?.on()
+            toggle(it.value)
     }
 }
 
@@ -114,15 +121,15 @@ object WsRouter {
 
 
         @Suppress("unused")
-        fun withFileTopic(xx: (message: String, file: ByteArray) -> Unit): FileTopic {
-            val fileTopic = FileTopic(destination, xx)
+        fun withFileTopic(block: (message: String, file: ByteArray) -> Unit): FileTopic {
+            val fileTopic = FileTopic(destination, block)
             mapper[destination] = fileTopic
             return fileTopic
         }
 
 
-        fun rawMessage(xx: suspend (String) -> Unit): InfoTopic {
-            val infoTopic = InfoTopic(destination, xx)
+        fun rawMessage(block: suspend (String) -> Unit): InfoTopic {
+            val infoTopic = InfoTopic(destination, block)
             mapper[destination] = infoTopic
             return infoTopic
         }

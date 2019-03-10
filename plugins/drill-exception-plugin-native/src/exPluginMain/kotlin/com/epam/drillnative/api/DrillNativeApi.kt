@@ -39,4 +39,6 @@ internal external fun disableJvmtiEventException(thread: jthread? = null)
 @SymbolName("addPluginToRegistry")
 internal external fun addPluginToRegistry(plugin: NativePart<*>)
 
+@SymbolName("getPlugin")
+internal external  fun getPlugin(id: CPointer<ByteVar>): NativePart<*>?
 

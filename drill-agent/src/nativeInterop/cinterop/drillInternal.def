@@ -107,11 +107,12 @@ char *getMessage() {
 
 
 typedef struct {
- void* loggers;
- void* loggerConfig;
- void* agentInfo;
+ //void* loggers;
+ //void* loggerConfig;
+ //void* agentInfo;
  char* drillInstallationDir;
- void* pstorage;
+ //void* pstorage;
+ void* di;
 } configStruct;
 
 configStruct config;

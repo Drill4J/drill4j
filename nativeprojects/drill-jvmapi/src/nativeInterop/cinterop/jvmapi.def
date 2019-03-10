@@ -81,14 +81,23 @@ extern void jvmtiEventVMInitEvent(jvmtiEnv *jvmti_env,
      JNIEnv* jni_env,
      jthread thread);
 
+
+extern void jvmtiEventNativeMethodBindEvent(jvmtiEnv *jvmti_env,
+                                              JNIEnv* jni_env,
+                                              jthread thread,
+                                              jmethodID method,
+                                              void* address,
+                                              void** new_address_ptr);
+
 jvmtiEventCallbacks generateDefaultCallbacks() {
 	jvmtiEventCallbacks callbacks = {NULL};
 	memset(&callbacks, 0, sizeof(callbacks));
     callbacks.VMInit = &jvmtiEventVMInitEvent;
+    callbacks.NativeMethodBind = &jvmtiEventNativeMethodBindEvent;
 //    callbacks.MethodExit = &jvmtiEventMethodExitEvent;
 //    callbacks.SingleStep = &jvmtiEventSingleStepEvent;
 //    callbacks.ClassFileLoadHook = &jvmtiEventClassFileLoadHookEvent;
-//    callbacks.NativeMethodBind = &jvmtiEventNativeMethodBindEvent;
+
 
 //callbacks.VMDeath = &jvmtiEventVMDeathEvent;
 //callbacks.ThreadStart = &jvmtiEventThreadStartEvent;

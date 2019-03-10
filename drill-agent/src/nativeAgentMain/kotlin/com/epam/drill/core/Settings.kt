@@ -6,11 +6,8 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.logger.readProperties
 import com.soywiz.korio.file.std.resourcesVfs
-import com.soywiz.korio.file.std.tempVfs
 import com.soywiz.korio.util.OS
 import drillInternal.config
-import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.toKString
 import kotlinx.serialization.json.Json
 
@@ -26,9 +23,8 @@ private suspend fun fillMainProperties() {
         AgentInfo.serializer(),
         resourcesVfs["${"$path/"}drillConfig.json"].readString()
     )
-    config.agentInfo = StableRef.create(
-        any
-    ).asCPointer()
+    di.agentInfo = any
+
 
     //fixme retrieve a real IP
     any.agentAddress = "127.0.0.1"
@@ -43,20 +39,14 @@ private suspend fun fillMainProperties() {
 
     any.agentAddress = "127.0.0.1"
 
-    config.loggerConfig =
-        StableRef.create(
-            resourcesVfs["${"$path/"}logger.properties"].readProperties()
-        ).asCPointer()
+    di.loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
+
 }
 
 var agentInfo: AgentInfo
-    get() = config.agentInfo?.asStableRef<AgentInfo>()?.get()!!
+    get() = di.agentInfo
     set(value) {
-        config.agentInfo?.asStableRef<AgentInfo>()?.dispose()
-        config.agentInfo = StableRef.create(
-            value
-        ).asCPointer()
-
+        di.agentInfo = value
         value.dumpConfigToFileSystem()
     }
 

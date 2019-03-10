@@ -2,9 +2,8 @@
 
 package com.epam.drill.api
 
-//import com.epam.drill.plugin.api.NativePart
-import com.epam.drill.core.request.DrillRequest
 import com.epam.drill.core.messanger.MessageQueue
+import com.epam.drill.core.request.DrillRequest
 import com.epam.drill.jvmapi.JNI
 import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
@@ -68,7 +67,6 @@ fun JNIEn(): JNI {
 
 @CName("sendToSocket")
 fun sendToSocket(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) {
-    println(pluginId.toKString())
     MessageQueue.sendMessage(pluginId.toKString(), message.toKString())
 }
 
@@ -161,9 +159,7 @@ fun enableJvmtiEventException(thread: jthread? = null) {
 
 @CName("enableJvmtiEventExceptionCatch")
 fun enableJvmtiEventExceptionCatch(thread: jthread? = null) {
-    println("TAK?? YA ne ponyal bilo zhe vse oK!")
     SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION_CATCH, thread)
-    println("Really?")
     gdata?.pointed?.IS_JVMTI_EVENT_EXCEPTION_CATCH = true
 }
 
@@ -479,6 +475,11 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
     gdata?.pointed?.IS_JVMTI_EVENT_VM_START = false
 }
 
+@CName("getPlugin")
+fun getPlugin(id: CPointer<ByteVar>): NativePart<*>?{
+    return PluginManager[id.toKString()]?.np
+}
+
 
 @Suppress("UNCHECKED_CAST")
 @CName("addPluginToRegistry")
@@ -489,6 +490,8 @@ fun addPluginToRegistry(plugin: NativePart<*>) {
         if (agentPluginPart != null) {
             agentPluginPart.np = plugin as NativePart<Any>
             println("[TEMP] native part added.")
+        } else {
+            println("[WARNING!!!!!!!] CANT FIND THE ${plugin.id.toKString()} plug in manager. ")
         }
 
     } catch (ex: Throwable) {

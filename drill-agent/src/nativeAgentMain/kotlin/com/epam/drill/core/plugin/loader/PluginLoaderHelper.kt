@@ -2,14 +2,16 @@ package com.epam.drill.core.plugin.loader
 
 import com.epam.drill.*
 import com.epam.drill.common.PluginBean
+import com.epam.drill.core.agentInfo
 import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.pluginConfigById
 import com.epam.drill.jvmapi.jniName
 import com.epam.drill.jvmapi.jniParamName
+import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.PluginRepresenter
-import com.epam.drill.plugin.api.processing.Reason
+import com.epam.drill.plugin.api.processing.UnloadReason
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.std.localVfs
 import jvmapi.*
@@ -65,6 +67,8 @@ suspend fun DrillPluginFile.retrieveFacilitiesFromPlugin() {
 
 @ExperimentalUnsignedTypes
 class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
+    private val natPluginLogger
+        get() = DLogger("NativePluginController")
 
     private val pluginApiClass: jclass = pf.retrievePluginApiClass()
     private val pluginConfig: PluginBean = pf.pluginConfig()
@@ -90,28 +94,29 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
 
     init {
         updateRawConfig(pluginConfig)
-        plLogger.warn { "config updated: ${pf.rawPluginConfig()}" }
+        natPluginLogger.warn { "config updated: ${pf.rawPluginConfig()}" }
         fullLoad(pf)
     }
 
     override fun on() {
-        println("on")
+        natPluginLogger.debug { "on" }
         CallVoidMethodA(
             userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::on.name, "()V"), null
         )
+        np?.on()
     }
 
     override fun off() {
-        println("off")
+        natPluginLogger.debug { "off" }
         CallVoidMethodA(
             userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::off.name, "()V"), null
         )
+        np?.off()
     }
 
 
     @ExperimentalUnsignedTypes
     override fun load(onImmediately: Boolean) {
-        PluginManager.activate(id)
         CallVoidMethodA(
             userPlugin,
             GetMethodID(pluginApiClass, AgentPart<*>::load.name, "(Z)V"),
@@ -121,28 +126,39 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
 
     }
 
-    override fun unload(reason: Reason) = memScoped<Unit> {
-        PluginManager.deactivate(id)
-        val findClass = FindClass(Reason::class.jniName())
+    override fun unload(unloadReason: UnloadReason) = memScoped<Unit> {
+        val findClass = FindClass(UnloadReason::class.jniName())
         val getStaticFieldID =
-            GetStaticFieldID(findClass, reason.name, Reason::class.jniParamName())
-        println(getStaticFieldID)
+            GetStaticFieldID(findClass, unloadReason.name, UnloadReason::class.jniParamName())
         val getStaticObjectField = GetStaticObjectField(findClass, getStaticFieldID)
-        println(getStaticObjectField)
         CallVoidMethodA(
-            userPlugin, GetMethodID(pluginApiClass, AgentPart<*>::unload.name, "(${Reason::class.jniParamName()})V"),
+            userPlugin,
+            GetMethodID(pluginApiClass, AgentPart<*>::unload.name, "(${UnloadReason::class.jniParamName()})V"),
             allocArray(1.toLong()) {
                 l = getStaticObjectField
             }
         )
-        np?.unload(reason)
+        np?.unload(unloadReason)
     }
 
     @ExperimentalUnsignedTypes
     fun fullLoad(jar: DrillPluginFile) {
-        load(pluginConfig.enabled)
+
+        //fixme raw hack only for native plguins... ohhh.. kill me
+        PluginManager.addPlugin(this)
+
+        load(pluginConfig.enabled && agentInfo.isEnable)
         initNativePart(jar)
-        np?.updateRawConfig(pluginConfig)
+        try {
+            np?.updateRawConfig(pluginConfig)
+        } catch (ex: Exception) {
+            natPluginLogger.error { "Can't update the config for $id. Config: $pluginConfig" }
+        }
+        try {
+            np?.load(pluginConfig.enabled && agentInfo.isEnable)
+        } catch (ex: Exception) {
+            natPluginLogger.error { "Can't Load the native part for $id. Immedeatly: ${pluginConfig.enabled && agentInfo.isEnable}" }
+        }
     }
 
     private fun initNativePart(jar: DrillPluginFile) {
