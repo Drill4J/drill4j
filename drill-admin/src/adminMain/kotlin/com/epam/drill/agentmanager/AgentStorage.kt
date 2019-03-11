@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AgentStorage(override val kodein: Kodein) : KodeinAware {
     private val drillServerWs: DrillServerWs by instance()
+
     suspend fun notifys() {
+
         drillServerWs.sessionStorage["/agentStorages"]?.forEach {
             val message = Gson().toJson((agents.values.map { it.agentInfo }))
             val text = Gson().toJson(Message(MessageType.MESSAGE, "/agentStorages", message))

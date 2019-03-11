@@ -46,6 +46,8 @@ import java.time.Duration
 val storage = Kodein.Module(name = "agentStorage") {
     bind<AgentStorage>() with singleton { AgentStorage(kodein) }
     bind<MongoClient>() with singleton { MongoClient() }
+    bind<WsTopic>() with singleton { WsTopic(kodein) }
+    bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
