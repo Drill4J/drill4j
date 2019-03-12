@@ -49,9 +49,15 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                                         wsTopic {
                                             val resolve = resolve(event.destination)
                                             sessionStorage[event.destination]?.forEach {
+                                                try {
+
+
                                                 val text = Gson().toJson(resolve)
                                                 val frame1 = Frame.Text(text)
                                                 it.send(frame1)
+                                                }catch (ex:Exception){
+                                                    println("fixme")
+                                                }
                                             }
                                         }
                                     }
