@@ -2,14 +2,12 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
-import io.ktor.locations.Location
 import io.ktor.routing.routing
 import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
@@ -32,7 +30,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
 
 
             webSocket("/api/drill-admin-socket") {
-
+                val wsSession = this
                 incoming.consumeEach { frame ->
                     when (frame) {
                         is Frame.Text -> {
@@ -40,25 +38,34 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                             when (event.type) {
                                 MessageType.REGISTER -> {
                                     if (sessionStorage[event.destination] == null) {
-                                        sessionStorage[event.destination] = mutableSetOf(this)
+                                        sessionStorage[event.destination] = mutableSetOf(wsSession)
                                     }
-                                    sessionStorage[event.destination]?.add(this)
+                                    sessionStorage[event.destination]?.add(wsSession)
 
 
                                     app.run {
                                         wsTopic {
                                             val resolve = resolve(event.destination)
-                                            sessionStorage[event.destination]?.forEach {
-                                                try {
-
-
-                                                val text = Gson().toJson(resolve)
-                                                val frame1 = Frame.Text(text)
-                                                it.send(frame1)
-                                                }catch (ex:Exception){
-                                                    println("fixme")
+                                            val iterator = sessionStorage[event.destination]?.iterator()
+                                            if (iterator != null)
+                                                while (iterator.hasNext()) {
+                                                    val next = iterator.next()
+                                                    val text = Gson().toJson(resolve)
+                                                    val frame1 = Frame.Text(
+                                                        Gson().toJson(
+                                                            Message(
+                                                                MessageType.MESSAGE,
+                                                                event.destination,
+                                                                text
+                                                            )
+                                                        )
+                                                    )
+                                                    try {
+                                                        next.send(frame1)
+                                                    } catch (ex: Exception) {
+                                                        iterator.remove()
+                                                    }
                                                 }
-                                            }
                                         }
                                     }
 
@@ -73,6 +80,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                         }
                     }
                 }
+
             }
 
 //            }
