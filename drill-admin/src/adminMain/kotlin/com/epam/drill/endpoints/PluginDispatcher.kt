@@ -1,7 +1,6 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.AgentStorage
-import com.epam.drill.get
+import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
@@ -17,7 +16,9 @@ import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
+import io.ktor.swagger.Json
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.serialization.json.JSON
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -73,7 +74,8 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
-                    call.respond { HttpStatusCode.OK }
+                    val  pluginBean = agentStorage.agents[ll.agentId]?.agentInfo?.rawPluginNames?.first {it.id == pluginId}
+                    call.respond {if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound}
                 }
             }
 

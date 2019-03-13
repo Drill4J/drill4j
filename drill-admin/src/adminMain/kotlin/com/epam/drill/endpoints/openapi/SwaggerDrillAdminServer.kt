@@ -71,7 +71,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                         )
                     )
                 )
-                call.respond { HttpStatusCode.OK }
+                call.respond {if (agentStorage.agents[config.agentId]?.agentInfo != null) HttpStatusCode.OK else HttpStatusCode.NotFound}
             }
         }
 
