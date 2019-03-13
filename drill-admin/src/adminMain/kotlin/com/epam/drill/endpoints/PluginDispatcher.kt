@@ -1,6 +1,7 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.AgentStorage
+import com.epam.drill.get
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
@@ -68,7 +69,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
                     val message = call.receive<String>()
-                    agentStorage.agents[ll.agentId]?.agentWsSession
+                    agentStorage[ll.agentId]
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
@@ -78,7 +79,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentStorage.agents[ll.agentId]?.agentWsSession
+                    agentStorage[ll.agentId]
                         ?.send(
                             agentWsMessage("/plugins/togglePlugin", ll.pluginId)
                         )

@@ -21,7 +21,7 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    fun Application.resolve(destination: WsUrl): Any? {
+    fun Application.resolve(destination: WsUrl, x: MutableSet<DrillWsSession>): Any? {
         val split = destination.split("/")
 
         val filter = xas.filter { it.key.count { c -> c == '/' } + 1 == split.size }.filter {
@@ -49,22 +49,22 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
         }
         val param = feature(Locations).resolve<Any>(next.value.first, parameters)
 
-        val block = next.value.second.resolve(param)
+        val block = next.value.second.resolve(param, x)
 
         return block
 
     }
 }
 
-inline fun <reified R : Any> WsTopic.topic(noinline block: (R) -> Any?) {
+inline fun <reified R : Any> WsTopic.topic(noinline block: (R, MutableSet<DrillWsSession>) -> Any?) {
     val findAnnotation = R::class.findAnnotation<Location>()
     val path = findAnnotation?.path!!
     xas[path] = R::class to Temp(path, block) as Temp<Any, Any>
 }
 
-class Temp<T, R>(val url: String, val block: (R) -> T) {
-    fun resolve(param: R): T {
-        return block(param)
+class Temp<T, R>(val url: String, val block: (R, MutableSet<DrillWsSession>) -> T) {
+    fun resolve(param: R, x: MutableSet<DrillWsSession>): T {
+        return block(param, x)
     }
 }
 

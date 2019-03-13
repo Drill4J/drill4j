@@ -1,10 +1,11 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.agentmanager.DrillAgent
+import com.epam.drill.AgentStorage
+import com.epam.drill.byId
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.agentWsMessage
+import com.epam.drill.get
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.serverInstance
@@ -58,8 +59,8 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
     private fun Routing.registerAgent() {
         authenticate {
-            patch<Routes.Api.Agent.Agent> {config ->
-                agentStorage.agents[config.agentId]?.agentWsSession?.send(
+            patch<Routes.Api.Agent.Agent> { config ->
+                agentStorage[config.agentId]?.send(
                     Frame.Text(
                         Gson().toJson(
                             Message(
@@ -77,7 +78,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         authenticate {
             post<Routes.Api.Agent.UnloadPlugin> { up ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent: DrillAgent? = agentStorage.agents[up.agentId]
+                val drillAgent = agentStorage[up.agentId]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${up.agentId}'")
                     return@post
@@ -88,7 +89,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                     return@post
                 }
 
-                drillAgent.agentWsSession.send(agentWsMessage("/plugins/unload", pluginId.pluginId))
+                drillAgent.send(agentWsMessage("/plugins/unload", pluginId.pluginId))
 //            drillAgent.agentInfo.rawPluginNames.removeIf { x -> x.id == up.pluginName }
                 call.respond("event 'unload' was sent to AGENT")
             }
@@ -97,7 +98,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         authenticate {
             post<Routes.Api.Agent.LoadPlugin> { lp ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent: DrillAgent? = agentStorage.agents[lp.agentId]
+                val drillAgent = agentStorage[lp.agentId]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${lp.agentId}'")
                     return@post
@@ -134,20 +135,20 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                 put.flip()
 //                println(put.array().contentToString())
 //                put.flip()
-                drillAgent.agentWsSession.send(Frame.Binary(true, put))
+                drillAgent.send(Frame.Binary(true, put))
                 call.respond("event 'load' and plugin's file(${lp.agentId}) was sent to AGENT")
             }
         }
 
         authenticate {
             get<Routes.Api.Agent.Agent> { up ->
-                call.respond(agentStorage.agents[up.agentId]?.agentInfo!!)
+                call.respond(agentStorage.byId(up.agentId) ?: "can't find")
             }
         }
 
         authenticate {
-            post<Routes.Api.Agent.AgentToggleStandby> {agent ->
-                agentStorage.agents[agent.agentId]?.agentWsSession
+            post<Routes.Api.Agent.AgentToggleStandby> { agent ->
+                agentStorage[agent.agentId]
                     ?.send(
                         agentWsMessage("agent/toggleStandBy", agent.agentId)
                     )
@@ -173,7 +174,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerDevDrillAdmin() {
         authenticate {
             get<DevRoutes.Api.Agent.Agents> {
-                call.respond(agentStorage.agents.values.map { da -> da.agentInfo })
+                call.respond(agentStorage.keys)
             }
         }
     }

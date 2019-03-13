@@ -1,6 +1,6 @@
 package com.epam.drill
 
-import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.endpoints.*
 import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
@@ -27,6 +27,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.KtorExperimentalLocationsAPI
@@ -43,11 +44,28 @@ import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
 import java.time.Duration
 
+typealias AgentStorage = ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>
+
+operator fun AgentStorage.invoke(block: AgentStorage.() -> Unit) {
+    block(this)
+}
+
+operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
+    return this.entries.associate { it.key.agentAddress to it.value }[k]
+}
+
+fun AgentStorage.byId(agentId: String): AgentInfo? {
+    return this.keys.firstOrNull { it.agentAddress == agentId }
+}
+
+
 val storage = Kodein.Module(name = "agentStorage") {
-    bind<AgentStorage>() with singleton { AgentStorage(kodein) }
+    //    bind<AgentStorage>() with singleton { AgentStorage(kodein) }
+    bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
     bind<MongoClient>() with singleton { MongoClient() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
+    bind<MutableSet<DrillWsSession>>() with eagerSingleton { mutableSetOf<DrillWsSession>() }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {

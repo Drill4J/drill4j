@@ -1,11 +1,9 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.SeqMessage
 import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.plugins.Plugins
 import com.epam.drill.storage.MongoClient
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
@@ -23,8 +21,6 @@ import org.litote.kmongo.getCollection
 
 class DevEndpoints(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
-    private val agentStorage: AgentStorage by instance()
-    private val plugins: Plugins by instance()
     private val mc: MongoClient by instance()
     private val ws: WsService by instance()
 
@@ -40,7 +36,13 @@ class DevEndpoints(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerDrillAdminDev() {
         get<Exceptionss> { tpd ->
             val objects = mc.client!!.getDatabase("test").getCollection<SeqMessage>(tpd.topicName)
-            call.respond(objects.find().map { getMessageForSocket(it) }.map { Message(MessageType.MESSAGE, tpd.topicName, it) }.toList())
+            call.respond(objects.find().map { getMessageForSocket(it) }.map {
+                Message(
+                    MessageType.MESSAGE,
+                    tpd.topicName,
+                    it
+                )
+            }.toList())
         }
         get<getAllSubscibers> {
             call.respond(ws.getPlWsSession())
