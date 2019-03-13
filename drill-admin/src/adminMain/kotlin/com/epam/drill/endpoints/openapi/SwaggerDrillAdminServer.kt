@@ -1,11 +1,11 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.AgentStorage
-import com.epam.drill.byId
+import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.agentmanager.byId
+import com.epam.drill.agentmanager.get
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.agentWsMessage
-import com.epam.drill.get
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.serverInstance
@@ -71,7 +71,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                         )
                     )
                 )
-                call.respond {if (agentStorage.agents[config.agentId]?.agentInfo != null) HttpStatusCode.OK else HttpStatusCode.NotFound}
+                call.respond { if (agentStorage.byId(config.agentId) != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
             }
         }
 

@@ -44,21 +44,6 @@ import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
 import java.time.Duration
 
-typealias AgentStorage = ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>
-
-operator fun AgentStorage.invoke(block: AgentStorage.() -> Unit) {
-    block(this)
-}
-
-operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
-    return this.entries.associate { it.key.agentAddress to it.value }[k]
-}
-
-fun AgentStorage.byId(agentId: String): AgentInfo? {
-    return this.keys.firstOrNull { it.agentAddress == agentId }
-}
-
-
 val storage = Kodein.Module(name = "agentStorage") {
     //    bind<AgentStorage>() with singleton { AgentStorage(kodein) }
     bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
@@ -95,7 +80,7 @@ val pluginServices = Kodein.Module(name = "pluginServices") {
 @ExperimentalCoroutinesApi
 fun Application.module(
     installation: Application.() -> Unit = {
-        val jwtAudience = environment.config.property("jwt.audience").getString()
+        @Suppress("UNUSED_VARIABLE") val jwtAudience = environment.config.property("jwt.audience").getString()
         val jwtRealm = environment.config.property("jwt.realm").getString()
 
         install(ContentNegotiation) {
@@ -154,11 +139,8 @@ fun Application.module(
         import(storage)
         import(handlers)
         import(pluginServices)
-
-        val devMode = true
-        if (devMode) {
-            import(devContainer)
-        }
+        
+        import(devContainer)
     }
 
 }

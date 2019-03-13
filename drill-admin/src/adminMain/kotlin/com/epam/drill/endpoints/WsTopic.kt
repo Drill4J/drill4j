@@ -14,7 +14,7 @@ import kotlin.reflect.full.findAnnotation
 
 class WsTopic(override val kodein: Kodein) : KodeinAware {
     val xas: MutableMap<String, Pair<KClass<*>, Temp<Any, Any>>> = ConcurrentHashMap()
-    val p = "\\{(.*)}".toRegex()
+    private val p = "\\{(.*)}".toRegex()
 
     suspend operator fun invoke(block: suspend WsTopic.() -> Unit) {
         block(this)
@@ -49,9 +49,7 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
         }
         val param = feature(Locations).resolve<Any>(next.value.first, parameters)
 
-        val block = next.value.second.resolve(param, x)
-
-        return block
+        return next.value.second.resolve(param, x)
 
     }
 }
@@ -59,10 +57,11 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
 inline fun <reified R : Any> WsTopic.topic(noinline block: (R, MutableSet<DrillWsSession>) -> Any?) {
     val findAnnotation = R::class.findAnnotation<Location>()
     val path = findAnnotation?.path!!
-    xas[path] = R::class to Temp(path, block) as Temp<Any, Any>
+    @Suppress("UNCHECKED_CAST")
+    xas[path] = R::class to Temp(block) as Temp<Any, Any>
 }
 
-class Temp<T, R>(val url: String, val block: (R, MutableSet<DrillWsSession>) -> T) {
+class Temp<T, R>(val block: (R, MutableSet<DrillWsSession>) -> T) {
     fun resolve(param: R, x: MutableSet<DrillWsSession>): T {
         return block(param, x)
     }

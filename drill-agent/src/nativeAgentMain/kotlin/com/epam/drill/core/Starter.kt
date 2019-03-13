@@ -40,7 +40,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         intiLoggers()
         parseConfigs()
         val logger = DLogger("StartLogger")
-        logger.info { agentInfo.drillAdminUrl }
+        logger.info { agentInfo.adminUrl }
         logger.info { "The native agent was loaded" }
         logger.info { "Pid is: " + getpid() }
         printAllowedCapabilities()

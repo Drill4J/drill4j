@@ -28,11 +28,6 @@ suspend fun MutableSet<DrillWsSession>.sendTo(message: Message) {
 
 fun MutableSet<DrillWsSession>.exists(destination: String) = this.firstOrNull { it.url == destination } != null
 
-
-suspend fun MutableSet<DrillWsSession>.specialDestinationSessions(destination: String): Iterator<DrillWsSession> {
-    return this.filter { it.url == destination }.iterator()
-}
-
 fun MutableSet<DrillWsSession>.removeTopic(destination: String) {
     val remove = this.remove(this.first { it.url == destination })
     if (remove)
@@ -40,7 +35,7 @@ fun MutableSet<DrillWsSession>.removeTopic(destination: String) {
 }
 
 
-fun Any?.stringify() = Gson().toJson(this)
+fun Any?.stringify() = Gson().toJson(this) ?: ""
 fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 //fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 

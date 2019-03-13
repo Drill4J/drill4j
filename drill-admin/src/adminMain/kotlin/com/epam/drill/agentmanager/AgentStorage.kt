@@ -1,41 +1,20 @@
 package com.epam.drill.agentmanager
 
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.endpoints.DrillWsSession
+import com.epam.drill.endpoints.ObservableMapStorage
+import io.ktor.http.cio.websocket.DefaultWebSocketSession
 
-//class AgentStorage(override val kodein: Kodein) : KodeinAware {
-//    private val drillServerWs: DrillServerWs by instance()
-//
-//    val newAgents = ObservableMapStorage<AgentInfo, DefaultWebSocketSession>()
-//
-//
-//    operator fun set(k: AgentInfo, v: DefaultWebSocketSession) {
-//        newAgents[k] = v
-//    }
-//
-//
-//    suspend fun notifys() {
-//
-//        drillServerWs.sessionStorage["/agentStorages"]?.forEach {
-//            val message = Gson().toJson((agents.values.map { it.agentInfo }))
-//            val text = Gson().toJson(Message(MessageType.MESSAGE, "/agentStorages", message))
-//            it.send(Frame.Text(text))
-//        }
-//
-//    }
-//
-//    val agents: MutableMap<String, DrillAgent> = ConcurrentHashMap()
-//
-//    suspend fun addAgent(drillAgent: DrillAgent) {
-//        agents[drillAgent.agentInfo.agentAddress] = drillAgent
-//        notifys()
-//        //fixme log
-////        logDebug("Agent was added")
-//    }
-//
-//    suspend fun removeAgent(name: String) {
-//        agents.remove(name)
-//        notifys()
-//        //fixme log
-////        logDebug("Agent was removed")
-//    }
-//
-//}
+typealias AgentStorage = ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>
+
+operator fun AgentStorage.invoke(block: AgentStorage.() -> Unit) {
+    block(this)
+}
+
+operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
+    return this.entries.associate { it.key.ipAddress to it.value }[k]
+}
+
+fun AgentStorage.byId(agentId: String): AgentInfo? {
+    return this.keys.firstOrNull { it.ipAddress == agentId }
+}

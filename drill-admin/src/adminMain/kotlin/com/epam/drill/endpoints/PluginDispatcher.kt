@@ -1,10 +1,10 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.AgentStorage
-import com.epam.drill.byId
+import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.agentmanager.byId
+import com.epam.drill.agentmanager.get
 import com.epam.drill.common.PluginBean
-import com.epam.drill.get
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
@@ -40,7 +40,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     suspend fun processPluginData(pluginData: String) {
         val message = parseRequest(pluginData)
         val pluginId = message.pluginId
-        val dp = plugins.plugins[pluginId]
         val sessionId = message.drillMessage.sessionId ?: ""
         val destination = pluginId + sessionId
 

@@ -5,19 +5,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AgentInfo(
-    val agentName: String,
-    val agentGroupName: String,
-    val agentDescription: String,
+    val name: String,
+    val groupName: String,
+    val description: String,
     var isEnable: Boolean,
 
     @Optional
-    val drillAdminUrl: String = "",
+    val adminUrl: String = "",
     @Optional
-    var agentAddress: String = "",
+    var ipAddress: String = "",
     @Optional
     val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
     @Optional
-    var agentAdditionalInfo: AgentAdditionalInfo? = null
+    var additionalInfo: AgentAdditionalInfo? = null
 )
 
 @Serializable

@@ -47,7 +47,7 @@ fun startWs(): Future<Unit> {
 
 private fun websocket() = runBlocking {
     launch {
-        val url = "ws://${agentInfo.drillAdminUrl}/agent/attach"
+        val url = "ws://${agentInfo.adminUrl}/agent/attach"
         wsLogger.debug { "try to create websocket $url" }
         val wsClient = WebSocketClient(url)
         wsLogger.debug { "WS created" }
