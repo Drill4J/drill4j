@@ -26,7 +26,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
     init {
 
         runBlocking {
-            agentStorage.onUpdate += update(mutableSetOf()) {it: MutableMap<AgentInfo, DefaultWebSocketSession> ->
+            agentStorage.onUpdate += update(mutableSetOf()) {
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
                 sessionStorage.sendTo(it.keys.toAgentInfosWebSocket().messageEvent(destination))
             }

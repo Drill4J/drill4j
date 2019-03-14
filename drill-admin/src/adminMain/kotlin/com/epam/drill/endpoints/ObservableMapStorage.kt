@@ -18,7 +18,12 @@ class ObservableMapStorage<K, V, R>(private val targetMap: MutableMap<K, V> = mu
         get() = targetMap.entries
 
     suspend fun put(key: K, value: V): V? {
-        val putValue = targetMap.put(key, value)
+        val putValue: V? = if (targetMap.containsKey(key)) {
+            targetMap.remove(key)
+            targetMap.put(key, value)
+        } else {
+            targetMap.put(key, value)
+        }
         onAdd.forEach {
             val first = it.first
             val second = it.second
@@ -81,7 +86,6 @@ class ObservableContext<R> {
     constructor(context: R) {
         this.context = context
     }
-
 
 
     suspend operator fun invoke(block: suspend R.() -> Unit) {
