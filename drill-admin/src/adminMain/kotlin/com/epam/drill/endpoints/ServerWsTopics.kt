@@ -3,6 +3,8 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.byId
+import com.epam.drill.agentmanager.toAgentInfoWebSocket
+import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
@@ -26,12 +28,12 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
         runBlocking {
             agentStorage.onUpdate += update(mutableSetOf()) {it: MutableMap<AgentInfo, DefaultWebSocketSession> ->
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
-                sessionStorage.sendTo(it.keys.messageEvent(destination))
+                sessionStorage.sendTo(it.keys.toAgentInfosWebSocket().messageEvent(destination))
             }
             agentStorage.onAdd += add(mutableSetOf()) { k, _ ->
                 val destination = app.toLocation(WsRoutes.GetAgent(k.ipAddress))
                 if (sessionStorage.exists(destination))
-                    sessionStorage.sendTo(k.messageEvent(destination))
+                    sessionStorage.sendTo(k.toAgentInfoWebSocket().messageEvent(destination))
             }
 
             agentStorage.onRemove += remove(mutableSetOf()) { k ->
@@ -42,11 +44,11 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
             wsTopic {
                 topic<WsRoutes.GetAllAgents> { _, _ ->
-                    agentStorage.keys
+                    agentStorage.keys.toAgentInfosWebSocket()
                 }
 
                 topic<WsRoutes.GetAgent> { x, _ ->
-                    agentStorage.byId(x.agentId)
+                    agentStorage.byId(x.agentId)?.toAgentInfoWebSocket()
                 }
             }
 
