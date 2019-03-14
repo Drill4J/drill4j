@@ -86,7 +86,12 @@ fun Application.module(
         install(ContentNegotiation) {
             register(ContentType.Application.Json, GsonConverter())
         }
-        install(StatusPages)
+        install(StatusPages){
+            exception<Throwable> { cause ->
+                call.respond(HttpStatusCode.InternalServerError, "Internal Server Error")
+                throw cause
+            }
+        }
         install(CallLogging)
         install(Locations)
         install(io.ktor.websocket.WebSockets) {

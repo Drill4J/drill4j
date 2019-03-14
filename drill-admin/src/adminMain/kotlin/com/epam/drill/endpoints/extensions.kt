@@ -39,7 +39,7 @@ fun Any?.stringify() = Gson().toJson(this) ?: ""
 fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 //fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 
-class DrillWsSession(var url: String? = null, sourceSession: DefaultWebSocketServerSession) :
+class DrillWsSession(var url: String? = null, val sourceSession: DefaultWebSocketServerSession) :
     DefaultWebSocketServerSession by sourceSession{
     override fun equals(other: Any?): Boolean {
         if (javaClass != other?.javaClass) return false
@@ -52,8 +52,12 @@ class DrillWsSession(var url: String? = null, sourceSession: DefaultWebSocketSer
     }
 
     override fun hashCode(): Int {
-        return url?.hashCode() ?: 0
+        var result = url?.hashCode() ?: 0
+        result = 31 * result + sourceSession.hashCode()
+        return result
     }
+
+
 }
 
 

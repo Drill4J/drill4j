@@ -14,4 +14,4 @@ fun agentWsMessage(destination: String, message: Any): Frame.Text {
     return Frame.Text(toJson)
 }
 
-inline fun <reified T : Any> KClass<T>.fromJson(json: String) = Gson().fromJson(json, this.java)
+inline infix fun <reified T : Any> KClass<T>.fromJson(json: String) = Gson().fromJson(json, this.java)

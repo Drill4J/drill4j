@@ -6,7 +6,6 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -34,14 +33,10 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
-                            val readText = frame.readText()
-                            if (readText.isEmpty())
-                                return@webSocket
-                            val message =
-                                Gson().fromJson<Message>(readText, Message::class.javaObjectType) ?: return@webSocket
+                            val message = Message::class fromJson frame.readText() ?: return@webSocket
                             when (message.type) {
                                 MessageType.AGENT_REGISTER -> {
-                                    agentInfo = AgentInfo::class.fromJson(message.message)
+                                    agentInfo = AgentInfo::class fromJson message.message
                                     agentStorage.put(agentInfo!!, this)
                                     send(agentWsMessage("/plugins/agent-attached", ""))
                                 }

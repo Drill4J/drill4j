@@ -52,14 +52,16 @@ fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
 fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
 
 fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
+    it.run {
         AgentInfoWebSocket(
-            name = it.name,
-            description = it.description,
-            group = it.groupName,
-            status = it.isEnable,
-            adminUrl = it.adminUrl,
-            ipAddress = it.ipAddress,
-            activePluginsCount = it.rawPluginNames.activePluginsCount(),
-            pluginsCount = it.rawPluginNames.size
+            name = name,
+            description = description,
+            group = groupName,
+            status = isEnable,
+            adminUrl = adminUrl,
+            ipAddress = ipAddress,
+            activePluginsCount = rawPluginNames.activePluginsCount(),
+            pluginsCount = rawPluginNames.size
         )
+    }
 }
