@@ -18,7 +18,27 @@ data class AgentInfo(
     val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
     @Optional
     var additionalInfo: AgentAdditionalInfo? = null
-)
+
+) {
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as AgentInfo
+
+        if (name != other.name) return false
+        if (ipAddress != other.ipAddress) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + ipAddress.hashCode()
+        return result
+    }
+}
 
 @Serializable
 data class AgentAdditionalInfo(
