@@ -8,7 +8,7 @@ object Routes {
 
     @Location("/api")
     class Api {
-        @Location("/agent")
+        @Location("/agents")
         class Agent {
             @Location("/{agentId}/toggle-standby")
             data class AgentToggleStandby(val agentId: String)

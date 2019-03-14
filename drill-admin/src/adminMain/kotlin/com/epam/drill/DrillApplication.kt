@@ -118,6 +118,7 @@ fun Application.module(
             method(HttpMethod.Get)
             method(HttpMethod.Delete)
             method(HttpMethod.Put)
+            header(HttpHeaders.Authorization)
             exposeHeader(HttpHeaders.Authorization)
         }
     }
