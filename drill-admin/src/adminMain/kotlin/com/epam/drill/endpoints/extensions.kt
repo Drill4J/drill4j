@@ -40,6 +40,20 @@ fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destina
 //fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 
 class DrillWsSession(var url: String? = null, sourceSession: DefaultWebSocketServerSession) :
-    DefaultWebSocketServerSession by sourceSession
+    DefaultWebSocketServerSession by sourceSession{
+    override fun equals(other: Any?): Boolean {
+        if (javaClass != other?.javaClass) return false
+
+        other as DrillWsSession
+
+        if (url != other.url) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return url?.hashCode() ?: 0
+    }
+}
 
 
