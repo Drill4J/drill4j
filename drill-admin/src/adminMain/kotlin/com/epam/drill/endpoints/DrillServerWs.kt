@@ -4,6 +4,7 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -27,7 +28,8 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                 val wsSession = DrillWsSession(null, this)
                 try {
                     incoming.consumeEach { frame ->
-                        val event = Message::class.fromJson((frame as Frame.Text).readText())
+                        val json = (frame as Frame.Text).readText()
+                        val event =     Gson().fromJson(json,Message::class.java)
                         when (event.type) {
                             MessageType.SUBSCRIBE -> {
                                 subscribe(wsSession, event)

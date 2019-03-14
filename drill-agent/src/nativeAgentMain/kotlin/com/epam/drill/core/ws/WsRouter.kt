@@ -5,6 +5,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.agentInfo
 import com.epam.drill.core.drillInstallationDir
+import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.core.plugin.pluginConfigById
 import com.epam.drill.core.util.dumpConfigToFileSystem

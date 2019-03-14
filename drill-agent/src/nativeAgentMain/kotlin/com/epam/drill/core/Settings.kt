@@ -27,8 +27,8 @@ private suspend fun fillMainProperties() {
 
 
     //fixme retrieve a real IP
-    any.agentAddress = "127.0.0.1"
-    any.agentAdditionalInfo = AgentAdditionalInfo(
+    any.ipAddress = "127.0.0.1"
+    any.additionalInfo = AgentAdditionalInfo(
         listOf(),
         4,
         "x64",
@@ -37,7 +37,7 @@ private suspend fun fillMainProperties() {
         mapOf()
     )
 
-    any.agentAddress = "127.0.0.1"
+    any.ipAddress = "127.0.0.1"
 
     di.loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
 

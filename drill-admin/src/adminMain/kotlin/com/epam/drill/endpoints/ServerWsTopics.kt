@@ -3,10 +3,12 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.byId
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.router.WsRoutes
 import io.ktor.application.Application
+import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -22,7 +24,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
     init {
 
         runBlocking {
-            agentStorage.onUpdate += update(mutableSetOf()) {
+            agentStorage.onUpdate += update(mutableSetOf()) {it: MutableMap<AgentInfo, DefaultWebSocketSession> ->
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
                 sessionStorage.sendTo(it.keys.messageEvent(destination))
             }
