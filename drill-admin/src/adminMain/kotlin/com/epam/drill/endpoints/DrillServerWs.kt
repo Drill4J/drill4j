@@ -24,7 +24,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
     init {
 
         app.routing {
-            webSocket("/api/drill-admin-socket") {
+            webSocket("/ws/drill-admin-socket") {
                 val wsSession = DrillWsSession(null, this)
                 try {
                     incoming.consumeEach { frame ->
