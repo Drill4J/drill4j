@@ -24,7 +24,7 @@ repositories {
     maven { url "https://kotlin.bintray.com/ktor" }
     maven { url "https://dl.bintray.com/spekframework/spek-dev" }
     maven { url "https://kotlin.bintray.com/kotlinx" }
-    maven { url "https://drill4j.bintray.com/nativewebsockets" }
+    maven { url "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/" }
 
 
 }
@@ -34,12 +34,20 @@ if (Os.isFamily(Os.FAMILY_MAC)) preset = "macosX64"
 if (Os.isFamily(Os.FAMILY_UNIX)) preset = "linuxX64"
 if (Os.isFamily(Os.FAMILY_WINDOWS)) preset = "mingwX64"
 
-
 kotlin {
     targets {
         fromPreset(kotlin.presets[preset], 'kasm')
     }
     sourceSets {
-        kasmMain
+        kasmMain {
+            dependencies {
+                implementation "com.soywiz:korio:1.1.6-drill"
+            }
+        }
+        kasmTest{
+            dependencies {
+                implementation "com.soywiz:korio:1.1.6-drill"
+            }
+        }
     }
 }

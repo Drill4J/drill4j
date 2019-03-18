@@ -16,7 +16,7 @@ repositories {
     maven { url "https://kotlin.bintray.com/ktor" }
     maven { url "https://dl.bintray.com/spekframework/spek-dev" }
     maven { url "https://kotlin.bintray.com/kotlinx" }
-    maven { url "https://drill4j.bintray.com/nativewebsockets" }
+    maven { url "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/" }
 }
 kotlin {
     targets {
