@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AgentInfo(
+    var id: String,
     val name: String,
     val groupName: String,
     val description: String,

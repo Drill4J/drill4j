@@ -19,16 +19,16 @@ suspend fun parseConfigs() {
 private suspend fun fillMainProperties() {
     val path = "$drillInstallationDir/configs"
 
-    val any = Json().parse(
+    val agInfo = Json().parse(
         AgentInfo.serializer(),
         resourcesVfs["${"$path/"}drillConfig.json"].readString()
     )
-    di.agentInfo = any
+    di.agentInfo = agInfo
 
 
     //fixme retrieve a real IP
-    any.ipAddress = "127.0.0.1"
-    any.additionalInfo = AgentAdditionalInfo(
+    agInfo.ipAddress = "127.0.0.1"
+    agInfo.additionalInfo = AgentAdditionalInfo(
         listOf(),
         4,
         "x64",
@@ -36,8 +36,6 @@ private suspend fun fillMainProperties() {
         "10",
         mapOf()
     )
-
-    any.ipAddress = "127.0.0.1"
 
     di.loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
 

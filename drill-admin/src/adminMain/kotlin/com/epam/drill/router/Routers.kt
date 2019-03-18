@@ -13,10 +13,10 @@ object Routes {
             @Location("/{agentId}/toggle-standby")
             data class AgentToggleStandby(val agentId: String)
 
-            @Location("/load-plugin/{agentId}")
+            @Location("/{agentId}/load-plugin")
             data class LoadPlugin(val agentId: String)
 
-            @Location("/unload-plugin/{agentId}")
+            @Location("/{agentId}/unload-plugin")
             data class UnloadPlugin(val agentId: String)
 
             @Location("/{agentId}")
