@@ -60,9 +60,9 @@ class DevEndpoints(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    @Location("/api/ex/exceptions/{topicName}")
+    @Location("/ws/ex/exceptions/{topicName}")
     data class Exceptionss(val topicName: String)
 
-    @Location("/api/ex/exceptions/getAllSubscibers")
+    @Location("/ws/ex/exceptions/getAllSubscibers")
     class getAllSubscibers
 }
