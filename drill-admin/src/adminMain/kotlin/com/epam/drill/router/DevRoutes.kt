@@ -11,6 +11,9 @@ object DevRoutes {
         class Agent {
             @Location("/get-all-agents")
             class Agents
+
+            @Location("/{agentId}")
+            data class AgentInfo(val agentId: String)
         }
     }
 }

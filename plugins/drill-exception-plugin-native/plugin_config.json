@@ -1,5 +1,8 @@
 {
   "id": "except-ions",
+  "name": "ExceptionPlugin",
+  "description": "Plugin for catching exceptions",
+  "type": "Exception",
   "enabled": true,
   "config": "{\n    \"blackList\": [\n      \"Ljava/\",\n      \"Ljavax/\",\n      \"Lorg/apache/\",\n      \"Lsun/\",\n      \"Lorg/springframework/core/\",\n      \"Lorg/springframework/cglib/\",\n      \"Lorg/springframework/util\",\n      \"Lorg/springframework/beans/\",\n      \"Lorg/springframework/data/\",\n      \"Lorg/hibernate/\",\n      \"Lorg/hibernate/internal\"\n    ]\n  }"
 }
