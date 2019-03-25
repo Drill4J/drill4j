@@ -8,6 +8,9 @@ import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.pluginServices
+import com.epam.drill.plugins.Plugins
+import com.epam.drill.plugins.serverInstance
 import com.epam.drill.router.WsRoutes
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
@@ -20,6 +23,7 @@ import org.kodein.di.generic.instance
 class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
     private val wsTopic: WsTopic by instance()
     private val agentStorage: AgentStorage by instance()
+    private val plugins: Plugins by instance()
     private val app: Application by instance()
     private val sessionStorage: MutableSet<DrillWsSession> by instance()
 
@@ -49,6 +53,10 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 topic<WsRoutes.GetAgent> { x, _ ->
                     agentStorage.byId(x.agentId)?.toAgentInfoWebSocket()
+                }
+
+                topic<WsRoutes.GetAllPlugins> { _, _ ->
+                    plugins.plugins.values.map { dp -> dp.serverInstance.id }
                 }
             }
 

@@ -9,4 +9,7 @@ object WsRoutes {
     @Location("/get-agent/{agentId}")
     data class GetAgent(val agentId: String)
 
+    @Location("/get-all-plugins")
+    class GetAllPlugins
+
 }
