@@ -1,8 +1,6 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.agentmanager.byId
-import com.epam.drill.agentmanager.get
+import com.epam.drill.agentmanager.*
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.agentWsMessage
@@ -174,7 +172,11 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerDevDrillAdmin() {
         authenticate {
             get<DevRoutes.Api.Agent.Agents> {
-                call.respond(agentStorage.keys)
+                call.respond(agentStorage.keys.toAgentInfosWebSocket())
+            }
+
+            get<DevRoutes.Api.Agent.AgentInfo> {agent ->
+                call.respond(agentStorage.byId(agent.agentId)?.toAgentInfoWebSocket() ?: HttpStatusCode.NotFound)
             }
         }
     }
