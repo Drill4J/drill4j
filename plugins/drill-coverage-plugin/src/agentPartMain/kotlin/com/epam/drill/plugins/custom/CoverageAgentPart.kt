@@ -8,11 +8,28 @@ import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
-import org.jacoco.core.instr.Instrumenter
-import org.jacoco.core.runtime.Es
-import org.jacoco.core.runtime.MyRuntime
-import java.util.concurrent.Callable
+import org.jacoco.core.runtime.RuntimeData
+import java.util.concurrent.ConcurrentHashMap
 
+object DrillProbeArrayProvider : ProbeArrayProvider {
+    
+    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>() 
+        
+    override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
+        val sessionId = DrillRequest.currentSession()
+        return sessionRuntimes[sessionId]?.run {
+            getExecutionData(id, name, probeCount).probes
+        } ?: BooleanArray(probeCount)
+    }
+    
+    fun start(sessionId: String) {
+        sessionRuntimes.put(sessionId, RuntimeData())
+    }
+
+    fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)
+}
+
+val instrumenter = instrumenter(DrillProbeArrayProvider)
 
 @Suppress("unused")
 class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
@@ -22,12 +39,11 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
     override fun doAction(action: CoverageAction) {
         val record = action.isRecord
         if (record) {
-            println("Start record for session ${action.sessionId}")
-            Es.get().workers.add(action.sessionId)
+            println("Start recording for session ${action.sessionId}")
+            DrillProbeArrayProvider.start(action.sessionId)
         } else if (!record) {
-            println("End record for session ${action.sessionId}")
-            Es.get().workers.remove(action.sessionId)
-            val get = Es.get().sessionToRuntimeMap.remove(action.sessionId)
+            println("End recording for session ${action.sessionId}")
+            val get = DrillProbeArrayProvider.stop(action.sessionId)
             if (get != null) {
                 val executionData = ExecutionDataStore()
                 val sessionInfos = SessionInfoStore()
@@ -48,11 +64,6 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
     }
 
     override fun initPlugin() {
-        Es.get().sessionCallable = object : Callable<String> {
-            override fun call(): String {
-                return DrillRequest.currentSession()
-            }
-        }
     }
 
     override fun instrument(className: String, initialBytest: ByteArray): ByteArray {
@@ -72,7 +83,7 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
                 message
             )
 
-            return Instrumenter(MyRuntime()).instrument(initialBytest, className)
+            return instrumenter(className, initialBytest)
         } catch (ex: Throwable) {
             ex.printStackTrace()
             throw ex
