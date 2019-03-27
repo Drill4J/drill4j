@@ -5,15 +5,12 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.byId
 import com.epam.drill.agentmanager.toAgentInfoWebSocket
 import com.epam.drill.agentmanager.toAgentInfosWebSocket
-import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.pluginServices
 import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.serverInstance
+import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
 import io.ktor.application.Application
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -56,7 +53,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 }
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
-                    plugins.plugins.values.map { dp -> dp.serverInstance.id }
+                    plugins.pluginBeans.toAllPluginsWebSocket(agentStorage.keys)
                 }
             }
 
