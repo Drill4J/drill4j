@@ -50,7 +50,7 @@ val storage = Kodein.Module(name = "agentStorage") {
     bind<MongoClient>() with singleton { MongoClient() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
-    bind<MutableSet<DrillWsSession>>() with eagerSingleton { mutableSetOf<DrillWsSession>() }
+    bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
