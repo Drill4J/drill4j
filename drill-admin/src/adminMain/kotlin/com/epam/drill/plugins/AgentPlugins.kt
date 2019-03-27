@@ -68,7 +68,9 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         val entrySet = jarFile.entries().iterator().asSequence().toSet()
         val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
         val constructor = pluginApiClass!!.getConstructor(WsService::class.java, String::class.java)
-        return constructor.newInstance(wsService, extractPluginBean(jarFile, tempDirectory).id) as AdminPluginPart
+        val pluginBean = extractPluginBean(jarFile, tempDirectory)
+        plugins.pluginBeans.add(pluginBean)
+        return constructor.newInstance(wsService, pluginBean.id) as AdminPluginPart
     }
 
     private fun processAgentPart(jar: JarFile, tempDirectory: File): File {
