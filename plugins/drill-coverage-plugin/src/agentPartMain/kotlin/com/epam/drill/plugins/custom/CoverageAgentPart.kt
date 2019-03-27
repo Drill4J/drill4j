@@ -16,25 +16,26 @@ object DrillProbeArrayProvider : ProbeArrayProvider {
     private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>() 
         
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
-        val sessionId = DrillRequest.currentSession()
-        return sessionRuntimes[sessionId]?.run {
+        val sessionId = DrillRequest.currentSession() as String?
+        val runtime = sessionId?.let { sessionRuntimes[it] }
+        return runtime?.run {
             getExecutionData(id, name, probeCount).probes
         } ?: BooleanArray(probeCount)
     }
     
     fun start(sessionId: String) {
-        sessionRuntimes.put(sessionId, RuntimeData())
+        sessionRuntimes[sessionId] = RuntimeData()
     }
 
     fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)
 }
 
-val instrumenter = instrumenter(DrillProbeArrayProvider)
-
 @Suppress("unused")
 class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
 
     val initialClassBytes = mutableMapOf<String, ByteArray>()
+
+    val instrumenter = instrumenter(DrillProbeArrayProvider)
 
     override fun doAction(action: CoverageAction) {
         val record = action.isRecord
@@ -42,7 +43,7 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
             println("Start recording for session ${action.sessionId}")
             DrillProbeArrayProvider.start(action.sessionId)
         } else if (!record) {
-            println("End recording for session ${action.sessionId}")
+            println("End of recording for session ${action.sessionId}")
             val get = DrillProbeArrayProvider.stop(action.sessionId)
             if (get != null) {
                 val executionData = ExecutionDataStore()

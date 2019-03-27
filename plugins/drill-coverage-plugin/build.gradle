@@ -27,7 +27,7 @@ kotlin {
                 implementation project(":drill-plugin-api:drill-agent-part")
                 implementation project(":drill-common")
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1"
-                implementation("org.jacoco:org.jacoco.core:0.8.3")
+                api("org.jacoco:org.jacoco.core:0.8.3")
             }
         }
         adminPartMain {
@@ -36,7 +36,7 @@ kotlin {
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1"
                 implementation project(":drill-plugin-api:drill-admin-part")
                 implementation project(":drill-common")
-                implementation("org.jacoco:org.jacoco.core:0.8.3")
+                api("org.jacoco:org.jacoco.core:0.8.3")
             }
         }
 
@@ -73,7 +73,6 @@ task packPlugin(type: Jar) {
     from(adminPartJar, agentPartJar)
     destinationDir = file("../../distr/adminStorage")
 }
-
 
 task buildCoveragePlugin {
     group = "app"
