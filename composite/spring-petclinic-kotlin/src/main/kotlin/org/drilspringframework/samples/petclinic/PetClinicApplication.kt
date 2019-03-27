@@ -15,10 +15,8 @@
  */
 package org.drilspringframework.samples.petclinic
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.drilspringframework.samples.petclinic.system.Rst
 
 /**
  * PetClinic Spring Boot Application.
@@ -28,11 +26,19 @@ import org.drilspringframework.samples.petclinic.system.Rst
  */
 @SpringBootApplication
 class PetClinicApplication{
-    @Autowired
-    lateinit var qq: Rst
+
+    fun mon(){
+        println("cretin")
+    }
+
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            println("xxx")
+            runApplication<PetClinicApplication>(*args)
+        }
+    }
 }
 
 
-fun main(args: Array<String>) {
-    runApplication<PetClinicApplication>(*args)
-}
+

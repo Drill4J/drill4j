@@ -181,7 +181,7 @@ class Label {
      * are stored in a linked list of [Edge] objects, linked to each
      * other by their [Edge.next] field.
      */
-    internal lateinit var successors: Edge
+    internal var successors: Edge? = null
 
     /**
      * The next basic block in the basic block stack. This stack is used in the
@@ -211,7 +211,8 @@ class Label {
         get() {
             if (status and RESOLVED == 0) {
                 throw IllegalStateException(
-                        "Label offset position has not been resolved yet")
+                    "Label offset position has not been resolved yet"
+                )
             }
             return position
         }
@@ -246,8 +247,10 @@ class Label {
      * @throws IllegalArgumentException
      * if this label has not been created by the given code writer.
      */
-    internal fun put(owner: MethodWriter, out: ByteVector, source: Int,
-                     wideOffset: Boolean) {
+    internal fun put(
+        owner: MethodWriter, out: ByteVector, source: Int,
+        wideOffset: Boolean
+    ) {
         if (status and RESOLVED == 0) {
             if (wideOffset) {
                 addReference(-1 - source, out.length)
@@ -278,14 +281,16 @@ class Label {
      * the position where the offset for this forward reference must
      * be stored.
      */
-    private fun addReference(sourcePosition: Int,
-                             referencePosition: Int) {
+    private fun addReference(
+        sourcePosition: Int,
+        referencePosition: Int
+    ) {
         if (srcAndRefPositions == null) {
             srcAndRefPositions = IntArray(6)
         }
         if (referenceCount >= srcAndRefPositions!!.size) {
             val a = IntArray(srcAndRefPositions!!.size + 6)
-            srcAndRefPositions!!.copyInto(a,0,0, srcAndRefPositions!!.size)
+            srcAndRefPositions!!.copyInto(a, 0, 0, srcAndRefPositions!!.size)
 
             srcAndRefPositions = a
         }
@@ -316,8 +321,10 @@ class Label {
      * if this label has already been resolved, or if it has not
      * been created by the given code writer.
      */
-    internal fun resolve(owner: MethodWriter, position: Int,
-                         data: ByteArray): Boolean {
+    internal fun resolve(
+        owner: MethodWriter, position: Int,
+        data: ByteArray
+    ): Boolean {
         var needUpdate = false
         this.status = this.status or RESOLVED
         this.position = position
@@ -328,7 +335,7 @@ class Label {
             val offset: Int
             if (source >= 0) {
                 offset = position - source
-                if (offset <Short.MIN_VALUE || offset > Short.MAX_VALUE) {
+                if (offset < Short.MIN_VALUE || offset > Short.MAX_VALUE) {
                     /*
                      * changes the opcode of the jump instruction, in order to
                      * be able to find it later (see resizeInstructions in
@@ -450,7 +457,7 @@ class Label {
                     if (!l.inSameSubroutine(JSR)) {
                         val e = Edge()
                         e.info = l.inputStackTop
-                        e.successor = JSR.successors.successor
+                        e.successor = JSR.successors?.successor
                         e.next = l.successors
                         l.successors = e
                     }
@@ -469,7 +476,7 @@ class Label {
                 // if the l block is a JSR block, then 'l.successors.next' leads
                 // to the JSR target (see {@link #visitJumpInsn}) and must
                 // therefore not be followed
-                if (l.status and Companion.JSR == 0 || e !== l.successors.next) {
+                if (l.status and Companion.JSR == 0 || e !== l.successors?.next) {
                     // pushes e.successor on the stack if it not already added
                     if (e.successor!!.next == null) {
                         e.successor!!.next = stack

@@ -1547,7 +1547,7 @@ open class MethodWriter
                         for (i in start until end) {
                             code.data[i] = Opcodes.NOP.toByte()
                         }
-                        code.data[end] = Opcodes.ATHROW as Byte
+                        code.data[end] = Opcodes.ATHROW.toByte()
                         // emits a frame for this unreachable block
                         startFrame(start, 0, 1)
                         frame!![frameIndex++] = Frame.OBJECT or cw.addType("java/lang/Throwable")
@@ -1589,8 +1589,8 @@ open class MethodWriter
                         // if l is a JSR block, adds b after the first two edges
                         // to preserve the hypothesis about JSR block successors
                         // order (see {@link #visitJumpInsn})
-                        b.next = l.successors.next!!.next
-                        l.successors.next!!.next = b
+                        b.next = l.successors?.next!!.next
+                        l.successors?.next!!.next = b
                     }
                     // goes to the next label
                     l = l.successor
@@ -1612,7 +1612,7 @@ open class MethodWriter
                 while (l != null) {
                     if (l.status and Label.JSR != 0) {
                         // the subroutine is defined by l's TARGET, not by l
-                        val subroutine = l.successors.next!!.successor
+                        val subroutine = l.successors?.next!!.successor
                         // if this subroutine has not been visited yet...
                         if (subroutine!!.status and Label.VISITED == 0) {
                             // ...assigns it a new id and finds its basic blocks
@@ -1632,7 +1632,7 @@ open class MethodWriter
                             L = L.successor
                         }
                         // the subroutine is defined by l's TARGET, not by l
-                        val subroutine = l.successors.next!!.successor
+                        val subroutine = l.successors?.next!!.successor
                         subroutine!!.visitSubroutine(l, 0, subroutines)
                     }
                     l = l.successor

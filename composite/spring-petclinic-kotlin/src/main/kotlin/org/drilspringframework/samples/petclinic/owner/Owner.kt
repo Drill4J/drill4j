@@ -51,8 +51,7 @@ class Owner : Person() {
     var pets: MutableSet<Pet> = HashSet()
 
 
-    fun getPets(): List<Pet> =
-            pets.sortedWith(compareBy({ it.name }))
+    fun getPets(): List<Pet> =listOf()
 
 
     fun addPet(pet: Pet) {

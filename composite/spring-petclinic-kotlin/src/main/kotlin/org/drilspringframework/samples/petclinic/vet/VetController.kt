@@ -31,7 +31,7 @@ class VetController(val vetRepository: VetRepository) {
 
     @GetMapping("/vets.html")
     fun showHtmlVetList(model: MutableMap<String, Any>): String {
-        val vets = Vets(vetRepository.findAll())
+        val vets = Vets(setOf())
         model.put("vets", vets)
         return "vets/vetList"
     }
