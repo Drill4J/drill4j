@@ -1,6 +1,11 @@
 package com.epam.drill.core.request
 
-data class DrillRequest(val drillSessionId: String?, val host: String?)
+import com.epam.drill.api.drillRequest
+import jvmapi.JNIEnv
+import jvmapi.NewStringUTF
+import jvmapi.jobject
+
+data class DrillRequest(val drillSessionId: String?, val host: String?, val additionalConfig: String?)
 
 object RetrieveDrillSessionFromRequest {
 
@@ -33,7 +38,11 @@ object RetrieveDrillSessionFromRequest {
             }
         }
 
-        return DrillRequest(cookies["DrillSessionId"] ?: requestHeaders["DrillSessionId"], requestHeaders["Host"])
+        return DrillRequest(
+            cookies["DrillSessionId"] ?: requestHeaders["DrillSessionId"],
+            requestHeaders["Host"],
+            requestHeaders["DrillAdditionalConfig"]
+        )
     }
 
     @Throws(RuntimeException::class)
@@ -44,5 +53,12 @@ object RetrieveDrillSessionFromRequest {
         }
         return header.substring(0, idx) to header.substring(idx + 1, header.length)
     }
+
+}
+
+
+@CName("Java_com_epam_drill_session_DrillRequest_currentSession")
+fun currentsession4java(env: JNIEnv, thiz: jobject): jobject? {
+    return NewStringUTF(drillRequest()?.drillSessionId)
 
 }

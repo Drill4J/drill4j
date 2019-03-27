@@ -55,7 +55,9 @@ kotlin {
         fromPreset(kotlin.presets[preset], 'jvmapi')
 
         configure([jvmapi]) {
+            compilations.main.outputKinds('DYNAMIC')
             compilations.main {
+                
                 cinterops {
                     jvmapi {
                         includeDirs includeBase, includeAddition, "./src/nativeInterop/cpp"

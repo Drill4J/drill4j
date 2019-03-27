@@ -22,9 +22,12 @@ fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
     var pluginApiClass: jclass? = null
 
     this@retrievePluginApiClass.iterateThroughtPluginClasses { findClass ->
+
         if (com.epam.drill.core.plugin.loader.isSuitablePluginClass(findClass))
             pluginApiClass = findClass
+
     }
+
     pluginApiClass ?: throw com.epam.drill.core.exceptions.PluginLoadException("Can't find the plugin API class.")
     pluginApiClass!!
 }
@@ -32,20 +35,26 @@ fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
 
 fun isSuitablePluginClass(findClass: jclass) = memScoped {
     val targetClass = AgentPart::class.jniParamName()
-    var parentClass = GetSuperclass(findClass)
-    var name = alloc<CPointerVar<ByteVar>>()
-    GetClassSignature(parentClass, name.ptr, null)
     var isApiClassFound = false
-    while (parentClass != null) {
-        val toKString = name.value?.toKString()
-        if (toKString == targetClass) {
-            isApiClassFound = true
-            break
-        }
-
-        parentClass = GetSuperclass(parentClass)
-        name = alloc()
+    var parentClass = GetSuperclass(findClass)
+    ExceptionClear()
+    if (parentClass != null) {
+        var name = alloc<CPointerVar<ByteVar>>()
         GetClassSignature(parentClass, name.ptr, null)
+        ExceptionClear()
+        while (name.value?.toKString() != "Ljava/lang/Object;") {
+            val toKString = name.value?.toKString()
+            if (toKString == targetClass) {
+                isApiClassFound = true
+                break
+            }
+
+            parentClass = GetSuperclass(parentClass)
+            ExceptionClear()
+            name = alloc()
+            GetClassSignature(parentClass, name.ptr, null)
+            ExceptionClear()
+        }
     }
     isApiClassFound
 }
@@ -66,11 +75,11 @@ suspend fun DrillPluginFile.retrieveFacilitiesFromPlugin() {
 }
 
 @ExperimentalUnsignedTypes
-class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
-    private val natPluginLogger
+open class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
+    val natPluginLogger
         get() = DLogger("NativePluginController")
 
-    private val pluginApiClass: jclass = pf.retrievePluginApiClass()
+    val pluginApiClass: jclass = pf.retrievePluginApiClass()
     private val pluginConfig: PluginBean = pf.pluginConfig()
     override val id: String = pf.pluginId()
 
@@ -83,7 +92,7 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
             pluginConfigById.dumpConfigToFileSystem()
         }
 
-    private var userPlugin: jobject =
+    var userPlugin: jobject =
         NewObjectA(
             pluginApiClass,
             GetMethodID(pluginApiClass, "<init>", "(Ljava/lang/String;)V"),
@@ -193,4 +202,32 @@ class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
     }
 
 
+}
+
+@ExperimentalUnsignedTypes
+class Instrumented(pf: DrillPluginFile) : NativePluginController(pf) {
+
+    var qs: jmethodID? = null
+
+    init {
+        qs = GetMethodID(pluginApiClass, "instrument", "(Ljava/lang/String;[B)[B")
+    }
+
+    fun instrument(className: String, x1: jbyteArray): jobject? {
+        val callObjectMethodA =
+            CallObjectMethod(userPlugin, qs, NewStringUTF(className), x1)
+
+        ExceptionDescribe()
+        return callObjectMethodA
+
+    }
+
+    fun doRawAction(action: String) {
+        CallVoidMethod(
+            userPlugin,
+            GetMethodID(pluginApiClass, "doRawAction", "(Ljava/lang/String;)V"),
+            NewStringUTF(action)
+        )
+        ExceptionDescribe()
+    }
 }

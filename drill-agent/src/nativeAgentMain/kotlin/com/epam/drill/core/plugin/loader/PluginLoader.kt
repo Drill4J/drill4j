@@ -1,9 +1,12 @@
 package com.epam.drill.core.plugin.loader
 
-import com.epam.drill.*
+import com.epam.drill.DrillPluginFile
+import com.epam.drill.core.di
 import com.epam.drill.core.exceptions.PluginLoadException
+import com.epam.drill.iterateThroughPlugins
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
+import com.epam.drill.pluginConfig
 import kotlinx.coroutines.runBlocking
 
 val plLogger
@@ -23,7 +26,18 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
     pluginFile.retrieveFacilitiesFromPlugin()
     pluginFile.addPluginsToSystemClassLoader()
     try {
-        PluginManager.addPlugin(NativePluginController(pluginFile))
+
+        //fixme costyl for coverage plugin...
+        val pluginConfig = pluginFile.pluginConfig()
+        if (pluginConfig.id == "coverage") {
+            println("coverage load as plugin")
+            val nativePluginController = Instrumented(pluginFile)
+            di {
+                pInstrumentedStorage["coverage"] = nativePluginController
+            }
+        } else {
+            PluginManager.addPlugin(NativePluginController(pluginFile))
+        }
     } catch (ex: Exception) {
         when (ex) {
             is PluginLoadException ->

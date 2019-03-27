@@ -38,13 +38,14 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val wsService: WsService by kodein.instance()
 
     suspend fun processPluginData(pluginData: String) {
-        val message = parseRequest(pluginData)
+        val message: SeqMessage = parseRequest(pluginData)
         val pluginId = message.pluginId
         val sessionId = message.drillMessage.sessionId ?: ""
         val destination = pluginId + sessionId
 
         try {
             //fixme
+            plugins.plugins[pluginId]?.first?.processData(message.drillMessage)
 //                                    val processData = dp?.serverInstance?.processData(message.drillMessage)
 //            dp?.serverInstance?.sender?.convertAndSend(destination, message)
             wsService.convertAndSend(destination, message)
@@ -78,6 +79,18 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         )
                     val pluginBean = agentStorage.byId(ll.agentId)?.rawPluginNames?.first { it.id == pluginId }
                     call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
+                }
+            }
+            authenticate {
+                patch<Routes.Api.Agent.PluginAction> { ll ->
+                    val message = call.receive<String>()
+
+                    agentStorage[ll.agentId]
+                        ?.send(
+                            agentWsMessage("/plugins/action", message)
+                        )
+//                    val pluginBean = agentStorage.byId(ll.agentId)?.rawPluginNames?.first { it.id == pluginId }
+                    call.respond { HttpStatusCode.OK }
                 }
             }
 

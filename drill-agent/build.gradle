@@ -84,7 +84,6 @@ kotlin {
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-
             }
         }
         javaAgentTest {
@@ -119,6 +118,16 @@ javaAgentJar {
         }
     }
 }
+
+tasks.forEach {
+    if (it.name == 'linkTestDebugExecutableNativeAgent')
+        println(it.class)
+}
+
+linkTestDebugExecutableNativeAgent {
+    binary.linkerOpts += "main.dll"
+}
+
 
 
 task deleteAndCopyAgent {

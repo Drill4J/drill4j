@@ -51,4 +51,5 @@ fun modifyClass(
         value[x] = y.toUByte()
     }
     newClassDataLen!!.pointed.value = toByteArray.size
+    println("_________________________________________________________________________________")
 }

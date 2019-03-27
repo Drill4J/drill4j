@@ -7,6 +7,7 @@ import com.soywiz.korio.file.extension
 import com.soywiz.korio.file.std.MemoryVfs
 import com.soywiz.korio.file.std.openAsZip
 import com.soywiz.korio.util.OS
+import jvmapi.ExceptionClear
 import jvmapi.FindClass
 import jvmapi.jclass
 import kotlinx.coroutines.runBlocking
@@ -29,8 +30,11 @@ suspend fun DrillPluginFile.iterateThroughtPluginClasses(block: suspend (jclass)
         for (x in it.listRecursive()) {
             if (x.extension == "class") {
                 val className = x.absolutePath.replace(".class", "").drop(1)
-                val findClass = FindClass(className)!!
-                block(findClass)
+                val findClass = FindClass(className)
+                ExceptionClear()
+                if (findClass != null) {
+                    block(findClass)
+                }
             }
         }
     }

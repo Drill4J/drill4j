@@ -118,3 +118,83 @@ typedef struct {
 configStruct config;
 
 
+pthread_mutex_t diMutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+
+
+
+
+
+
+
+typedef struct {
+    unsigned char *array;
+    int size;
+} classd;
+
+typedef struct {
+    classd **array;
+    size_t used;
+    size_t size;
+} ClassLoadingQueue;
+
+ClassLoadingQueue *classLoadingQu;
+
+
+void createClassLoadingQueue() {
+    ClassLoadingQueue data;
+    (void) memset((void *) &data, 0, sizeof(data));
+    classLoadingQu = &data;
+    classd **ptr = (classd **) malloc(1 * sizeof(classd));
+
+    classLoadingQu->array = ptr;
+    classLoadingQu->used = 0;
+    classLoadingQu->size = 1;
+    classLoadingQu->array[0] = NULL;
+
+}
+
+ClassLoadingQueue *getQs() {
+    return classLoadingQu;
+}
+
+void addClass(unsigned char *element, int size) {
+   //pthread_mutex_lock(&diMutex);
+   //static classd aa;
+   //(void) memset((void *) &aa, 0, sizeof(aa));
+   //aa.array = element;
+   //aa.size = size;
+   //if (classLoadingQu->used == classLoadingQu->size) {
+   //    classLoadingQu->size *= 2;
+   //    classLoadingQu->array = (classd **) realloc(classLoadingQu->array, classLoadingQu->size * sizeof(classd));
+   //}
+   ////size_t i = classLoadingQu->used++;
+   ////classLoadingQu->array[i] = &aa;
+   //pthread_mutex_unlock(&diMutex);
+
+}
+
+classd *getLoadedClass() {
+    pthread_mutex_lock(&diMutex);
+    if (classLoadingQu->used == 0) {
+        pthread_mutex_unlock(&diMutex);
+        return NULL;
+    }
+    classd *string = classLoadingQu->array[0];
+    classLoadingQu->used = classLoadingQu->used - 1;
+
+    for (int i = 0; i < classLoadingQu->size; i++) {
+        classLoadingQu->array[i] = classLoadingQu->array[i + 1];
+    }
+    classLoadingQu->array = (classd **) realloc(classLoadingQu->array, classLoadingQu->size * sizeof(classd));
+
+    return string;
+}
+
+void anyLock(){
+  pthread_mutex_lock(&diMutex);
+}
+void anyUnlock(){
+  pthread_mutex_unlock(&diMutex);
+}
