@@ -12,7 +12,6 @@ import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
-import java.lang.Math.round
 
 @Suppress("unused")
 
@@ -25,37 +24,61 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         val content = dm.content
         val parse = JSON.parse(CoverageMessage.serializer(), content!!)
         if (parse.type == CoverageEventType.COVERAGE_DATA) {
-            val xx = JSON.parse(ExDataTemp.serializer().list, parse.data)
-            val executionData = ExecutionDataStore()
-            xx.forEach { executionData.put(ExecutionData(it.id, it.className, it.probes.toBooleanArray())) }
-
             val coverageBuilder = CoverageBuilder()
-            val analyzer = Analyzer(executionData, coverageBuilder)
+            val dataStore = ExecutionDataStore()
+            val analyzer = Analyzer(dataStore, coverageBuilder)
 
-            executionData.contents.forEach { x ->
-                val name = x.name
-                analyzer.analyzeClass(initialClassBytes[name], name)
+            // Get new probes from message and populate dataStore with them
+            val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
+            probes.forEach { exData ->
+                dataStore.put(ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray()))
             }
-            val i1 =
-                (coverageBuilder.getClasses().map { it.methodCounter.coveredCount }.sum() * 100.0) / coverageBuilder.getClasses().map { it.methodCounter.totalCount }.sum()
-//            println(i1.round(2))
 
-            for (cc in coverageBuilder.getClasses()) {
-                        println("Coverage of class ${cc.getName()}")
+            // Analyze all exiting classes
+            dataStore.contents.forEach { exData ->
+                analyzer.analyzeClass(initialClassBytes[exData.name], exData.name)
+            }
 
-                        printCounter("instructions", cc.instructionCounter)
-                        printCounter("branches", cc.branchCounter)
-                        printCounter("lines", cc.lineCounter)
-                        printCounter("methods", cc.methodCounter)
-                        printCounter("complexity", cc.complexityCounter)
+            // TODO possible to store existing bundles to work with obsolete coverage results
+            val a = coverageBuilder.getBundle("all")
 
-                        for (i in cc.firstLine..cc.lastLine) {
-                            System.out.printf(
-                                "Line %s: %s%n", Integer.valueOf(i),
-                                getColor(cc.getLine(i).status)
-                            )
+            // TODO remove this temporary trace block and dependent methods
+            println("General method coverage ${a.methodCounter.coveredRatio*100}")
+            println("\n----------------\nCoverage of ${a.name}")
+            printCounter("instructions", a.instructionCounter)
+            printCounter("branches", a.branchCounter)
+            printCounter("lines", a.lineCounter)
+            printCounter("methods", a.methodCounter)
+            printCounter("complexity", a.complexityCounter)
+            for (p in a.packages) {
+                println("\n----------------\nCoverage of package ${p.name}")
+                printCounter("instructions", p.instructionCounter)
+                printCounter("branches", p.branchCounter)
+                printCounter("lines", p.lineCounter)
+                printCounter("methods", p.methodCounter)
+                printCounter("complexity", p.complexityCounter)
+                for (c in p.classes) {
+                    println("\n----------------\nCoverage of class ${c.name}")
+                    printCounter("instructions", c.instructionCounter)
+                    printCounter("branches", c.branchCounter)
+                    printCounter("lines", c.lineCounter)
+                    printCounter("methods", c.methodCounter)
+                    printCounter("complexity", c.complexityCounter)
+                    for (m in c.methods) {
+                        println("\n----------------\nCoverage of method ${m.name}")
+                        printCounter("instructions", m.instructionCounter)
+                        printCounter("branches", m.branchCounter)
+                        printCounter("lines", m.lineCounter)
+                        printCounter("methods", m.methodCounter)
+                        printCounter("complexity", m.complexityCounter)
+                        println()
+                        for (i in m.firstLine..m.lastLine) {
+                            println("Line ${Integer.valueOf(i)}: ${getColor(m.getLine(i).status)}")
                         }
                     }
+                }
+            }
+
         } else if (parse.type == CoverageEventType.CLASS_BYTES) {
             val xx = JSON.parse(ClassBytes.serializer(), parse.data)
             initialClassBytes[xx.className] = xx.bytes.toByteArray()

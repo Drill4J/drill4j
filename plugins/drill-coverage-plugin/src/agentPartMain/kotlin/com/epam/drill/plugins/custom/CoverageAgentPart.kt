@@ -12,9 +12,9 @@ import org.jacoco.core.runtime.RuntimeData
 import java.util.concurrent.ConcurrentHashMap
 
 object DrillProbeArrayProvider : ProbeArrayProvider {
-    
-    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>() 
-        
+
+    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
+
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = DrillRequest.currentSession() as String?
         val runtime = sessionId?.let { sessionRuntimes[it] }
@@ -22,7 +22,7 @@ object DrillProbeArrayProvider : ProbeArrayProvider {
             getExecutionData(id, name, probeCount).probes
         } ?: BooleanArray(probeCount)
     }
-    
+
     fun start(sessionId: String) {
         sessionRuntimes[sessionId] = RuntimeData()
     }
@@ -46,20 +46,16 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
             println("End of recording for session ${action.sessionId}")
             val get = DrillProbeArrayProvider.stop(action.sessionId)
             if (get != null) {
-                val executionData = ExecutionDataStore()
+                val dataStore = ExecutionDataStore()
                 val sessionInfos = SessionInfoStore()
-                get.collect(executionData, sessionInfos, false)
-                val map = executionData.contents.map { ExDataTemp(it.id, it.name, it.probes.toList()) }
-
-
-                val message = JSON.stringify(ExDataTemp.serializer().list, map)
-                val stringify = JSON.stringify(
-                    CoverageMessage.serializer(),
-                    CoverageMessage(CoverageEventType.COVERAGE_DATA, message)
-                )
-                Sender.sendMessage("coverage", stringify)
-
-
+                get.collect(dataStore, sessionInfos, false)
+                sendExecutionData(dataStore.contents.map { exData ->
+                    ExDataTemp(
+                        exData.id,
+                        exData.name,
+                        exData.probes.toList()
+                    )
+                })
             }
         }
     }
@@ -70,25 +66,30 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
     override fun instrument(className: String, initialBytest: ByteArray): ByteArray {
         try {
             initialClassBytes[className] = initialBytest
-            val classBytes = ClassBytes(className, initialBytest.toList())
-
-            val message = JSON.stringify(
-                CoverageMessage.serializer(),
-                CoverageMessage(
-                    CoverageEventType.CLASS_BYTES,
-                    JSON.stringify(ClassBytes.serializer(), classBytes)
-                )
-            )
-            Sender.sendMessage(
-                "coverage",
-                message
-            )
-
+            sendClass(ClassBytes(className, initialBytest.toList()))
             return instrumenter(className, initialBytest)
         } catch (ex: Throwable) {
             ex.printStackTrace()
             throw ex
         }
+    }
+
+    private fun sendClass(classBytes: ClassBytes) {
+        val classJson = JSON.stringify(ClassBytes.serializer(), classBytes)
+        val message = JSON.stringify(
+            CoverageMessage.serializer(),
+            CoverageMessage(CoverageEventType.CLASS_BYTES, classJson)
+        )
+        Sender.sendMessage("coverage", message)
+    }
+
+    private fun sendExecutionData(exData: List<ExDataTemp>) {
+        val exDataJson = JSON.stringify(ExDataTemp.serializer().list, exData)
+        val message = JSON.stringify(
+            CoverageMessage.serializer(),
+            CoverageMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
+        )
+        Sender.sendMessage("coverage", message)
     }
 
 
@@ -110,7 +111,6 @@ data class CoverageAction(
 
 @Serializable
 data class CoverageMessage(val type: CoverageEventType, val data: String)
-
 
 
 enum class CoverageEventType {
