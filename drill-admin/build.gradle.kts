@@ -1,41 +1,31 @@
 plugins {
-    id 'kotlin-multiplatform'
-    id 'kotlinx-serialization'
-
+    id("kotlin-multiplatform")
+    id("kotlinx-serialization")
 }
-
-group 'com.epam'
-version '0.0.1'
-
-apply plugin: 'maven-publish'
 
 repositories {
     mavenCentral()
     mavenLocal()
     jcenter()
-    maven { url "https://dl.bintray.com/kodein-framework/Kodein-DI" }
-    maven { url "https://dl.bintray.com/soywiz/soywiz" }
-    maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
-    maven { url "https://kotlin.bintray.com/ktor" }
-    maven { url "https://dl.bintray.com/spekframework/spek-dev" }
-    maven { url "https://kotlin.bintray.com/kotlinx" }
-    maven { url "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/" }
-
-
+    maven(url = "https://dl.bintray.com/kodein-framework/Kodein-DI")
+    maven(url = "https://dl.bintray.com/soywiz/soywiz")
+    maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
+    maven(url = "https://kotlin.bintray.com/ktor")
+    maven(url = "https://dl.bintray.com/spekframework/spek-dev")
+    maven(url = "https://kotlin.bintray.com/kotlinx")
+    maven(url = "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/")
 }
 
 kotlin {
-    targets {
 
-        fromPreset(presets.jvm, 'admin')
+    targets {
+        jvm("admin")
     }
 
-
     sourceSets {
-
-        adminMain {
+        jvm("admin").compilations["main"].defaultSourceSet {
             dependencies {
-                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1'
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
                 implementation("org.litote.kmongo:kmongo:3.9.0")
                 implementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.1.1")
                 implementation("io.ktor:ktor-auth:1.1.2")
@@ -56,7 +46,8 @@ kotlin {
 
             }
         }
-        adminTest {
+
+        jvm("admin").compilations["test"].defaultSourceSet {
             dependencies {
                 implementation("io.ktor:ktor-server-test-host:1.1.2")
                 implementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
@@ -66,35 +57,40 @@ kotlin {
             }
         }
 
+
     }
 }
 
-task runDrillAdmin() {
-    group = "application"
-    doLast {
-        javaexec {
-            classpath = (kotlin.targets['admin'].compilations.main.compileDependencyFiles)
-            classpath(adminJar)
-            main = "io.ktor.server.netty.EngineMain"
-            jvmArgs(
+tasks {
+
+
+    val adminJar = "adminJar"(Jar::class) {
+        manifest {
+            attributes(mapOf("Main-Class" to "io.ktor.server.netty.EngineMain"))
+        }
+
+        from(provider {
+            kotlin.targets["admin"].compilations["main"].compileDependencyFiles.map {
+                if (it.isDirectory) it else zipTree(it)
+            }
+        })
+
+        archiveFileName.set("drillAdmin.jar")
+    }
+    register("runDrillAdmin") {
+        group = "application"
+        dependsOn(adminJar)
+        doLast {
+            javaexec {
+                classpath = (kotlin.targets["admin"].compilations["main"].compileDependencyFiles)
+                classpath(adminJar)
+                main = "io.ktor.server.netty.EngineMain"
+                jvmArgs(
                     "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006",
                     "-Xmx2g"
-            )
+                )
+            }
         }
+
     }
-}
-
-runDrillAdmin.dependsOn('adminJar')
-
-
-adminJar {
-    manifest {
-        attributes(
-                "Main-Class": "io.ktor.server.netty.EngineMain")
-    }
-    from {
-        kotlin.targets['admin'].compilations.main.compileDependencyFiles.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    getArchiveFileName().set("drillAdmin.jar")
 }
