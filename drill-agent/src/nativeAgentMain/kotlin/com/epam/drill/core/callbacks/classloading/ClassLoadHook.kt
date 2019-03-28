@@ -4,15 +4,9 @@ import com.epam.drill.core.JClassVersions
 import com.epam.drill.core.addNewVersion
 import com.epam.drill.core.di
 import com.soywiz.kmem.buildByteArray
-import com.soywiz.korio.file.std.localVfs
 import drillInternal.addClass
 import jvmapi.*
 import kotlinx.cinterop.*
-import kotlinx.coroutines.runBlocking
-
-//@ThreadLocal
-//val ss = mutableMapOf<String,ByteArray>()
-
 
 @ExperimentalUnsignedTypes
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -37,10 +31,6 @@ fun classLoadEvent(
 
         if (className != null && classData != null) {
             val kClassName = className.toKString()
-//                launch {
-//                    mutex.withLock {
-//            println(kClassName)
-
             addClass(classData, classDataLen)
             if (loader != null && protection_domain != null) {
 
@@ -76,12 +66,7 @@ fun classLoadEvent(
                             byteArray[i] = getByteArrayElements1!![i].toByte()
                         }
 
-                        runBlocking {
-                            localVfs("C:\\Users\\Igor_Kuzminykh\\xxDrill4J\\temp\\${kClassName.replace("/","_")}.class").write(byteArray)
-                        }
                         newClassDataLen!!.pointed.value = size
-
-////                            loadedClasses[kClassName]!!.addNewVersion(byteArray)
                     }
 //                }
                 }
