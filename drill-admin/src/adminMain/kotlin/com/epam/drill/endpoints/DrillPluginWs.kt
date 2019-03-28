@@ -78,7 +78,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                         is Frame.Text -> {
                             val event = Gson().fromJson(frame.readText(), Message::class.java)
                             when (event.type) {
-                                MessageType.REGISTER -> {
+                                MessageType.SUBSCRIBE -> {
                                     if (sessionStorage[event.destination] == null) {
                                         sessionStorage[event.destination] = mutableSetOf(this)
                                     }
