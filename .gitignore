@@ -11,3 +11,4 @@
 /test.log
 /docker-compose/data/
 /plugins/drill-exception-plugin-native/drill-api/
+/temp/
