@@ -88,3 +88,13 @@ task buildCoveragePlugin {
     dependsOn "packPlugin"
 
 }
+
+task buildCoveragePluginDev(type: Copy) { 
+    group = "app"
+    dependsOn "buildCoveragePlugin"
+    from(agentPartJar)
+    from(file("plugin_config.json")) {
+        into("static")
+    }
+    destinationDir = file("../../distr/drill-plugins/coverage")
+}
