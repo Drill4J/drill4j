@@ -100,5 +100,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }
         return ""
     }
-
 }
+
+@Serializable
+data class CoverageBlock(val coverage: Double, val uncoveredMethodsCount: Int)
