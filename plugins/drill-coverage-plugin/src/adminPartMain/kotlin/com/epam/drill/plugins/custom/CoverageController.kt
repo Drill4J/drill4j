@@ -102,22 +102,3 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     }
 
 }
-
-
-//fixme these duplications. Move to common module
-@Serializable
-data class ExDataTemp(val id: Long, val className: String, val probes: List<Boolean>)
-
-
-@Serializable
-data class CoverageMessage(val type: CoverageEventType, val data: String)
-
-
-enum class CoverageEventType {
-    CLASS_BYTES, COVERAGE_DATA
-}
-
-@Serializable
-data class ClassBytes(val className: String, val bytes: List<Byte>)
-
-

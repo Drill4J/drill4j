@@ -33,12 +33,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     }
 
     override suspend fun convertAndSend(destination: String, message: Any) {
-        val ogs = message as SeqMessage
-        val messageAsString = getMessageForSocket(ogs)
-        val mutableSet = sessionStorage[destination]
 
-        if (mutableSet != null) {
-            val iterator = mutableSet.iterator()
+       sessionStorage[destination]?.apply{
+            val ogs = message as SeqMessage
+            val messageAsString = getMessageForSocket(ogs)
+            val iterator = this.iterator()
             while (iterator.hasNext()) {
                 val next = iterator.next()
                 try {
@@ -49,7 +48,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 //                    logDebug("Old WS session was removed")
                 }
             }
-        } else logger.info("can't find socket connection for '$destination' destination")
+        }
 
     }
 

@@ -4,9 +4,11 @@ import com.epam.drill.core.JClassVersions
 import com.epam.drill.core.addNewVersion
 import com.epam.drill.core.di
 import com.soywiz.kmem.buildByteArray
+import com.soywiz.korio.file.std.localVfs
 import drillInternal.addClass
 import jvmapi.*
 import kotlinx.cinterop.*
+import kotlinx.coroutines.runBlocking
 
 //@ThreadLocal
 //val ss = mutableMapOf<String,ByteArray>()
@@ -45,7 +47,7 @@ fun classLoadEvent(
 
                 if (kClassName.contains("/drilspringframework")) {
 
-                    val instrumentedPlugin = di{pInstrumentedStorage}["coverage"]
+                    val instrumentedPlugin = di { pInstrumentedStorage }["coverage"]
                     if (instrumentedPlugin != null) {
                         val newByteArray: jbyteArray? = NewByteArray(classDataLen)
                         ExceptionDescribe()
@@ -58,23 +60,26 @@ fun classLoadEvent(
                         ExceptionDescribe()
                         val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
 
-                            val getByteArrayElements1 = GetByteArrayElements(instrument, null)
-                            val size = GetArrayLength(instrument)
-                            Allocate(size.toLong(), newData)
-                            for (i in 0 until size) {
-                                val pointed = newData!!.pointed
-                                val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
-                                value[i] = getByteArrayElements1!![i].toUByte()
-                            }
+                        val getByteArrayElements1 = GetByteArrayElements(instrument, null)
+                        val size = GetArrayLength(instrument)
+                        Allocate(size.toLong(), newData)
+                        for (i in 0 until size) {
+                            val pointed = newData!!.pointed
+                            val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
+                            value[i] = getByteArrayElements1!![i].toUByte()
+                        }
 
 
-                            val byteArray = ByteArray(size)
+                        val byteArray = ByteArray(size)
 
-                            for (i in 0 until size) {
-                                byteArray[i] = getByteArrayElements1!![i].toByte()
-                            }
+                        for (i in 0 until size) {
+                            byteArray[i] = getByteArrayElements1!![i].toByte()
+                        }
 
-                            newClassDataLen!!.pointed.value = size
+                        runBlocking {
+                            localVfs("C:\\Users\\Igor_Kuzminykh\\xxDrill4J\\temp\\${kClassName.replace("/","_")}.class").write(byteArray)
+                        }
+                        newClassDataLen!!.pointed.value = size
 
 ////                            loadedClasses[kClassName]!!.addNewVersion(byteArray)
                     }

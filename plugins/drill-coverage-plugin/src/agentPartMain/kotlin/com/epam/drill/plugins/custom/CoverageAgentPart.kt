@@ -16,7 +16,7 @@ object DrillProbeArrayProvider : ProbeArrayProvider {
     private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
-        val sessionId = DrillRequest.currentSession() as String?
+        val sessionId = DrillRequest.currentSession()
         val runtime = sessionId?.let { sessionRuntimes[it] }
         return runtime?.run {
             getExecutionData(id, name, probeCount).probes
@@ -97,31 +97,3 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
     override var actionSerializer: kotlinx.serialization.KSerializer<CoverageAction> = CoverageAction.serializer()
 
 }
-
-@Serializable
-data class CoverConfig(val message: String)
-
-
-@Serializable
-data class CoverageAction(
-    val sessionId: String,
-    val isRecord: Boolean
-)
-
-
-@Serializable
-data class CoverageMessage(val type: CoverageEventType, val data: String)
-
-
-enum class CoverageEventType {
-    CLASS_BYTES, COVERAGE_DATA
-}
-
-@Serializable
-data class ExDataTemp(val id: Long, val className: String, val probes: List<Boolean>)
-
-
-@Serializable
-data class ClassBytes(val className: String, val bytes: List<Byte>)
-
-

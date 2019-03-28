@@ -21,7 +21,9 @@ kotlin {
     }
     sourceSets {
         agentPartMain {
+
             dependencies {
+              
                 //fixme 6 only..
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation project(":drill-plugin-api:drill-agent-part")
@@ -31,12 +33,19 @@ kotlin {
             }
         }
         adminPartMain {
+
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1"
                 implementation project(":drill-plugin-api:drill-admin-part")
                 implementation project(":drill-common")
                 api("org.jacoco:org.jacoco.core:0.8.3")
+            }
+        }
+        commonMain {
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1"
             }
         }
 
