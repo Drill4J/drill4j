@@ -92,9 +92,6 @@ fun modifyClass(
 //    cr.accept(cv, 0)
     val toByteArray = cv.toByteArray()
     println(toByteArray.contentToString())
-    runBlocking {
-        localVfs("C:\\Users\\Igor_Kuzminykh\\xxDrill4J\\temp\\${toKString.replace("/","_")}.class").write(toByteArray)
-    }
     Allocate(toByteArray.size.toLong(), newData)
     toByteArray.forEachIndexed { x, y ->
         val pointed = newData!!.pointed
