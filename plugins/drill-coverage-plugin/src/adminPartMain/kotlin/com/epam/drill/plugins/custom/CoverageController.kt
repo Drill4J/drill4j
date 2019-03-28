@@ -43,8 +43,9 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             val a = coverageBuilder.getBundle("all")
 
             // TODO remove this temporary trace block and dependent methods
-            val coverage = a.methodCounter.coveredRatio * 100
             val uncoveredMethodsCount = a.methodCounter.missedCount
+            var coverage = a.methodCounter.coveredRatio * 100
+            coverage = if (coverage.isFinite()) coverage else 0.0
 
             // TODO extend destination with plugin id
             ws.convertAndSend("/coverage", JSON.stringify(
