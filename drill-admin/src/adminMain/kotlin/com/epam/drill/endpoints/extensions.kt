@@ -29,35 +29,15 @@ suspend fun MutableSet<DrillWsSession>.sendTo(message: Message) {
 fun MutableSet<DrillWsSession>.exists(destination: String) = this.firstOrNull { it.url == destination } != null
 
 fun MutableSet<DrillWsSession>.removeTopic(destination: String) {
-    val remove = this.remove(this.first { it.url == destination })
-    if (remove)
+    if (this.removeIf { it.url == destination })
         println("$destination unsubscribe")
 }
 
 
 fun Any?.stringify() = Gson().toJson(this) ?: ""
+fun Any?.textFrame() = Frame.Text(this.stringify())
 fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
-//fun Any.messageEvent(destination: String) = Message(MessageType.MESSAGE, destination, this.stringify())
 
 data class DrillWsSession(var url: String? = null, val sourceSession: DefaultWebSocketServerSession) :
-    DefaultWebSocketServerSession by sourceSession{
-    override fun equals(other: Any?): Boolean {
-        if (javaClass != other?.javaClass) return false
-
-        other as DrillWsSession
-
-        if (url != other.url) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = url?.hashCode() ?: 0
-        result = 31 * result + sourceSession.hashCode()
-        return result
-    }
-
-
-}
-
+    DefaultWebSocketServerSession by sourceSession
 

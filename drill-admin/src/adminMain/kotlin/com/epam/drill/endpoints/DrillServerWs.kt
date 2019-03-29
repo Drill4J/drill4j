@@ -29,7 +29,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                 try {
                     incoming.consumeEach { frame ->
                         val json = (frame as Frame.Text).readText()
-                        val event =     Gson().fromJson(json,Message::class.java)
+                        val event = Gson().fromJson(json, Message::class.java)
                         when (event.type) {
                             MessageType.SUBSCRIBE -> {
                                 subscribe(wsSession, event)
@@ -61,6 +61,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
     ) {
         wsSession.url = event.destination
         sessionStorage += (wsSession)
+        println("${event.destination} is subscribed")
         app.run {
             wsTopic {
                 sessionStorage.sendTo(
