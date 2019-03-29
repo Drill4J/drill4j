@@ -49,9 +49,9 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         app.routing {
             registerAgent()
             registerDrillAdmin()
-            if (app.environment.config.property("ktor.dev").getString().toBoolean()) {
-                registerDevDrillAdmin()
-            }
+//            if (app.environment.config.property("ktor.dev").getString().toBoolean()) {
+//                registerDevDrillAdmin()
+//            }
         }
     }
 

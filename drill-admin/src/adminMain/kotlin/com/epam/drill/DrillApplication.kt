@@ -36,6 +36,7 @@ import io.ktor.locations.post
 import io.ktor.response.header
 import io.ktor.response.respond
 import io.ktor.routing.routing
+import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.kodein.di.Kodein
@@ -44,13 +45,12 @@ import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
 import java.time.Duration
 
-val storage = Kodein.Module(name = "agentStorage") {
-    //    bind<AgentStorage>() with singleton { AgentStorage(kodein) }
+val storage = Kodein.Module(name = "agentStorage", allowSilentOverride = true) {
     bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
     bind<MongoClient>() with singleton { MongoClient() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
-    bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
+    bind<MutableSet<DrillWsSession>>(overrides = true) with eagerSingleton { HashSet<DrillWsSession>() }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
@@ -62,12 +62,16 @@ val userSource: UserSource = UserSourceImpl()
 @KtorExperimentalLocationsAPI
 @ObsoleteCoroutinesApi
 val handlers = Kodein.Module(name = "handlers") {
-    bind<AgentHandler>() with eagerSingleton { AgentHandler(kodein) }
     bind<SwaggerDrillAdminServer>() with eagerSingleton { SwaggerDrillAdminServer(kodein) }
     bind<PluginDispatcher>() with eagerSingleton { PluginDispatcher(kodein) }
+    bind<DrillOtherHandlers>() with eagerSingleton { DrillOtherHandlers(kodein) }
+}
+
+
+val wsHandlers = Kodein.Module(name = "wsHandlers") {
+    bind<AgentHandler>() with eagerSingleton { AgentHandler(kodein) }
     bind<WsService>() with eagerSingleton { DrillPluginWs(kodein) }
     bind<DrillServerWs>() with eagerSingleton { DrillServerWs(kodein) }
-    bind<DrillOtherHandlers>() with eagerSingleton { DrillOtherHandlers(kodein) }
 }
 
 val pluginServices = Kodein.Module(name = "pluginServices") {
@@ -86,7 +90,7 @@ fun Application.module(
         install(ContentNegotiation) {
             register(ContentType.Application.Json, GsonConverter())
         }
-        install(StatusPages){
+        install(StatusPages) {
             exception<Throwable> { cause ->
                 call.respond(HttpStatusCode.InternalServerError, "Internal Server Error")
                 throw cause
@@ -94,7 +98,7 @@ fun Application.module(
         }
         install(CallLogging)
         install(Locations)
-        install(io.ktor.websocket.WebSockets) {
+        install(WebSockets) {
             pingPeriod = Duration.ofSeconds(15)
             timeout = Duration.ofSeconds(150)
             maxFrameSize = Long.MAX_VALUE
@@ -121,11 +125,16 @@ fun Application.module(
             header(HttpHeaders.Authorization)
             exposeHeader(HttpHeaders.Authorization)
         }
+    }, kodeinConfig: Kodein.MainBuilder.() -> Unit = {
+        import(storage, allowOverride = true)
+        import(handlers, allowOverride = true)
+        import(pluginServices, allowOverride = true)
+        import(wsHandlers, allowOverride = true)
+        import(devContainer, allowOverride = true)
     }
-) {
-    kodeinApplication {
+): Kodein {
+    return kodeinApplication {
         installation()
-
         routing {
             post<Routes.Api.Login> {
                 val username = "guest"
@@ -141,20 +150,15 @@ fun Application.module(
                 resources("public")
             }
         }
+        kodeinConfig()
 
-        import(storage)
-        import(handlers)
-        import(pluginServices)
-        
-        import(devContainer)
     }
-
 }
 
 
-fun Application.kodeinApplication(kodeinMapper: Kodein.MainBuilder.(Application) -> Unit = {}) {
+fun Application.kodeinApplication(kodeinMapper: Kodein.MainBuilder.(Application) -> Unit = {}): Kodein {
     val app = this
-    Kodein {
+    return Kodein {
         bind<Application>() with singleton { app }
         kodeinMapper(this, app)
     }
