@@ -2,6 +2,8 @@ package com.epam.drill.agentmanager
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
+import com.epam.drill.plugins.PluginWebSocket
+import com.epam.drill.plugins.toPluginsWebSocket
 import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
 
@@ -34,7 +36,7 @@ class AgentInfoWebSocketSingle(
     ipAddress: String = "",
     activePluginsCount: Int = 0,
     pluginsCount: Int = 0,
-    val rawPluginsName: MutableSet<PluginBean> = mutableSetOf()
+    val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf()
 ) : AgentInfoWebSocket(name, description, group, status, adminUrl, ipAddress, activePluginsCount, pluginsCount)
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
@@ -46,7 +48,7 @@ fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     ipAddress = ipAddress,
     activePluginsCount = rawPluginNames.activePluginsCount(),
     pluginsCount = rawPluginNames.size,
-    rawPluginsName = rawPluginNames
+    rawPluginsName = rawPluginNames.toPluginsWebSocket()
 )
 
 fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
