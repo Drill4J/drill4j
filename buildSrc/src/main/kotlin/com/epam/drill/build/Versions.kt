@@ -9,3 +9,5 @@ val serializationNativeVersion = "0.10.0"
 val jvmCoroutinesVersion = "1.1.1"
 
 val korioVersion = "1.1.6-drill"
+
+val ktorVersion = "1.1.3"

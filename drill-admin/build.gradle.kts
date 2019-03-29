@@ -1,4 +1,5 @@
 import com.epam.drill.build.serializationRuntimeVersion
+import com.epam.drill.build.ktorVersion
 
 plugins {
     id("kotlin-multiplatform")
@@ -30,17 +31,17 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.litote.kmongo:kmongo:3.9.0")
                 implementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.1.1")
-                implementation("io.ktor:ktor-auth:1.1.2")
-                implementation("io.ktor:ktor-auth-jwt:1.1.2")
+                implementation("io.ktor:ktor-auth:$ktorVersion")
+                implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
                 //fixme temp solution
                 implementation(fileTree(file("testLib/kodein-di-generic-jvm-6.0.1.jar")))
                 implementation(fileTree(file("testLib/kodein-di-core-jvm-6.0.1.jar")))
-                implementation("io.ktor:ktor-server-netty:1.1.2")
-                implementation("io.ktor:ktor-locations:1.1.2")
-                implementation("io.ktor:ktor-gson:1.1.2")
-                implementation("io.ktor:ktor-server-core:1.1.2")
-                implementation("io.ktor:ktor-websockets:1.1.2")
-                implementation("io.ktor:ktor-html-builder:1.1.2")
+                implementation("io.ktor:ktor-server-netty:$ktorVersion")
+                implementation("io.ktor:ktor-locations:$ktorVersion")
+                implementation("io.ktor:ktor-gson:$ktorVersion")
+                implementation("io.ktor:ktor-server-core:$ktorVersion")
+                implementation("io.ktor:ktor-websockets:$ktorVersion")
+                implementation("io.ktor:ktor-html-builder:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:1.2.1")
                 implementation("ch.qos.logback:logback-classic:1.2.1")
                 implementation(project(":drill-common"))
@@ -51,11 +52,7 @@ kotlin {
 
         jvm("admin").compilations["test"].defaultSourceSet {
             dependencies {
-                implementation("io.ktor:ktor-server-test-host:1.1.2")
-                implementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
-                implementation("org.spekframework.spek2:spek-dsl-jvm:2.0.0-alpha.2")
-                implementation("org.junit.jupiter:junit-jupiter-engine:5.3.1")
-                implementation("org.spekframework.spek2:spek-runner-junit5:2.0.0-alpha.2")
+                implementation("io.ktor:ktor-server-test-host:$ktorVersion")
             }
         }
 
