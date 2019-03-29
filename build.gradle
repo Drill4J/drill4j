@@ -1,5 +1,0 @@
-
-task runAgent {
-    dependsOn(gradle.includedBuild("spring-petclinic-kotlin").task(":bootRun").resolveTask())
-    group = "application"
-}
