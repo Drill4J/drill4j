@@ -1,5 +1,5 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
-import com.epam.drill.build.mainCompilation
+import com.epam.drill.build.*
+
 
 plugins {
     id("kotlin-multiplatform")
@@ -27,9 +27,9 @@ kotlin {
         val loggerMain by getting
         loggerMain.apply {
             dependencies {
-                implementation("com.soywiz:korio:1.1.6-drill")
-                implementation("com.soywiz:klogger:1.2.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0")
+                implementation("com.soywiz:korio:$korioVersion")
+                implementation("com.soywiz:klogger:$kloggerVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
             }
         }
     }

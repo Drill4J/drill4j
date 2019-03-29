@@ -1,4 +1,5 @@
 import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.korioVersion
 
 plugins {
     id("kotlin-multiplatform")
@@ -19,7 +20,7 @@ kotlin {
         val kasmMain by getting
         kasmMain.apply {
             dependencies {
-                implementation("com.soywiz:korio:1.1.6-drill")
+                implementation("com.soywiz:korio:$korioVersion")
             }
         }
     }

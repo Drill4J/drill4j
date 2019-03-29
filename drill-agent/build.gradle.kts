@@ -2,6 +2,7 @@ import com.epam.drill.build.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 plugins {
     id("kotlin-multiplatform")
@@ -32,12 +33,12 @@ kotlin {
     }
 
     sourceSets {
-        jvm("javaAgentMain").compilations["main"].defaultSourceSet {
+        jvm("javaAgent").compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("com.soywiz:klogger:1.2.1")
+                implementation("com.soywiz:klogger:$kloggerVersion")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
@@ -47,7 +48,7 @@ kotlin {
         commonMain.apply {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":drill-common"))
             }
@@ -57,9 +58,9 @@ kotlin {
         val nativeAgentMain by getting
         nativeAgentMain.apply {
             dependencies {
-                implementation("com.soywiz:korio:1.1.6-drill")
-                implementation("com.soywiz:klogger:1.2.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0")
+                implementation("com.soywiz:korio:$korioVersion")
+                implementation("com.soywiz:klogger:$kloggerVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
                 implementation(project(":nativeprojects:drill-kasm"))
@@ -82,7 +83,6 @@ tasks {
             }
         })
     }
-
 
 
     val deleteAndCopyAgent by registering {
@@ -128,11 +128,10 @@ tasks {
         }
     }
 
-
-    //fixme this is to give a chance to tests
-//    linkTestDebugExecutableNativeAgent {
-//        binary.linkerOpts += "main.dll"
-//    }
+    "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
+//        binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
+        binary.linkerOpts.add("main.dll")
+    }
 
 
 }

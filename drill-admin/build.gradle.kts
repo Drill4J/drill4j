@@ -1,3 +1,5 @@
+import com.epam.drill.build.serializationRuntimeVersion
+
 plugins {
     id("kotlin-multiplatform")
     id("kotlinx-serialization")
@@ -25,7 +27,7 @@ kotlin {
     sourceSets {
         jvm("admin").compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.litote.kmongo:kmongo:3.9.0")
                 implementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.1.1")
                 implementation("io.ktor:ktor-auth:1.1.2")

@@ -1,3 +1,5 @@
+import com.epam.drill.build.serializationRuntimeVersion
+
 plugins {
     id("kotlin-multiplatform")
     id("kotlinx-serialization")
@@ -14,7 +16,7 @@ kotlin {
         commonMain.apply {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
                 implementation(project(":drill-common"))
             }
         }

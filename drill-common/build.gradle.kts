@@ -1,4 +1,4 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.*
 
 plugins {
     id("kotlin-multiplatform")
@@ -14,7 +14,7 @@ kotlin {
     sourceSets {
         jvm().compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
             }
         }
 
@@ -22,7 +22,7 @@ kotlin {
         commonMain.apply {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
         }
 
@@ -30,7 +30,7 @@ kotlin {
         val nativeMain by getting
         nativeMain.apply {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:0.10.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
             }
         }
 

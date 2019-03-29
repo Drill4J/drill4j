@@ -1,4 +1,4 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.*
 
 plugins {
     id("kotlin-multiplatform")
@@ -16,7 +16,7 @@ kotlin {
         commonMain.apply {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation(project(":drill-common"))
             }
         }
