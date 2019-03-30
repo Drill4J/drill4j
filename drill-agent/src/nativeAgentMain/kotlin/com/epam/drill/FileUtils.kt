@@ -25,7 +25,7 @@ suspend fun DrillPluginFile.extractPluginFacilitiesTo(destination: VfsFile, filt
 }
 
 
-suspend fun DrillPluginFile.iterateThroughtPluginClasses(block: suspend (jclass) -> Unit) {
+suspend fun DrillPluginFile.iterateThroughPluginClasses(block: suspend (jclass) -> Unit) {
     this.openAsZip {
         for (x in it.listRecursive()) {
             if (x.extension == "class") {
