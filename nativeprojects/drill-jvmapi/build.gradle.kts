@@ -45,14 +45,19 @@ tasks {
         dependsOn("linkMainDebugSharedJvmapi")
         doFirst {
 
-            val binary = (kotlin.targets["jvmapi"].compilations["main"] as KotlinNativeCompilation).getBinary(
-                NativeOutputKind.valueOf("DYNAMIC"),
-                NativeBuildType.DEBUG
-            )
-            copy {
-                from(binary)
-                into(rootProject.file("drill-agent/subdep"))
+            arrayOf(rootProject.file("drill-agent"), rootProject.file("drill-agent/subdep")).forEach {
+                copy {
+                    from(
+                        (kotlin.targets["jvmapi"].compilations["main"] as KotlinNativeCompilation).getBinary(
+                            NativeOutputKind.valueOf("DYNAMIC"),
+                            NativeBuildType.DEBUG
+                        )
+                    )
+                    into(it)
+                }
             }
         }
+
+
     }
 }

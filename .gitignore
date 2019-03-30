@@ -13,3 +13,6 @@
 /plugins/drill-exception-plugin-native/drill-api/
 /temp/
 /drill-agent/subdep/
+/drill-agent/main.dll
+/drill-agent/libmain.so
+/drill-agent/libmain.dylib

@@ -129,8 +129,8 @@ tasks {
     }
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
-//        binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
-        binary.linkerOpts.add("main.dll")
+        binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
+//        binary.linkerOpts.add("subdep/main.dll")
     }
 
 
