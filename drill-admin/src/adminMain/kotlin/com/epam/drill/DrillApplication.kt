@@ -45,12 +45,12 @@ import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
 import java.time.Duration
 
-val storage = Kodein.Module(name = "agentStorage", allowSilentOverride = true) {
+val storage = Kodein.Module(name = "agentStorage") {
     bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
     bind<MongoClient>() with singleton { MongoClient() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
-    bind<MutableSet<DrillWsSession>>(overrides = true) with eagerSingleton { HashSet<DrillWsSession>() }
+    bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
