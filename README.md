@@ -1,3 +1,5 @@
+[![Build Status](https://cloud.drone.io/api/badges/Drill4J/Drill4J/status.svg?ref=/refs/heads/drone-io-integration)](https://cloud.drone.io/Drill4J/Drill4J)
+
 # Drill4J
 Next-gen web-profiler
 

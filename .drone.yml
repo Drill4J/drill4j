@@ -1,0 +1,7 @@
+pipeline:
+  build:
+    image: igorkuzminykh/drill-platform:1.0
+    environment:
+      - GRADLE_USER_HOME=~/.gradle
+    commands:
+      - ./gradlew check
