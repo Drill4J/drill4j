@@ -1322,7 +1322,7 @@ open class ClassWriter
 //        }
 //
 //        if (c.isAssignableFrom(d)) {
-//            return type1
+            return type1!!
 //        }
 //        if (d.isAssignableFrom(c)) {
 //            return type2

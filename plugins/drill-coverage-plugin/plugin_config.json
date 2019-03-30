@@ -1,0 +1,8 @@
+{
+  "id": "coverage",
+  "name": "AwesomecoveragePlugin",
+  "description": "This is the awesome custom plugin",
+  "type": "Custom",
+  "enabled": true,
+  "config": "{\n    \"message\": \"hello from default plugin config... This is 'plugin_config.json file\" }"
+}

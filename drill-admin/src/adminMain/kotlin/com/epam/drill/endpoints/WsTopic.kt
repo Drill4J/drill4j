@@ -22,6 +22,7 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
 
 
     fun Application.resolve(destination: WsUrl, x: MutableSet<DrillWsSession>): Any? {
+        if (xas.isEmpty()) return ""
         val split = destination.split("/")
 
         val filter = xas.filter { it.key.count { c -> c == '/' } + 1 == split.size }.filter {

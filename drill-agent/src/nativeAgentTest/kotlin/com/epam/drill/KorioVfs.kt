@@ -8,11 +8,13 @@ import com.soywiz.korio.lang.Charset
 import kotlinx.coroutines.runBlocking
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class KorioVfs {
 
     @Test
+    @Ignore
     fun readRawString() = runBlocking {
 
         Worker.start(true).execute(TransferMode.UNSAFE, {}) {

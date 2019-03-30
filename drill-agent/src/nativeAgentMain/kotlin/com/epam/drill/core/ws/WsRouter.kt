@@ -4,6 +4,7 @@ import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.agentInfo
+import com.epam.drill.core.di
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
@@ -65,6 +66,16 @@ fun topicRegister() =
                 topicLogger.warn { "new settings for ${config.id} was save to file" }
             } else
                 topicLogger.warn { "Plugin ${config.id} not loaded to agent" }
+
+        }
+        topic("/plugins/action").rawMessage { action ->
+            topicLogger.warn { "actionPluign event: message is $action " }
+            di { loadedClasses }.forEach {
+                println(it)
+            }
+            //fixme thi hardcode
+            val agentPluginPart = di.pInstrumentedStorage["coverage"]
+            agentPluginPart?.doRawAction(action)
 
         }
 

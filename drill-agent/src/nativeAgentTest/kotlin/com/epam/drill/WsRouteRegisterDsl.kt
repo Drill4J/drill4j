@@ -7,7 +7,7 @@ class WsRouteRegisterDsl{
 
     @Test
     fun  x(){
-        topicRegister()
+//        topicRegister()
 
     }
 }

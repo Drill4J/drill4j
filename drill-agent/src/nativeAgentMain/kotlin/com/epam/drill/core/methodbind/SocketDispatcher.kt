@@ -1,18 +1,21 @@
 package com.epam.drill.core.methodbind
 
+import com.epam.drill.api.drillRequest
 import com.epam.drill.core.di
 import com.epam.drill.core.request.RetrieveDrillSessionFromRequest
 import jvmapi.JNIEnvVar
 import jvmapi.SetThreadLocalStorage
 import jvmapi.jint
 import jvmapi.jobject
-import kotlinx.cinterop.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.StableRef
+import kotlinx.cinterop.invoke
 
 const val SocketDispatcher = "Lsun/nio/ch/SocketDispatcher;"
 
 fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBufferAddress, len: jint): Int {
     initRuntimeIfNeeded()
-    val retVal = di.originalMethod[::read0](env, obj, fd, address, len)
+    val retVal = di { originalMethod[::read0](env, obj, fd, address, len) }
     if (retVal > 0)
         try {
             val request = address.rawString(retVal)
@@ -43,8 +46,11 @@ fun write0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectB
     var fakeLength = len
     var fakeBuffer = address
     var contentBodyBytes = address.rawString(len)
-    println("\n\n\n_____________________________________________________________")
-    println(contentBodyBytes.lines().joinToString("\n"))
+    println(contentBodyBytes.lines())
+    if (contentBodyBytes.contains("HTTP/1.1 200")) {
+        println("http response: ${drillRequest()?.drillSessionId}")
+    }
+
 //    if (contentBodyBytes.contains("Content-Type: text/html;charset=UTF-8")) {
 //
 //        val drillRequest = drillRequest()
@@ -65,8 +71,10 @@ fun write0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectB
 //        try {
 //    contentBodyBytes.replace("chunked","huyanddasda")
 
-            val alloc = nativeHeap.allocArray<ByteVar>(contentBodyBytes.toUtf8().size) { index -> value = contentBodyBytes.toUtf8()[index] }
-            fakeBuffer = alloc.toLong()
+//    val alloc = nativeHeap.allocArray<ByteVar>(contentBodyBytes.toUtf8().size) { index ->
+//        value = contentBodyBytes.toUtf8()[index]
+//    }
+//    fakeBuffer = alloc.toLong()
 //            fakeLength = toUtf8.size
 //            println("$len _$fakeLength")
 //        } catch (ex: Throwable) {
@@ -74,7 +82,8 @@ fun write0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectB
 //        }
 //    }
 
-    val retVal = di.originalMethod[::write0](env, obj, fd, fakeBuffer, len)
+    val retVal = di { originalMethod[::write0] }(env, obj, fd, address, len)
+
     return len
 }
 

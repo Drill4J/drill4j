@@ -9,6 +9,7 @@ import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korio.util.OS
 import drillInternal.config
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 
@@ -23,28 +24,31 @@ private suspend fun fillMainProperties() {
         AgentInfo.serializer(),
         resourcesVfs["${"$path/"}drillConfig.json"].readString()
     )
-    di.agentInfo = agInfo
+    di {
+        agentInfo = agInfo
 
 
-    //fixme retrieve a real IP
-    agInfo.ipAddress = "127.0.0.1"
-    agInfo.additionalInfo = AgentAdditionalInfo(
-        listOf(),
-        4,
-        "x64",
-        OS.platformNameLC + ":" + OS.platformName,
-        "10",
-        mapOf()
-    )
-
-    di.loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
+        //fixme retrieve a real IP
+        agInfo.ipAddress = "127.0.0.1"
+        agInfo.additionalInfo = AgentAdditionalInfo(
+            listOf(),
+            4,
+            "x64",
+            OS.platformNameLC + ":" + OS.platformName,
+            "10",
+            mapOf()
+        )
+        runBlocking {
+            loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
+        }
+    }
 
 }
 
 var agentInfo: AgentInfo
-    get() = di.agentInfo
+    get() = di { agentInfo }
     set(value) {
-        di.agentInfo = value
+        di { agentInfo = value }
         value.dumpConfigToFileSystem()
     }
 

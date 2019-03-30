@@ -1,11 +1,15 @@
 package com.epam.drill.core
 
 
+import com.epam.drill.api.enableJvmtiEventClassLoad
 import com.epam.drill.api.enableJvmtiEventNativeMethodBind
+import com.epam.drill.api.enableJvmtiEventVmStart
+import com.epam.drill.core.callbacks.classloading.classLoadEvent
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
 import com.soywiz.klogger.Logger
 import drillInternal.config
+import drillInternal.createClassLoadingQueue
 import drillInternal.createQueue
 import jvmapi.*
 import kotlinx.cinterop.*
@@ -45,6 +49,7 @@ fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, res
         logger.info { "Pid is: " + getpid() }
         printAllowedCapabilities()
         createQueue()
+        createClassLoadingQueue()
         AddCapabilities(GetPotentialCapabilities())
         AddToSystemClassLoaderSearch("${args["drillInstallationDir"]}/drillRuntime.jar")
         SetNativeMethodPrefix("xxx_")
@@ -76,7 +81,13 @@ private fun callbackRegister() {
 //        initRuntimeIfNeeded()
 //
 //    }
+//    gjavaVMGlob?.pointed?.callbackss?.MethodEntry = staticCFunction(::x)
+    gjavaVMGlob?.pointed?.callbackss?.ClassFileLoadHook = staticCFunction(::classLoadEvent)
+    gjavaVMGlob?.pointed?.callbackss?.VMStart = staticCFunction(::x)
     SetEventCallbacks(gjavaVMGlob?.pointed?.callbackss?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
+//    enableJvmtiEventNativeMethodBind()
+    enableJvmtiEventClassLoad()
+    enableJvmtiEventVmStart()
     enableJvmtiEventNativeMethodBind()
 }
 
@@ -84,4 +95,12 @@ private fun callbackRegister() {
 @CName("Agent_OnUnload")
 fun agentOnUnload(vmPtr: Long) {
 
+}
+
+
+fun x(
+    x1: kotlinx.cinterop.CPointer<jvmapi.jvmtiEnvVar>?,
+    x2: kotlinx.cinterop.CPointer<jvmapi.JNIEnvVar>?
+) {
+    println("VM IS START")
 }

@@ -19,7 +19,9 @@ fun nativeMethodBind(
     address: COpaquePointer,
     newAddressPtr: CPointer<COpaquePointerVar>
 ) {
+
     nativeMethodBindMapper[method.getDeclaringClassName() + method.getName()]?.let {
+        println(method.getDeclaringClassName() + method.getName())
         newAddressPtr.pointed.value = it(address)
     }
 
