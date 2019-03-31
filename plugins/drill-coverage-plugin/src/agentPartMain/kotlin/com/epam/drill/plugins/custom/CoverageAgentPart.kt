@@ -3,32 +3,12 @@ package com.epam.drill.plugins.custom
 import com.epam.drill.plugin.api.processing.InstrumentedPlugin
 import com.epam.drill.plugin.api.processing.Sender
 import com.epam.drill.session.DrillRequest
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
-import org.jacoco.core.runtime.RuntimeData
-import java.util.concurrent.ConcurrentHashMap
 
-object DrillProbeArrayProvider : ProbeArrayProvider {
-
-    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
-
-    override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
-        val sessionId = DrillRequest.currentSession()
-        val runtime = sessionId?.let { sessionRuntimes[it] }
-        return runtime?.run {
-            getExecutionData(id, name, probeCount).probes
-        } ?: BooleanArray(probeCount)
-    }
-
-    fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = RuntimeData()
-    }
-
-    fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)
-}
+object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(DrillRequest::currentSession)
 
 @Suppress("unused")
 class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, CoverageAction>() {

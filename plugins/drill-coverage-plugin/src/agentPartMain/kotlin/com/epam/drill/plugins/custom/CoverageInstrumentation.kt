@@ -9,8 +9,10 @@ import org.jacoco.core.internal.instr.ClassInstrumenter
 import org.jacoco.core.internal.instr.IProbeArrayStrategy
 import org.jacoco.core.internal.instr.InstrSupport
 import org.jacoco.core.runtime.IExecutionDataAccessorGenerator
+import org.jacoco.core.runtime.RuntimeData
 import org.objectweb.asm.*
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provides boolean array for the probe.
@@ -24,9 +26,34 @@ typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
 typealias DrillInstrumenter = (String, ByteArray) -> ByteArray
 
 /**
+ * Simple probe array provider that employs ConcurrentHashMap for runtime data storage.
+ * This class is intended to be an ancestor for a concrete probe array provider object.
+ * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
+ */
+open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> String?) : ProbeArrayProvider {
+    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
+
+    override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
+        val sessionId = sessionIdProvider()
+        val runtime = sessionId?.let { sessionRuntimes[it] }
+        return runtime?.run {
+            getExecutionData(id, name, probeCount).probes
+        } ?: BooleanArray(probeCount)
+    }
+
+    fun start(sessionId: String) {
+        sessionRuntimes[sessionId] = RuntimeData()
+    }
+
+    fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)
+}
+
+/**
  * JaCoCo instrumenter
  */
-fun instrumenter(probeArrayProvider: ProbeArrayProvider): DrillInstrumenter = CustomInstrumenter(probeArrayProvider)
+fun instrumenter(probeArrayProvider: ProbeArrayProvider): DrillInstrumenter {
+    return CustomInstrumenter(probeArrayProvider)
+}
 
 private class CustomInstrumenter(
     private val probeArrayProvider: ProbeArrayProvider
