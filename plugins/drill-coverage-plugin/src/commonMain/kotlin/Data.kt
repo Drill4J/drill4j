@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.custom
+package com.epam.drill.plugins.coverage
 
 
 @kotlinx.serialization.Serializable
