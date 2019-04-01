@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.custom
+package com.epam.drill.plugins.coverage
 
 import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.data.CRC64

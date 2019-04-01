@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.custom
+package com.epam.drill.plugins.coverage
 
 
 import com.epam.drill.plugin.api.end.AdminPluginPart
