@@ -12,6 +12,7 @@ val logger
 val jvmtiWarnings
     get() = DLogger("jvmtiWarnings")
 
+
 fun printAllowedCapabilities() {
     val potentialCapabilities = GetPotentialCapabilities()
     potentialCapabilities.useContents {

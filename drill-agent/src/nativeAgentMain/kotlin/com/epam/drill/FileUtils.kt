@@ -27,9 +27,9 @@ suspend fun DrillPluginFile.extractPluginFacilitiesTo(destination: VfsFile, filt
 
 suspend fun DrillPluginFile.iterateThroughPluginClasses(block: suspend (jclass) -> Unit) {
     this.openAsZip {
-        for (x in it.listRecursive()) {
-            if (x.extension == "class") {
-                val className = x.absolutePath.replace(".class", "").drop(1)
+        for (jarEntry in it.listRecursive()) {
+            if (jarEntry.extension == "class") {
+                val className = jarEntry.absolutePath.replace(".class", "").drop(1)
                 val findClass = FindClass(className)
                 ExceptionClear()
                 if (findClass != null) {

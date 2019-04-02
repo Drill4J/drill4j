@@ -130,7 +130,10 @@ tasks {
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
         binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
-//        binary.linkerOpts.add("subdep/main.dll")
+    }
+
+    "nativeAgentTestProcessResources"(ProcessResources::class) {
+        setDestinationDir(file("build/bin/nativeAgent/testDebugExecutable/resources"))
     }
 
 

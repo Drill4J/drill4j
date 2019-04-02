@@ -1,24 +1,5 @@
 headers = pthread.h
 ---
-//typedef jint (JNICALL *SCReadMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCread0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCReadMethod SCReadMethodAddress = NULL;
-//static SCReadMethod SCReadMethodInterceptorAddress = &SCread0;
-//
-//typedef jint (JNICALL *SCWriteMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCwrite0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCWriteMethod SCWriteMethodAddress = NULL;
-//static SCWriteMethod SCWriteMethodInterceptorAddress = &SCwrite0;
-//
-//typedef jint (JNICALL *SCWritevMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCwritev0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCWritevMethod SCWritevMethodAddress = NULL;
-//static SCWritevMethod SCWritevMethodInterceptorAddress = &SCwritev0;
-//
-//
-//typedef jint (JNICALL *LLoadMethod)   (JNIEnv *env, jobject this, jstring name, jboolean isBuiltin);
-//static LLoadMethod lloadMethod = NULL;
-
 extern int xx(void *env, void * clazz);
 static void * nrTest= &xx;
 
@@ -60,14 +41,14 @@ MessageQueue *get() {
 
 void addMessage(char *element) {
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (messageQu->used == messageQu->size) {
         messageQu->size *= 2;
         messageQu->array = (char **) realloc(messageQu->array, messageQu->size * sizeof(char *));
     }
     size_t i = messageQu->used++;
     messageQu->array[i] = element;
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
 
 }
 
@@ -88,13 +69,12 @@ int size(){
 
 
 char *getMessage() {
-    pthread_mutex_lock(&mutex);
     if (messageQu->used == 0) {
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
+    pthread_mutex_lock(&mutex);
     char *string = messageQu->array[0];
-//    messageQu->size = messageQu->size - 1;
     messageQu->used = messageQu->used - 1;
 
     for (int i = 0; i < messageQu->size; i++) {
@@ -107,12 +87,9 @@ char *getMessage() {
 
 
 typedef struct {
- //void* loggers;
- //void* loggerConfig;
- //void* agentInfo;
  char* drillInstallationDir;
- //void* pstorage;
  void* di;
+ void* xx;
 } configStruct;
 
 configStruct config;
