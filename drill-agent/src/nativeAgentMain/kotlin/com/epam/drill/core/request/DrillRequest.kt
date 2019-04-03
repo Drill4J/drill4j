@@ -30,9 +30,9 @@ object RetrieveDrillSessionFromRequest {
 
         val cookie = requestHeaders["Cookie"]
         if (cookie != null) {
-            val split = cookie.split("; ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val split = cookie.trimStart().split("; ").dropLastWhile { it.isBlank() }
             for (rawCookie in split) {
-                val cook = rawCookie.split("=".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val cook = rawCookie.split('=').dropLastWhile { it.isEmpty() }.toTypedArray()
                 if (cook.size == 2)
                     cookies[cook[0]] = cook[1]
             }
