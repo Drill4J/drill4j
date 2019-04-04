@@ -11,24 +11,25 @@ import org.jacoco.core.data.SessionInfoStore
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(DrillRequest::currentSession)
 
 @Suppress("unused")
-class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
+class CoveragePlugin @JvmOverloads constructor(
+    override val id: String,
+    private val probeArrayProvider: SessionProbeArrayProvider = DrillProbeArrayProvider
+) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
 
-    val initialClassBytes = mutableMapOf<String, ByteArray>()
-
-    val instrumenter = instrumenter(DrillProbeArrayProvider)
+    val instrumenter = instrumenter(probeArrayProvider)
 
     override fun doAction(action: CoverageAction) {
         val record = action.isRecord
         if (record) {
             println("Start recording for session ${action.sessionId}")
-            DrillProbeArrayProvider.start(action.sessionId)
-        } else if (!record) {
+            probeArrayProvider.start(action.sessionId)
+        } else {
             println("End of recording for session ${action.sessionId}")
-            val get = DrillProbeArrayProvider.stop(action.sessionId)
-            if (get != null) {
+            val runtimeData = probeArrayProvider.stop(action.sessionId)
+            runtimeData?.apply {
                 val dataStore = ExecutionDataStore()
                 val sessionInfos = SessionInfoStore()
-                get.collect(dataStore, sessionInfos, false)
+                runtimeData.collect(dataStore, sessionInfos, false)
                 sendExecutionData(dataStore.contents.map { exData ->
                     ExDataTemp(
                         exData.id,
@@ -41,13 +42,19 @@ class CoveragePlugin(override val id: String) : InstrumentedPlugin<CoverConfig, 
     }
 
     override fun initPlugin() {
+        val str = "Plugin $id initialized!"
+        val message = JSON.stringify(
+            CoverageMessage.serializer(),
+            CoverageMessage(CoverageEventType.INIT, str)
+        )
+        Sender.sendMessage("coverage", message)
+        println(str)
     }
 
-    override fun instrument(className: String, initialBytest: ByteArray): ByteArray {
+    override fun instrument(className: String, initialBytes: ByteArray): ByteArray {
         try {
-            initialClassBytes[className] = initialBytest
-            sendClass(ClassBytes(className, initialBytest.toList()))
-            return instrumenter(className, initialBytest)
+            sendClass(ClassBytes(className, initialBytes.toList()))
+            return instrumenter(className, initialBytes)
         } catch (ex: Throwable) {
             ex.printStackTrace()
             throw ex

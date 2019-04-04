@@ -25,12 +25,17 @@ typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
  */
 typealias DrillInstrumenter = (String, ByteArray) -> ByteArray
 
+interface SessionProbeArrayProvider : ProbeArrayProvider {
+    fun start(sessionId: String)
+    fun stop(sessionId: String): RuntimeData?
+}
+
 /**
  * Simple probe array provider that employs ConcurrentHashMap for runtime data storage.
  * This class is intended to be an ancestor for a concrete probe array provider object.
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
-open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> String?) : ProbeArrayProvider {
+open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> String?) : SessionProbeArrayProvider {
     private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
@@ -41,11 +46,11 @@ open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> 
         } ?: BooleanArray(probeCount)
     }
 
-    fun start(sessionId: String) {
+    override fun start(sessionId: String) {
         sessionRuntimes[sessionId] = RuntimeData()
     }
 
-    fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)
+    override fun stop(sessionId: String): RuntimeData? = sessionRuntimes.remove(sessionId)
 }
 
 /**
