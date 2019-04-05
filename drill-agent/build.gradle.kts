@@ -44,8 +44,14 @@ kotlin {
             }
         }
 
-        val commonMain by getting
-        commonMain.apply {
+        jvm("javaAgent").compilations["test"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
+        }
+
+
+        named("commonMain") {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
@@ -53,10 +59,15 @@ kotlin {
                 implementation(project(":drill-common"))
             }
         }
+        named("commonTest") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-common")
+                implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
+            }
+        }
 
 
-        val nativeAgentMain by getting
-        nativeAgentMain.apply {
+        named("nativeAgentMain") {
             dependencies {
                 implementation("com.soywiz:korio:$korioVersion")
                 implementation("com.soywiz:klogger:$kloggerVersion")
