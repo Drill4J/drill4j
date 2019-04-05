@@ -56,7 +56,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // TODO possible to store existing bundles to work with obsolete coverage results
                 val bundleCoverage = coverageBuilder.getBundle("all")
 
-                val totalLinePercent = bundleCoverage.methodCounter.coveredRatio * 100
+                val totalLinePercent = bundleCoverage.lineCounter.coveredRatio * 100
                 val totalCoverage = if (totalLinePercent.isFinite()) totalLinePercent else null
 
                 fillJavaClasses(bundleCoverage)
