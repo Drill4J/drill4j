@@ -18,18 +18,17 @@ data class JavaMethod(
 
 @Serializable
 data class CoverageBlock(
-    val coverage: Double,
-    val uncoveredMethodsCount: Int,
-    val newMethodsCount: Int = 0,
-    val newMethodsCovered: Int = 0,
-    val newMethodsCoverage: Double = 100.0
+    val coverage: Double?,
+    val classesCount: Int = 0,
+    val methodsCount: Int = 0,
+    val uncoveredMethodsCount: Int = 0
 )
 
 @Serializable
 data class NewCoverageBlock(
     val methodsCount: Int = 0,
     val methodsCovered: Int = 0,
-    val coverage: Double = 0.0
+    val coverage: Double? = null
 )
 
 @Serializable

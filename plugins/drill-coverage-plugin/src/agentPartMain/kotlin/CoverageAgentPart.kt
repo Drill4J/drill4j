@@ -52,13 +52,15 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray {
-        try {
-            sendClass(ClassBytes(className, initialBytes.toList()))
-            return instrumenter(className, initialBytes)
-        } catch (ex: Throwable) {
-            ex.printStackTrace()
-            throw ex
-        }
+        return if ("_\$\$_" !in className && "CGLIB\$\$" !in className) {
+            try {
+                sendClass(ClassBytes(className, initialBytes.toList()))
+                instrumenter(className, initialBytes)
+            } catch (ex: Throwable) {
+                ex.printStackTrace()
+                throw ex
+            }
+        } else initialBytes
     }
 
     private fun sendClass(classBytes: ClassBytes) {

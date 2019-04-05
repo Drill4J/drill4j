@@ -48,7 +48,6 @@ class CoverageControllerTest {
             val path = clazz.path
             assertNotNull(initialClassBytes[path])
             assertTrue { initialClassBytes[path]!!.contentEquals(bytes) }
-            assertNotNull(javaClasses[path])
         }
     }
 
