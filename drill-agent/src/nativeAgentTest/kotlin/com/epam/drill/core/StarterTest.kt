@@ -1,16 +1,12 @@
 package com.epam.drill.core
 
 import com.soywiz.klogger.Logger
-import com.soywiz.korio.async.await
 import drillInternal.*
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
-import kotlinx.coroutines.runBlocking
 import storage.loggers
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
 import kotlin.test.*
 
 class StarterTest {
@@ -76,28 +72,10 @@ class StarterTest {
         assertEquals(getMessage()?.toKString(), messageForQueue)
     }
 
-    /**all features is provided by drill-agent/src/nativeInterop/cinterop/drillInternal.def file.*/
-    //fixme move it to sender
-    @Test
-    fun `Queue for ws messages should be synchronized`() = runBlocking {
-        val threadNumber = 100
-
-        createQueue()
-        repeat(2) {
-            List(threadNumber) {
-                Worker.start(true).execute(TransferMode.UNSAFE, {}) {
-                    val messageForQueue = "test message"
-                    addMessage(messageForQueue.cstr.getPointer(Arena()))
-                }
-            }.forEach { it.await() }
-            repeat(threadNumber) {
-                assertNotNull(getMessage()?.toKString())
-            }
-        }
-
-    }
 
     companion object {
         const val ARGUMENT_TEST_DATA = "xx=123,sad=jjk"
     }
 }
+
+

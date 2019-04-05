@@ -11,10 +11,6 @@ import drillInternal.config
 import kotlinx.cinterop.CFunction
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.asStableRef
-import kotlinx.coroutines.channels.Channel
-import kotlin.collections.HashMap
-import kotlin.collections.MutableMap
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.*
@@ -26,17 +22,14 @@ fun JClassVersions.addNewVersion(bytes: ByteArray) {
 }
 
 class DI {
-    val x = Channel<ByteArray>()
+
     inline operator fun <reified T> invoke(bock: DI.() -> T): T {
         try {
-//            anyLock()
+            anyLock()
             Thread_sleep(1)
-            val bock1 = bock(this)
-//            anyUnlock()
-            return bock1
+            return bock(this)
         } finally {
-
-
+            anyUnlock()
         }
     }
 
@@ -44,7 +37,6 @@ class DI {
     val objects = mutableMapOf<KClass<*>, Any>()
 
     val loadedClasses = mutableMapOf<String, JClassVersions>()
-    val sxs = HashMap<String, ByteArray>()
 
     fun singleton(obj: Any) {
         objects[obj::class] = obj
@@ -62,30 +54,30 @@ class DI {
     val originalMethod = NativeMethodBinder()
 
     class NativeMethodBinder {
-        val w = mutableMapOf<KFunction<*>, CPointer<*>>()
+        val misfeatureToFunctionDictionary = mutableMapOf<KFunction<*>, CPointer<*>>()
 
         @Suppress("UNCHECKED_CAST")
-        operator fun <P1, P2, R> get(xx: KFunction2<P1, P2, R>): CPointer<CFunction<(P1, P2) -> R>> {
-            val cPointer = w[xx]
+        operator fun <P1, P2, R> get(targetFunction: KFunction2<P1, P2, R>): CPointer<CFunction<(P1, P2) -> R>> {
+            val cPointer = misfeatureToFunctionDictionary[targetFunction]
             return cPointer as kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(P1, P2) -> R>>
         }
 
 
         @Suppress("UNCHECKED_CAST")
-        operator fun <P1, P2, P3, R> get(xx: KFunction3<P1, P2, P3, R>): CPointer<CFunction<(P1, P2, P3) -> R>> {
-            val cPointer = w[xx]
+        operator fun <P1, P2, P3, R> get(targetFunction: KFunction3<P1, P2, P3, R>): CPointer<CFunction<(P1, P2, P3) -> R>> {
+            val cPointer = misfeatureToFunctionDictionary[targetFunction]
             return cPointer as kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(P1, P2, P3) -> R>>
         }
 
         @Suppress("UNCHECKED_CAST")
-        operator fun <P1, P2, P3, P4, R> get(xx: KFunction4<P1, P2, P3, P4, R>): CPointer<CFunction<(P1, P2, P3, P4) -> R>> {
-            val cPointer = w[xx]
+        operator fun <P1, P2, P3, P4, R> get(targetFunction: KFunction4<P1, P2, P3, P4, R>): CPointer<CFunction<(P1, P2, P3, P4) -> R>> {
+            val cPointer = misfeatureToFunctionDictionary[targetFunction]
             return cPointer as kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(P1, P2, P3, P4) -> R>>
         }
 
         @Suppress("UNCHECKED_CAST")
-        operator fun <P1, P2, P3, P4, P5, R> get(xx: KFunction5<P1, P2, P3, P4, P5, R>): CPointer<CFunction<(P1, P2, P3, P4, P5) -> R>> {
-            val cPointer = w[xx]
+        operator fun <P1, P2, P3, P4, P5, R> get(targetFunction: KFunction5<P1, P2, P3, P4, P5, R>): CPointer<CFunction<(P1, P2, P3, P4, P5) -> R>> {
+            val cPointer = misfeatureToFunctionDictionary[targetFunction]
             return cPointer as kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(P1, P2, P3, P4, P5) -> R>>
         }
 
@@ -95,26 +87,21 @@ class DI {
 }
 
 @ThreadLocal
-var qs: DI? = null
+var threadLocalDiVariable: DI? = null
 
 
 inline val di: DI
     get() {
-        return if (qs != null)
-            try {
-                qs!!
-            } catch (exL: Throwable) {
-                exL.printStackTrace()
-                throw exL
+        try {
+            return if (threadLocalDiVariable != null)
+                threadLocalDiVariable!!
+            else {
+                threadLocalDiVariable = config.di!!.asStableRef<DI>().get()
+                threadLocalDiVariable!!
             }
-        else {
-            try {
-                qs = config.di!!.asStableRef<DI>().get()
-                qs!!
-            } catch (exL: Throwable) {
-                exL.printStackTrace()
-                throw exL
-            }
+        } catch (exL: Throwable) {
+            exL.printStackTrace()
+            throw exL
         }
 
     }
