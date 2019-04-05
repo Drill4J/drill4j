@@ -112,6 +112,14 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     CoverageBlock(coveredPercent, uncoveredMethodsCount)
                 ))
                 debugPrintCoverage(bundleCoverage)
+
+                ws.convertAndSend(
+                    "/coverage-by-classes",
+                    JSON.stringify(
+                        JavaClassCoverage.serializer().list,
+                        classesCoverage(bundleCoverage)
+                    )
+                )
             }
             CoverageEventType.CLASS_BYTES -> {
                 val classData = JSON.parse(ClassBytes.serializer(), parse.data)
@@ -189,5 +197,29 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }
         return ""
     }
+
+    private fun classesCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
+        .flatMap { it.classes }
+        .map { classCoverage ->
+            JavaClassCoverage(
+                name = classCoverage.name.substringAfterLast('/'),
+                path = classCoverage.name,
+                coverage = classCoverage.lineCounter.coverage(),
+                totalMethodsCount = classCoverage.methodCounter.totalCount,
+                coveredMethodsCount = classCoverage.methodCounter.coveredCount,
+                methods = classCoverage.methods.map { methodCoverage ->
+                    JavaMethodCoverage(
+                        name = methodCoverage.name,
+                        desc = methodCoverage.desc,
+                        coverage = methodCoverage.lineCounter.coverage()
+                    )
+                }.toList()
+            )
+        }.toList()
 }
 
+fun ICounter.coverage() : Double {
+    val covered = this.coveredCount
+    val total = this.totalCount
+    return if (total != 0) covered * 100.0 / total else 0.0
+}

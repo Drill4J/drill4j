@@ -32,4 +32,19 @@ data class NewCoverageBlock(
     val coverage: Double = 0.0
 )
 
+@Serializable
+data class JavaClassCoverage(
+    val name: String,
+    val path: String,
+    val coverage: Double,
+    val totalMethodsCount: Int,
+    val coveredMethodsCount: Int,
+    val methods: List<JavaMethodCoverage>
+)
 
+@Serializable
+data class JavaMethodCoverage(
+    val name: String,
+    val desc: String,
+    val coverage: Double
+)
