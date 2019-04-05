@@ -29,7 +29,7 @@ data class CoverageBlock(
 data class NewCoverageBlock(
     val methodsCount: Int = 0,
     val methodsCovered: Int = 0,
-    val coverage: Double = 100.0
+    val coverage: Double = 0.0
 )
 
 

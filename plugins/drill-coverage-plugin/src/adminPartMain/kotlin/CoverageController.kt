@@ -69,9 +69,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 println("General uncovered methods count $uncoveredMethodsCount")
                 
                 println("Current java classes: $javaClasses")
-                
-                
-                
+
+
                 val newCoverageBlock = if (prevJavaClasses.isNotEmpty()) {
                     //TODO Diff should be calculated after all classes has been parsed
                     val diff = javers.compareCollections(
@@ -95,7 +94,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         val newCoverageBlock = NewCoverageBlock(
                             newMethodsCoverages.count(),
                             newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
-                            newCoverage
+                            newCoverage * 100
                         )
                         println(newCoverageBlock)
                         newCoverageBlock
@@ -179,7 +178,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun printCounter(unit: String, counter: ICounter) {
         val missed = Integer.valueOf(counter.missedCount)
         val total = Integer.valueOf(counter.totalCount)
-        System.out.printf("%s of %s %s missed%n", missed, total, unit)
+        println("$missed of $total $unit missed")
     }
 
     private fun getColor(status: Int): String {
