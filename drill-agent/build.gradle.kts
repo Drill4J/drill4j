@@ -83,7 +83,7 @@ kotlin {
 }
 
 
-
+val staticLibraryName = "${staticLibraryPrefix}main.$staticLibraryExtension"
 tasks {
     val javaAgentJar = "javaAgentJar"(Jar::class) {
         destinationDirectory.set(file("../distr"))
@@ -100,7 +100,7 @@ tasks {
 
         dependsOn("linkMainDebugSharedNativeAgent")
         doFirst {
-            delete(file("distr/${staticLibraryPrefix}main.$staticLibraryExtension"))
+            delete(file("distr/$staticLibraryName"))
         }
         doLast {
             val binary = (kotlin.targets["nativeAgent"].compilations["main"] as KotlinNativeCompilation).getBinary(
@@ -140,7 +140,11 @@ tasks {
     }
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
-        binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
+        binary.linkerOpts.add("subdep/$staticLibraryName")
+        copy {
+            from(staticLibraryName)
+            into(file("build/bin/nativeAgent/testDebugExecutable"))
+        }
     }
 
     "nativeAgentTestProcessResources"(ProcessResources::class) {
