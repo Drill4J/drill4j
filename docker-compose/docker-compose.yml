@@ -8,9 +8,16 @@ services:
     drill-admin:
         build:
             context: ../
-            dockerfile: ./docker-compose/Dockerfile
+            dockerfile: ./drill-admin/Dockerfile
         ports:
             - 8090:90
+        networks:
+            - drill4j-dev-network
+        restart: always
+    drill-agent:
+        build:
+            context: ../
+            dockerfile: ./drill-agent/Dockerfile
         networks:
             - drill4j-dev-network
         restart: always
