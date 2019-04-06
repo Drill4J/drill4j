@@ -5,7 +5,7 @@ import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.logger.readProperties
-import com.soywiz.korio.file.std.resourcesVfs
+import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.util.OS
 import drillInternal.config
 import kotlinx.cinterop.toKString
@@ -22,7 +22,7 @@ private suspend fun fillMainProperties() {
 
     val agInfo = Json().parse(
         AgentInfo.serializer(),
-        resourcesVfs["${"$path/"}drillConfig.json"].readString()
+        localVfs("${"$path/"}drillConfig.json").readString()
     )
     di {
         agentInfo = agInfo
@@ -39,7 +39,7 @@ private suspend fun fillMainProperties() {
             mapOf()
         )
         runBlocking {
-            loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
+            loggerConfig = localVfs("${"$path/"}logger.properties").readProperties()
         }
     }
 
