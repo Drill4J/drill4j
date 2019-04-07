@@ -56,8 +56,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // TODO possible to store existing bundles to work with obsolete coverage results
                 val bundleCoverage = coverageBuilder.getBundle("all")
 
-                val totalLinePercent = bundleCoverage.lineCounter.coveredRatio * 100
-                val totalCoverage = if (totalLinePercent.isFinite()) totalLinePercent else null
+                val totalCoverage = bundleCoverage.instructionCounter.coveredRatio
+                val totalCoveragePercent = if (totalCoverage.isFinite()) totalCoverage * 100 else null
 
                 fillJavaClasses(bundleCoverage)
 
@@ -66,7 +66,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
 
                 val coverageBlock = CoverageBlock(
-                    coverage = totalCoverage,
+                    coverage = totalCoveragePercent,
                     classesCount = classesCount,
                     methodsCount = methodsCount,
                     uncoveredMethodsCount = uncoveredMethodsCount
@@ -89,10 +89,10 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
                         .filter { it.first in newMethodSet }
                         .map { it.second }
-                    val totalLineCount = newMethodsCoverages.sumBy { it.lineCounter.totalCount }
-                    val coveredLineCount = newMethodsCoverages.sumBy { it.lineCounter.coveredCount }
+                    val totalCount = newMethodsCoverages.sumBy { it.instructionCounter.totalCount }
+                    val coveredCount = newMethodsCoverages.sumBy { it.instructionCounter.coveredCount }
                     //line coverage
-                    val newCoverage = if (totalLineCount > 0) coveredLineCount.toDouble() / totalLineCount else 0.0
+                    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount else 0.0
                     NewCoverageBlock(
                         newMethodsCoverages.count(),
                         newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
@@ -154,9 +154,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 totalMethodsCount = classCoverage.methodCounter.totalCount,
                 coveredMethodsCount = classCoverage.methodCounter.coveredCount,
                 methods = classCoverage.methods.map { methodCoverage ->
-                    if (!methodCoverage.lineCounter.coveredRatio.isFinite()) {
-                        println(">>>>>>${classCoverage.name}/${methodCoverage.name}${methodCoverage.desc}")
-                    }
                     JavaMethodCoverage(
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
@@ -167,13 +164,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }.toList()
 }
 
-fun IClassCoverage.coverage() : Double {
-    val ratio = this.lineCounter.coveredRatio
+fun ISourceNode.coverage() : Double {
+    val ratio = this.instructionCounter.coveredRatio
     return if (ratio.isFinite()) ratio * 100.0 else 100.0
 }
-
-fun IMethodCoverage.coverage() : Double {
-    val ratio = this.lineCounter.coveredRatio
-    return if (ratio.isFinite()) ratio * 100.0 else 100.0
-}
-

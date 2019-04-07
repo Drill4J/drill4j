@@ -24,13 +24,13 @@ class InstrumentationTests {
     val originalBytes = targetClass.readBytes()
 
     @Test
-    fun instrumentation() {
+    fun `instrumented class should be larger the the original`() {
         val instrumented = instrument(targetClass.name, originalBytes)
         assertTrue { instrumented.count() > originalBytes.count() }
     }
 
     @Test
-    fun `basic method coverage`() {
+    fun `should provide coverage for run with the instrumented class`() {
         addInstrumentedClass()
         val instrumentedClass = memoryClassLoader.loadClass(targetClass.name)
         TestProbeArrayProvider.start(sessionId)
@@ -43,9 +43,9 @@ class InstrumentationTests {
         val analyzer = Analyzer(executionData, coverageBuilder)
         analyzer.analyzeClass(originalBytes, targetClass.name)
         val coverage = coverageBuilder.getBundle("all")
-        val lineCounter = coverage.lineCounter
-        assertEquals(lineCounter.coveredCount, 9)
-        assertEquals(lineCounter.missedCount, 1)
+        val counter = coverage.instructionCounter
+        assertEquals(counter.coveredCount, 27)
+        assertEquals(counter.missedCount, 2)
     }
 
     private fun addInstrumentedClass() {
@@ -56,25 +56,6 @@ class InstrumentationTests {
 }
 
 fun Class<*>.readBytes() = this.getResourceAsStream("/${this.name.replace('.', '/')}.class").readBytes()
-
-class TestTarget : Runnable {
-
-    override fun run() {
-        isPrime(7)
-        isPrime(12)
-    }
-
-    private fun isPrime(n: Int): Boolean {
-        var i = 2
-        while (i * i <= n) {
-            if (n xor i == 0) {
-                return false
-            }
-            i++
-        }
-        return true
-    }
-}
 
 class MemoryClassLoader : ClassLoader() {
     private val definitions = mutableMapOf<String, ByteArray?>()

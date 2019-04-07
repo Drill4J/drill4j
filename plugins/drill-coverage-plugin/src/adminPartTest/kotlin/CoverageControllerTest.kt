@@ -15,14 +15,14 @@ class CoverageControllerTest {
     private val coverageController = CoverageController(ws, "test")
 
     @Test
-    fun init() {
+    fun `should have empty state after init`() {
         assertTrue { coverageController.initialClassBytes.isEmpty() }
         assertTrue { coverageController.javaClasses.isEmpty() }
         assertTrue { coverageController.prevJavaClasses.isEmpty() }
     }
 
     @Test
-    fun `process init message`() {
+    fun `should preserve class data for diff`() {
         val message = CoverageMessage(CoverageEventType.INIT, "hello")
 
         coverageController.javaClasses["TestClass"] = JavaClass("TestClass", "TestClass", emptySet())
@@ -39,7 +39,7 @@ class CoverageControllerTest {
     }
 
     @Test
-    fun `receive class`() {
+    fun `should add class bytes on receiving a CLASS_BYTES message`() {
         val clazz = Dummy::class.java
         val bytes = clazz.readBytes()
         prepareClasses(clazz)
@@ -52,7 +52,7 @@ class CoverageControllerTest {
     }
 
     @Test
-    fun `empty coverage`() {
+    fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
         val message = CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]")
 
