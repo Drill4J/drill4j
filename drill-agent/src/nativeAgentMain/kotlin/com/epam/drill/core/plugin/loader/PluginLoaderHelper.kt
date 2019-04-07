@@ -21,7 +21,7 @@ import kotlinx.coroutines.runBlocking
 fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
     var pluginApiClass: jclass? = null
 
-    this@retrievePluginApiClass.iterateThroughtPluginClasses { findClass ->
+    this@retrievePluginApiClass.iterateThroughPluginClasses { findClass ->
 
         if (com.epam.drill.core.plugin.loader.isSuitablePluginClass(findClass))
             pluginApiClass = findClass
