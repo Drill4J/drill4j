@@ -13,12 +13,16 @@ services:
     restart: always
     ports:
       - 27017:27017
+    networks:
+      - drill4j-dev-network
   drill-agent:
     image: 'igorkuzminykh/drill-platform:2.0'
     volumes:
       - '../:/app'
     command: ./gradlew runAgent --project-cache-dir .gradle_agent
     restart: always
+    networks:
+      - drill4j-dev-network
   drill-admin:
     depends_on:
       - drill-agent
@@ -28,6 +32,13 @@ services:
     command: ./gradlew runDrillAdmin --project-cache-dir .gradle_admin
     ports:
       - 8090:8090
+    networks:
+      - drill4j-dev-network
     environment:
       - isDocker=true
     restart: always
+
+networks:
+  drill4j-dev-network:
+    external:
+      name: drill4j-dev-network
