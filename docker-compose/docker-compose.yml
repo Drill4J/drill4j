@@ -1,27 +1,33 @@
 version: '3'
 services:
-    drillmongodb:
-        image: 'mongo'
-        restart: always
-        ports:
-            - 27017:27017
-    drill-admin:
-        build:
-            context: ../
-            dockerfile: ./drill-admin/Dockerfile
-        ports:
-            - 8090:90
-        networks:
-            - drill4j-dev-network
-        restart: always
-    drill-agent:
-        build:
-            context: ../
-            dockerfile: ./drill-agent/Dockerfile
-        networks:
-            - drill4j-dev-network
-        restart: always
-networks:
-    drill4j-dev-network:
-        external:
-            name: drill4j-dev-network
+  fullbuild:
+    image: 'igorkuzminykh/drill-platform:2.0'
+    volumes:
+      - '../:/app'
+    command: >
+      bash -c "./gradlew build
+      && ./gradlew buildAgent
+      && ./gradlew buildCoveragePluginDev"
+  drillmongodb:
+    image: 'mongo'
+    restart: always
+    ports:
+      - 27017:27017
+  drill-agent:
+    image: 'igorkuzminykh/drill-platform:2.0'
+    volumes:
+      - '../:/app'
+    command: ./gradlew runAgent --project-cache-dir .gradle_agent
+    restart: always
+  drill-admin:
+    depends_on:
+      - drill-agent
+    image: 'igorkuzminykh/drill-platform:2.0'
+    volumes:
+      - '../:/app'
+    command: ./gradlew runDrillAdmin --project-cache-dir .gradle_admin
+    ports:
+      - 8090:8090
+    environment:
+      - isDocker=true
+    restart: always
