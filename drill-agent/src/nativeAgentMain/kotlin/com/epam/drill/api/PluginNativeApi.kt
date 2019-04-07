@@ -79,11 +79,15 @@ fun currentThread() = memScoped {
 }
 
 @CName("drillRequest")
-fun drillRequest(thread: jthread? = currentThread()) = memScoped {
+fun drillRequest() = drillCRequest()?.get()
+
+
+fun drillCRequest(thread: jthread? = currentThread()) = memScoped {
     val drillReq = alloc<COpaquePointerVar>()
     GetThreadLocalStorage(thread, drillReq.ptr)
-    drillReq.value?.asStableRef<DrillRequest>()?.get()
+    drillReq.value?.asStableRef<DrillRequest>()
 }
+
 
 @CName("jvmtix")
 fun jvmti(): CPointer<jvmtiEnvVar>? {
@@ -476,7 +480,7 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
 }
 
 @CName("getPlugin")
-fun getPlugin(id: CPointer<ByteVar>): NativePart<*>?{
+fun getPlugin(id: CPointer<ByteVar>): NativePart<*>? {
     return PluginManager[id.toKString()]?.np
 }
 

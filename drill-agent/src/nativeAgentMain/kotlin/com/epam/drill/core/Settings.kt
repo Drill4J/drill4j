@@ -12,12 +12,7 @@ import kotlinx.cinterop.toKString
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
-
-suspend fun parseConfigs() {
-    fillMainProperties()
-}
-
-private suspend fun fillMainProperties() {
+fun parseConfigs() = runBlocking {
     val path = "$drillInstallationDir/configs"
 
     val agInfo = Json().parse(
@@ -26,8 +21,6 @@ private suspend fun fillMainProperties() {
     )
     di {
         agentInfo = agInfo
-
-
         //fixme retrieve a real IP
         agInfo.ipAddress = "127.0.0.1"
         agInfo.additionalInfo = AgentAdditionalInfo(
@@ -38,9 +31,8 @@ private suspend fun fillMainProperties() {
             "10",
             mapOf()
         )
-        runBlocking {
-            loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
-        }
+
+        loggerConfig = resourcesVfs["${"$path/"}logger.properties"].readProperties()
     }
 
 }

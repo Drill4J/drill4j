@@ -44,8 +44,14 @@ kotlin {
             }
         }
 
-        val commonMain by getting
-        commonMain.apply {
+        jvm("javaAgent").compilations["test"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
+        }
+
+
+        named("commonMain") {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
@@ -53,10 +59,15 @@ kotlin {
                 implementation(project(":drill-common"))
             }
         }
+        named("commonTest") {
+            dependencies {
+                implementation("org.jetbrains.kotlin:kotlin-test-common")
+                implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
+            }
+        }
 
 
-        val nativeAgentMain by getting
-        nativeAgentMain.apply {
+        named("nativeAgentMain") {
             dependencies {
                 implementation("com.soywiz:korio:$korioVersion")
                 implementation("com.soywiz:klogger:$kloggerVersion")
@@ -72,7 +83,7 @@ kotlin {
 }
 
 
-
+val staticLibraryName = "${staticLibraryPrefix}main.$staticLibraryExtension"
 tasks {
     val javaAgentJar = "javaAgentJar"(Jar::class) {
         destinationDirectory.set(file("../distr"))
@@ -89,7 +100,7 @@ tasks {
 
         dependsOn("linkMainDebugSharedNativeAgent")
         doFirst {
-            delete(file("distr/${staticLibraryPrefix}main.$staticLibraryExtension"))
+            delete(file("distr/$staticLibraryName"))
         }
         doLast {
             val binary = (kotlin.targets["nativeAgent"].compilations["main"] as KotlinNativeCompilation).getBinary(
@@ -129,8 +140,15 @@ tasks {
     }
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
-        binary.linkerOpts.add("subdep/${staticLibraryPrefix}main.$staticLibraryExtension")
-//        binary.linkerOpts.add("subdep/main.dll")
+        binary.linkerOpts.add("subdep/$staticLibraryName")
+        copy {
+            from(staticLibraryName)
+            into(file("build/bin/nativeAgent/testDebugExecutable"))
+        }
+    }
+
+    "nativeAgentTestProcessResources"(ProcessResources::class) {
+        setDestinationDir(file("build/bin/nativeAgent/testDebugExecutable/resources"))
     }
 
 

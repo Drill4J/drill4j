@@ -1,9 +1,8 @@
 package com.epam.drill.core
 
-
-import com.epam.drill.api.enableJvmtiEventClassLoad
+import com.epam.drill.api.enableJvmtiEventClassFileLoadHook
 import com.epam.drill.api.enableJvmtiEventNativeMethodBind
-import com.epam.drill.api.enableJvmtiEventVmStart
+import com.epam.drill.api.enableJvmtiEventVmInit
 import com.epam.drill.core.callbacks.classloading.classLoadEvent
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
@@ -17,90 +16,87 @@ import kotlinx.coroutines.runBlocking
 import platform.posix.getpid
 import storage.loggers
 
-
 @ExperimentalUnsignedTypes
 @Suppress("UNUSED_PARAMETER", "UNUSED")
 @CName("Agent_OnLoad")
-fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: CPointer<ByteVar>?, reservedPtr: Long): jint = runBlocking {
+fun agentOnLoad(vmPointer: CPointer<JavaVMVar>, options: String, reservedPtr: Long): jint {
     try {
-        agentSetup(vmPointer.pointed.value)
-        saveVmToGlobal(vmPointer)
+        initAgentGlobals(vmPointer)
+        runAgent(options)
+    } catch (ex: Throwable) {
+        println("Can't load the agent. Ex: ${ex.message}")
+    }
+    return JNI_OK
+}
 
-        val args = options?.toKString()?.split(",")?.associate {
-            val split = it.split("=")
-            split[0] to split[1]
-        }!!
-        config.di = StableRef.create(DI()).asCPointer()
-        if (args["drillInstallationDir"] == null) {
-            println("________________________________________________________________")
-            println(
-                "NATIVE WARNING: Please fill the config folder in agent args.\n" +
-                        "Drill is OFF.\n"
-            )
-            println("________________________________________________________________")
-            return@runBlocking JNI_OK
-        }
-        config.drillInstallationDir = args.getValue("drillInstallationDir").cstr.getPointer(Arena())
-        intiLoggers()
+@Jvmapi
+private fun initAgentGlobals(vmPointer: CPointer<JavaVMVar>) {
+    agentSetup(vmPointer.pointed.value)
+    saveVmToGlobal(vmPointer)
+}
+
+private fun runAgent(options: String?) {
+    options.asAgentParams().apply {
+        val drillInstallationDir = this.getValue("drillInstallationDir")
+        initCGlobals(CConfig(drillInstallationDir))
+        initLoggers()
         parseConfigs()
+        createQueue()
+
+        printAllowedCapabilities()
+        AddCapabilities(GetPotentialCapabilities())
+        AddToSystemClassLoaderSearch("$drillInstallationDir/drillRuntime.jar")
+        SetNativeMethodPrefix("xxx_")
+        callbackRegister()
         val logger = DLogger("StartLogger")
         logger.info { agentInfo.adminUrl }
         logger.info { "The native agent was loaded" }
         logger.info { "Pid is: " + getpid() }
-        printAllowedCapabilities()
-        createQueue()
-        createClassLoadingQueue()
-        AddCapabilities(GetPotentialCapabilities())
-        AddToSystemClassLoaderSearch("${args["drillInstallationDir"]}/drillRuntime.jar")
-        SetNativeMethodPrefix("xxx_")
-        callbackRegister()
-        SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, null)
-        SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, null)
-
-    } catch (ex: Throwable) {
-        ex.printStackTrace()
     }
-    JNI_OK
-
 }
 
 
-private fun intiLoggers() {
-    val sr = StableRef.create(mutableMapOf<String, Logger>())
-    loggers.logs = sr.asCPointer()
+fun initCGlobals(cConfig: CConfig) {
+    config.di = StableRef.create(DI()).asCPointer()
+    config.drillInstallationDir = cConfig.drillInstallationDir.cstr.getPointer(Arena())
 }
 
+private fun printStartWarning() {
+    println("________________________________________________________________")
+    println(
+        "NATIVE WARNING: Please fill the config folder in agent args.\n" +
+                "Drill is OFF.\n"
+    )
+    println("________________________________________________________________")
+}
+
+fun String?.asAgentParams(): Map<String, String> {
+    if (this.isNullOrEmpty()) return mutableMapOf()
+    return try {
+        this.split(",").associate {
+            val split = it.split("=")
+            split[0] to split[1]
+        }
+    } catch (parseException: Exception) {
+        throw IllegalArgumentException("wrong agent parameters: $this")
+    }
+}
+
+ fun initLoggers() {
+    loggers.logs = StableRef.create(mutableMapOf<String, Logger>()).asCPointer()
+}
+
+@ExperimentalUnsignedTypes
 private fun callbackRegister() {
     generateDefaultCallbacks().useContents {
         SetEventCallbacks(this.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
         null
     }
-//    gjavaVMGlob?.pointed?.callbackss?.VMInit = initVmEvent
-//    gjavaVMGlob?.pointed?.callbackss?.NativeMethodBind = staticCFunction { x1, x2, x3, x4, x5, x6
-//        ->
-//        initRuntimeIfNeeded()
-//
-//    }
-//    gjavaVMGlob?.pointed?.callbackss?.MethodEntry = staticCFunction(::x)
     gjavaVMGlob?.pointed?.callbackss?.ClassFileLoadHook = staticCFunction(::classLoadEvent)
-    gjavaVMGlob?.pointed?.callbackss?.VMStart = staticCFunction(::x)
     SetEventCallbacks(gjavaVMGlob?.pointed?.callbackss?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
-//    enableJvmtiEventNativeMethodBind()
-    enableJvmtiEventClassLoad()
-    enableJvmtiEventVmStart()
+    enableJvmtiEventVmInit()
+    enableJvmtiEventClassFileLoadHook()
     enableJvmtiEventNativeMethodBind()
 }
 
-@Suppress("UNUSED_PARAMETER", "UNUSED")
-@CName("Agent_OnUnload")
-fun agentOnUnload(vmPtr: Long) {
-
-}
-
-
-fun x(
-    x1: kotlinx.cinterop.CPointer<jvmapi.jvmtiEnvVar>?,
-    x2: kotlinx.cinterop.CPointer<jvmapi.JNIEnvVar>?
-) {
-    println("VM IS START")
-}
+data class CConfig(val drillInstallationDir: String)
