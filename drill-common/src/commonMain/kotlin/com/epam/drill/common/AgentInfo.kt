@@ -10,6 +10,7 @@ data class AgentInfo(
     val groupName: String,
     val description: String,
     var isEnable: Boolean,
+    var buildVersion: String,
 
     @Optional
     val adminUrl: String = "",
