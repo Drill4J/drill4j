@@ -1,6 +1,6 @@
 {
   "id": "MySuperAgent",
-  "adminUrl": "drill-admin:8090",
+  "adminUrl": "localhost:8090",
   "name": "MyTestApp",
   "groupName": "TestGroup",
   "description": "This agent configured only for petclinic",
