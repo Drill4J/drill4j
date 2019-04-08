@@ -47,7 +47,7 @@ class CoverageControllerTest {
         coverageController.apply {
             val path = clazz.path
             assertNotNull(initialClassBytes[path])
-            assertTrue { initialClassBytes[path]!!.contentEquals(bytes) }
+            assertTrue { bytes.contentEquals(initialClassBytes[path]!!) }
         }
     }
 

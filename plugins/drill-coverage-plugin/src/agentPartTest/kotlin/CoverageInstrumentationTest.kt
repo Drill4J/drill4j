@@ -44,8 +44,8 @@ class InstrumentationTests {
         analyzer.analyzeClass(originalBytes, targetClass.name)
         val coverage = coverageBuilder.getBundle("all")
         val counter = coverage.instructionCounter
-        assertEquals(counter.coveredCount, 27)
-        assertEquals(counter.missedCount, 2)
+        assertEquals(27, counter.coveredCount)
+        assertEquals(2, counter.missedCount)
     }
 
     private fun addInstrumentedClass() {
