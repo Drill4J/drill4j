@@ -4,114 +4,167 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
-import org.jacoco.core.analysis.Analyzer
-import org.jacoco.core.analysis.CoverageBuilder
-import org.jacoco.core.analysis.ICounter
+import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
+import org.javers.core.JaversBuilder
+import org.javers.core.diff.changetype.NewObject
 
 @Suppress("unused")
-
 class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
 
     val initialClassBytes = mutableMapOf<String, ByteArray>()
+    
+    val javaClasses = mutableMapOf<String, JavaClass>()
+
+    //TODO Only the last prev state at this moment - use JaVers repositories
+    val prevJavaClasses = mutableMapOf<String, JavaClass>()
+
+    private val javers = JaversBuilder.javers().build()
 
     override suspend fun processData(dm: DrillMessage): Any {
         val sessionId = dm.sessionId
         val content = dm.content
         val parse = JSON.parse(CoverageMessage.serializer(), content!!)
-        if (parse.type == CoverageEventType.COVERAGE_DATA) {
-            val coverageBuilder = CoverageBuilder()
-            val dataStore = ExecutionDataStore()
-            val analyzer = Analyzer(dataStore, coverageBuilder)
-
-            // Get new probes from message and populate dataStore with them
-            val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
-            probes.forEach { exData ->
-                dataStore.put(ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray()))
+        when(parse.type) {
+            CoverageEventType.INIT -> {
+                println(parse.data) //log init message
+                //change maps
+                initialClassBytes.clear()
+                prevJavaClasses.clear()
+                prevJavaClasses.putAll(javaClasses)
+                javaClasses.clear()
             }
+            CoverageEventType.COVERAGE_DATA -> {
+                val coverageBuilder = CoverageBuilder()
+                val dataStore = ExecutionDataStore()
+                val analyzer = Analyzer(dataStore, coverageBuilder)
 
-            // Analyze all exiting classes
-            dataStore.contents.forEach { exData ->
-                analyzer.analyzeClass(initialClassBytes[exData.name], exData.name)
-            }
-
-            // TODO possible to store existing bundles to work with obsolete coverage results
-            val a = coverageBuilder.getBundle("all")
-
-            // TODO remove this temporary trace block and dependent methods
-            val uncoveredMethodsCount = a.methodCounter.missedCount
-            var coverage = a.methodCounter.coveredRatio * 100
-            coverage = if (coverage.isFinite()) coverage else 0.0
-
-            // TODO extend destination with plugin id
-            ws.convertAndSend("/coverage", JSON.stringify(
-                CoverageBlock.serializer(),
-                CoverageBlock(coverage, uncoveredMethodsCount)
-            ))
-
-            println("General method coverage $coverage")
-            println("General uncovered methods count $coverage")
-            println("\n----------------\nCoverage of ${a.name}")
-            printCounter("instructions", a.instructionCounter)
-            printCounter("branches", a.branchCounter)
-            printCounter("lines", a.lineCounter)
-            printCounter("methods", a.methodCounter)
-            printCounter("complexity", a.complexityCounter)
-            for (p in a.packages) {
-                println("\n----------------\nCoverage of package ${p.name}")
-                printCounter("instructions", p.instructionCounter)
-                printCounter("branches", p.branchCounter)
-                printCounter("lines", p.lineCounter)
-                printCounter("methods", p.methodCounter)
-                printCounter("complexity", p.complexityCounter)
-                for (c in p.classes) {
-                    println("\n----------------\nCoverage of class ${c.name}")
-                    printCounter("instructions", c.instructionCounter)
-                    printCounter("branches", c.branchCounter)
-                    printCounter("lines", c.lineCounter)
-                    printCounter("methods", c.methodCounter)
-                    printCounter("complexity", c.complexityCounter)
-                    for (m in c.methods) {
-                        println("\n----------------\nCoverage of method ${m.name}")
-                        printCounter("instructions", m.instructionCounter)
-                        printCounter("branches", m.branchCounter)
-                        printCounter("lines", m.lineCounter)
-                        printCounter("methods", m.methodCounter)
-                        printCounter("complexity", m.complexityCounter)
-                        println()
-                        for (i in m.firstLine..m.lastLine) {
-                            println("Line ${Integer.valueOf(i)}: ${getColor(m.getLine(i).status)}")
-                        }
-                    }
+                // Get new probes from message and populate dataStore with them
+                val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
+                probes.forEach { exData ->
+                    dataStore.put(ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray()))
                 }
+
+                // Analyze all existing classes
+                initialClassBytes.forEach { (name, bytes) ->
+                    analyzer.analyzeClass(bytes, name)
+                }
+
+                // TODO possible to store existing bundles to work with obsolete coverage results
+                val bundleCoverage = coverageBuilder.getBundle("all")
+
+                val totalCoverage = bundleCoverage.instructionCounter.coveredRatio
+                val totalCoveragePercent = if (totalCoverage.isFinite()) totalCoverage * 100 else null
+
+                fillJavaClasses(bundleCoverage)
+
+                val classesCount = bundleCoverage.classCounter.totalCount
+                val methodsCount = bundleCoverage.methodCounter.totalCount
+                val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
+
+                val coverageBlock = CoverageBlock(
+                    coverage = totalCoveragePercent,
+                    classesCount = classesCount,
+                    methodsCount = methodsCount,
+                    uncoveredMethodsCount = uncoveredMethodsCount
+                )
+                println(coverageBlock)
+                ws.convertAndSend("/coverage", JSON.stringify(CoverageBlock.serializer(), coverageBlock))
+
+                //TODO Diff should be calculated after all classes has been parsed
+                val diff = javers.compareCollections(
+                    prevJavaClasses.values.toList(),
+                    javaClasses.values.toList(),
+                    JavaClass::class.java
+                )
+                val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
+                val newCoverageBlock = if (newMethods.isNotEmpty()) {
+                    println("New methods count: ${newMethods.count()}")
+                    val newMethodSet = newMethods.toSet()
+                    val newMethodsCoverages = bundleCoverage.packages
+                        .flatMap { it.classes }
+                        .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
+                        .filter { it.first in newMethodSet }
+                        .map { it.second }
+                    val totalCount = newMethodsCoverages.sumBy { it.instructionCounter.totalCount }
+                    val coveredCount = newMethodsCoverages.sumBy { it.instructionCounter.coveredCount }
+                    //line coverage
+                    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount else 0.0
+                    NewCoverageBlock(
+                        newMethodsCoverages.count(),
+                        newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
+                        newCoverage * 100
+                    )
+                } else NewCoverageBlock()
+                println(newCoverageBlock)
+
+                // TODO extend destination with plugin id
+                ws.convertAndSend(
+                    "/coverage-new",
+                    JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
+                )
+
+                val classesCoverage = classesCoverage(bundleCoverage)
+                println(classesCoverage)
+                ws.convertAndSend(
+                    "/coverage-by-classes",
+                    JSON.stringify(JavaClassCoverage.serializer().list, classesCoverage)
+                )
             }
-
-        } else if (parse.type == CoverageEventType.CLASS_BYTES) {
-            val xx = JSON.parse(ClassBytes.serializer(), parse.data)
-            initialClassBytes[xx.className] = xx.bytes.toByteArray()
+            CoverageEventType.CLASS_BYTES -> {
+                val classData = JSON.parse(ClassBytes.serializer(), parse.data)
+                val className = classData.className
+                val bytes = classData.bytes.toByteArray()
+                initialClassBytes[className] = bytes
+            }
         }
         return ""
     }
 
-    private fun printCounter(unit: String, counter: ICounter) {
-        val missed = Integer.valueOf(counter.missedCount)
-        val total = Integer.valueOf(counter.totalCount)
-        System.out.printf("%s of %s %s missed%n", missed, total, unit)
+    private fun fillJavaClasses(bundleCoverage: IBundleCoverage) {
+        javaClasses.clear()
+        bundleCoverage.packages
+            .flatMap { it.classes }
+            .map { cc ->
+                cc.name to JavaClass(
+                    name = cc.name.substringAfterLast('/'),
+                    path = cc.name,
+                    methods = cc.methods.map {
+                        JavaMethod(
+                            ownerClass = cc.name,
+                            name = it.name,
+                            desc = it.desc
+                        )
+                    }.toSet()
+
+                )
+            }.toMap(javaClasses)
     }
 
-    private fun getColor(status: Int): String {
-        when (status) {
-            ICounter.NOT_COVERED -> return "red"
-            ICounter.PARTLY_COVERED -> return "yellow"
-            ICounter.FULLY_COVERED -> return "green"
-        }
-        return ""
-    }
+    private fun classesCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
+        .flatMap { it.classes }
+        .map { classCoverage ->
+            JavaClassCoverage(
+                name = classCoverage.name.substringAfterLast('/'),
+                path = classCoverage.name,
+                coverage = classCoverage.coverage(),
+                totalMethodsCount = classCoverage.methodCounter.totalCount,
+                coveredMethodsCount = classCoverage.methodCounter.coveredCount,
+                methods = classCoverage.methods.map { methodCoverage ->
+                    JavaMethodCoverage(
+                        name = methodCoverage.name,
+                        desc = methodCoverage.desc,
+                        coverage = methodCoverage.coverage()
+                    )
+                }.toList()
+            )
+        }.toList()
 }
 
-@Serializable
-data class CoverageBlock(val coverage: Double, val uncoveredMethodsCount: Int)
+fun ISourceNode.coverage() : Double {
+    val ratio = this.instructionCounter.coveredRatio
+    return if (ratio.isFinite()) ratio * 100.0 else 100.0
+}

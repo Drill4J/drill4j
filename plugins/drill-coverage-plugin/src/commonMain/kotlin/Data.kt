@@ -18,7 +18,7 @@ data class CoverageMessage(val type: CoverageEventType, val data: String)
 
 
 enum class CoverageEventType {
-    CLASS_BYTES, COVERAGE_DATA
+    INIT, CLASS_BYTES, COVERAGE_DATA
 }
 
 @kotlinx.serialization.Serializable

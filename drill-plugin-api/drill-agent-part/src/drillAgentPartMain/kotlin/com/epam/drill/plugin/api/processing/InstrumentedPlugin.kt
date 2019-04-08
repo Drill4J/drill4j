@@ -29,6 +29,6 @@ abstract class InstrumentedPlugin<T, A> : AgentPart<T>() {
 
     abstract var actionSerializer: kotlinx.serialization.KSerializer<A>
 
-    abstract fun instrument(className: String, initialBytest: ByteArray): ByteArray
+    abstract fun instrument(className: String, initialBytes: ByteArray): ByteArray
 
 }

@@ -1,3 +1,5 @@
+import com.epam.drill.build.jvmCoroutinesVersion
+
 plugins {
     `kotlin-multiplatform`
     `kotlinx-serialization`
@@ -38,6 +40,7 @@ kotlin {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
                 api("org.jacoco:org.jacoco.core:0.8.3")
+                api("org.javers:javers-core:5.3.4")
             }
         }
 
@@ -45,6 +48,7 @@ kotlin {
         jvms.forEach {
             it.compilations["test"].defaultSourceSet {
                 dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
                     implementation(kotlin("test-junit"))
                 }
             }
