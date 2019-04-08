@@ -39,7 +39,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
                     }
                     for (pluginDir in files) {
                         val jar = JarFile(pluginDir)
-                        val tempDir = File(System.getProperty("user.home"), ".drill")
+                        val tempDir = File("stuff", ".drill")
                         val tempDirectory = createTempDirectory(tempDir, pluginDir.nameWithoutExtension)
                         val processAdminPart = processAdminPart(jar, tempDirectory)
                         val loadedPlugins = plugins.plugins.keys
