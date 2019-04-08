@@ -8,7 +8,10 @@ class MongoClient {
     var client: MongoClient? = null
 
     init {
-        val bindIp = "localhost"
+        val bindIp = if (System.getenv("isDocker") != null) {
+            println("docker ENV!")
+            "drillmongodb"
+        } else "localhost"
         val port = 27017
         try {
             client = KMongo.createClient(bindIp, port)

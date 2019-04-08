@@ -10,7 +10,7 @@ include(":nativeprojects:drill-kasm")
 include(":nativeprojects:drill-logger")
 
 /**plugin's projects*/
-include(":plugins:drill-exception-plugin-native")
+//include(":plugins:drill-exception-plugin-native")
 include(":plugins:drill-custom-plugin")
 include(":plugins:drill-coverage-plugin")
 
