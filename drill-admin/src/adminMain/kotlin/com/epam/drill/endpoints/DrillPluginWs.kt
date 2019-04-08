@@ -26,6 +26,10 @@ import java.util.concurrent.ConcurrentHashMap
 val logger = LoggerFactory.getLogger(DrillPluginWs::class.java)
 
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
+    private val app: Application by instance()
+    private val mc: MongoClient by instance()
+    private val sessionStorage: MutableMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
+
     override fun getPlWsSession(): Set<String> {
         return sessionStorage.keys
     }
@@ -33,18 +37,18 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     override suspend fun convertAndSend(destination: String, message: Any) {
 
         sessionStorage[destination]?.apply {
-            //            val ogs = message as SeqMessage
-//            val messageAsString = getMessageForSocket(ogs)
             if (message is String) {
+
                 val iterator = this.iterator()
                 while (iterator.hasNext()) {
                     val next = iterator.next()
                     try {
-                        next.send(Frame.Text(Gson().toJson(Message(MessageType.MESSAGE, destination, message))))
+                        val message1 = Message(MessageType.MESSAGE, destination, message)
+                        val collection = mc.client!!.getDatabase("test").getCollection<Message>(destination)
+                        collection.insertOne(message1)
+                        next.send(Frame.Text(Gson().toJson(message1)))
                     } catch (ex: Exception) {
                         iterator.remove()
-                        //fixme log
-//                    logDebug("Old WS session was removed")
                     }
                 }
             }
@@ -64,10 +68,6 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         }
     }
 
-    private val app: Application by instance()
-    private val mc: MongoClient by instance()
-    private val sessionStorage: MutableMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
-
     init {
         app.routing {
 
@@ -86,20 +86,9 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 //                                    logDebug("${event.destination} was subscribe")
 
                                     val objects =
-                                        mc.client!!.getDatabase("test").getCollection<SeqMessage>(event.destination)
+                                        mc.client!!.getDatabase("test").getCollection<Message>(event.destination)
                                     for (ogs in objects.find()) {
-                                        val message = getMessageForSocket(ogs)
-                                        this.send(
-                                            Frame.Text(
-                                                Gson().toJson(
-                                                    Message(
-                                                        MessageType.MESSAGE,
-                                                        event.destination,
-                                                        message
-                                                    )
-                                                )
-                                            )
-                                        )
+                                        this.send(Frame.Text(Gson().toJson(ogs)))
                                     }
 
 

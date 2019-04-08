@@ -39,10 +39,11 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     agentInfo = AgentInfo::class fromJson message.message
                                     agentStorage.put(agentInfo!!, this)
                                     send(agentWsMessage("/plugins/agent-attached", ""))
+                                    println("Agent registered")
                                 }
                                 MessageType.PLUGIN_DATA -> {
                                     logger.info(message.message)
-                                    pd.processPluginData(message.message)
+                                    pd.processPluginData(message.message, agentInfo!!)
                                 }
                                 else -> {
                                     //fixme log

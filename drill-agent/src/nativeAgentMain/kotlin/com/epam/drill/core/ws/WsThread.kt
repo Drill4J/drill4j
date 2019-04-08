@@ -97,8 +97,17 @@ private fun websocket() = runBlocking {
             //todo thing about this throwing...
             throw RuntimeException("close")
         }
-        register()
+
+//        register()
         launch {
+            agentInfo.rawPluginNames.clear()
+            agentInfo.rawPluginNames.addAll(pluginsState())
+
+            val message = Json.stringify(
+                Message.serializer(),
+                Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
+            )
+            wsClient.send(message)
             while (true) {
                 delay(5)
                 MessageQueue.retrieveMessage()?.apply {

@@ -4,6 +4,7 @@ package com.epam.drill.endpoints
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.byId
 import com.epam.drill.agentmanager.get
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.Plugins
@@ -37,7 +38,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
     private val wsService: WsService by kodein.instance()
 
-    suspend fun processPluginData(pluginData: String) {
+    suspend fun processPluginData(pluginData: String, agentInfo: AgentInfo) {
         val message: SeqMessage = parseRequest(pluginData)
         val pluginId = message.pluginId
         val sessionId = message.drillMessage.sessionId ?: ""
@@ -45,7 +46,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
         try {
             //fixme
-            plugins.plugins[pluginId]?.first?.processData(message.drillMessage)
+            plugins.plugins[pluginId]?.first?.processData(agentInfo, message.drillMessage)
 //                                    val processData = dp?.serverInstance?.processData(message.drillMessage)
 //            dp?.serverInstance?.sender?.convertAndSend(destination, message)
             wsService.convertAndSend(destination, message)

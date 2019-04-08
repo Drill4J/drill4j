@@ -1,6 +1,7 @@
 package com.epam.drill.plugins.coverage
 
 
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
@@ -24,7 +25,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
 
     private val javers = JaversBuilder.javers().build()
 
-    override suspend fun processData(dm: DrillMessage): Any {
+    override suspend fun processData(agentId: AgentInfo, dm: DrillMessage): Any {
         val sessionId = dm.sessionId
         val content = dm.content
         val parse = JSON.parse(CoverageMessage.serializer(), content!!)
