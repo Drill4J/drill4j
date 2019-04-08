@@ -14,6 +14,7 @@ open class AgentInfoWebSocket(
     val description: String,
     val group: String,
     val status: Boolean = true,
+    var buildVersion: String,
 
     @Optional
     val adminUrl: String = "",
@@ -31,19 +32,31 @@ class AgentInfoWebSocketSingle(
     description: String,
     group: String,
     status: Boolean = true,
+    buildVersion: String,
 
     adminUrl: String = "",
     ipAddress: String = "",
     activePluginsCount: Int = 0,
     pluginsCount: Int = 0,
     val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf()
-) : AgentInfoWebSocket(name, description, group, status, adminUrl, ipAddress, activePluginsCount, pluginsCount)
+) : AgentInfoWebSocket(
+    name = name,
+    description = description,
+    group = group,
+    status = status,
+    adminUrl = adminUrl,
+    ipAddress = ipAddress,
+    buildVersion = buildVersion,
+    activePluginsCount = activePluginsCount,
+    pluginsCount = pluginsCount
+)
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     name = name,
     description = description,
     group = groupName,
     status = isEnable,
+    buildVersion = buildVersion,
     adminUrl = adminUrl,
     ipAddress = ipAddress,
     activePluginsCount = rawPluginNames.activePluginsCount(),
@@ -60,6 +73,7 @@ fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
             description = description,
             group = groupName,
             status = isEnable,
+            buildVersion = buildVersion,
             adminUrl = adminUrl,
             ipAddress = ipAddress,
             activePluginsCount = rawPluginNames.activePluginsCount(),
