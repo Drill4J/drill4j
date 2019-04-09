@@ -2,7 +2,10 @@ package com.epam.drill.plugins.coverage
 
 
 @kotlinx.serialization.Serializable
-data class CoverConfig(val message: String)
+data class CoverConfig(
+    val packageNames: List<String>,
+    val message: String
+)
 
 
 @kotlinx.serialization.Serializable
@@ -18,7 +21,10 @@ data class CoverageMessage(val type: CoverageEventType, val data: String)
 
 
 enum class CoverageEventType {
-    INIT, CLASS_BYTES, COVERAGE_DATA
+    INIT,
+    CLASS_BYTES,
+    INITIALIZED,
+    COVERAGE_DATA
 }
 
 @kotlinx.serialization.Serializable
