@@ -46,7 +46,7 @@ data class JavaPackageCoverage(
 data class JavaClassCoverage(
     val name: String,
     val path: String,
-    val coverage: Double,
+    val coverage: Double?,
     val totalMethodsCount: Int,
     val coveredMethodsCount: Int,
     val methods: List<JavaMethodCoverage>
@@ -56,5 +56,5 @@ data class JavaClassCoverage(
 data class JavaMethodCoverage(
     val name: String,
     val desc: String,
-    val coverage: Double
+    val coverage: Double?
 )

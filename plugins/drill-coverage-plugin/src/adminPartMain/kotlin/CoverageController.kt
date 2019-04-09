@@ -184,11 +184,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }.toList()
 }
 
-fun ISourceNode.coverage() : Double {
-    val ratio = this.instructionCounter.coveredRatio
-    return if (ratio.isFinite()) ratio * 100.0 else 100.0
-}
-
 fun ICoverageNode.coverage() : Double? {
     val ratio = this.instructionCounter.coveredRatio
     return if (ratio.isFinite()) ratio * 100.0 else null
