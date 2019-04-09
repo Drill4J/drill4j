@@ -107,11 +107,18 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
                 )
 
-                val classesCoverage = classesCoverage(bundleCoverage)
-                println(classesCoverage)
+                val classCoverage = classCoverage(bundleCoverage)
+                println(classCoverage)
                 ws.convertAndSend(
                     "/coverage-by-classes",
-                    JSON.stringify(JavaClassCoverage.serializer().list, classesCoverage)
+                    JSON.stringify(JavaClassCoverage.serializer().list, classCoverage)
+                )
+
+                val packageCoverage = packageCoverage(bundleCoverage)
+                println(packageCoverage)
+                ws.convertAndSend(
+                    "/coverage-by-packages",
+                    JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
                 )
             }
             CoverageEventType.CLASS_BYTES -> {
@@ -144,8 +151,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             }.toMap(javaClasses)
     }
 
-    private fun classesCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
-        .flatMap { it.classes }
+    private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
+        .flatMap { it.classes}
         .map { classCoverage ->
             JavaClassCoverage(
                 name = classCoverage.name.substringAfterLast('/'),
@@ -162,9 +169,27 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 }.toList()
             )
         }.toList()
+
+    private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
+        .map { packageCoverage ->
+            JavaPackageCoverage(
+                name = packageCoverage.name,
+                coverage = packageCoverage.coverage(),
+                totalClassesCount = packageCoverage.classCounter.totalCount,
+                coveredClassesCount = packageCoverage.classCounter.coveredCount,
+                totalMethodsCount = packageCoverage.methodCounter.totalCount,
+                coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
+                classes = classCoverage(bundleCoverage)
+            )
+        }.toList()
 }
 
 fun ISourceNode.coverage() : Double {
     val ratio = this.instructionCounter.coveredRatio
     return if (ratio.isFinite()) ratio * 100.0 else 100.0
+}
+
+fun ICoverageNode.coverage() : Double? {
+    val ratio = this.instructionCounter.coveredRatio
+    return if (ratio.isFinite()) ratio * 100.0 else null
 }

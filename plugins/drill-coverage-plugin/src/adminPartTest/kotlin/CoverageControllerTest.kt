@@ -63,6 +63,7 @@ class CoverageControllerTest {
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
         assertTrue { ws.sent.any { it.first == "/coverage" } }
         assertTrue { ws.sent.any { it.first == "/coverage-by-classes" } }
+        assertTrue { ws.sent.any { it.first == "/coverage-by-packages" } }
     }
 
     private fun prepareClasses(vararg classes: Class<*>) {
