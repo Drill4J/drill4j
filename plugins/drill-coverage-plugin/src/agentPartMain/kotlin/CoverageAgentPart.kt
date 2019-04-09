@@ -3,6 +3,7 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.plugin.api.processing.InstrumentedPlugin
 import com.epam.drill.plugin.api.processing.Sender
 import com.epam.drill.session.DrillRequest
+import com.google.common.reflect.ClassPath
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
 import org.jacoco.core.data.ExecutionDataStore
@@ -17,6 +18,30 @@ class CoveragePlugin @JvmOverloads constructor(
 ) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
 
     val instrumenter = instrumenter(probeArrayProvider)
+    
+    private val classNameSet = mutableSetOf<String>()
+
+    override fun initPlugin() {
+        val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
+        println(initializingMessage)
+        sendMessage(CoverageEventType.INIT, initializingMessage)
+
+        @Suppress("UnstableApiUsage")
+        ClassPath.from(ClassLoader.getSystemClassLoader()).topLevelClasses
+            .filter { classInfo ->  config.packageNames.any { it in classInfo.packageName } }
+            .forEach {
+                val resourceName = it.resourceName.substringBeforeLast('.') //strip ".class" suffix
+                classNameSet.add(resourceName)
+                val bytes = it.asByteSource().read()
+                sendClass(ClassBytes(resourceName, bytes.toList()))
+
+            }
+
+        val initializedStr = "Plugin $id initialized!"
+        sendMessage(CoverageEventType.INITIALIZED, initializedStr)
+        println(initializedStr)
+        println("Loaded ${classNameSet.count()} classes: $classNameSet")
+    }
 
     override fun doAction(action: CoverageAction) {
         val record = action.isRecord
@@ -41,20 +66,9 @@ class CoveragePlugin @JvmOverloads constructor(
         }
     }
 
-    override fun initPlugin() {
-        val str = "Plugin $id initialized!"
-        val message = JSON.stringify(
-            CoverageMessage.serializer(),
-            CoverageMessage(CoverageEventType.INIT, str)
-        )
-        Sender.sendMessage("coverage", message)
-        println(str)
-    }
-
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray {
-        return if ("_\$\$_" !in className && "CGLIB\$\$" !in className) {
+        return if (className in classNameSet) { //instrument only classes from the selected packages
             try {
-                sendClass(ClassBytes(className, initialBytes.toList()))
                 instrumenter(className, initialBytes)
             } catch (ex: Throwable) {
                 ex.printStackTrace()
@@ -65,18 +79,18 @@ class CoveragePlugin @JvmOverloads constructor(
 
     private fun sendClass(classBytes: ClassBytes) {
         val classJson = JSON.stringify(ClassBytes.serializer(), classBytes)
-        val message = JSON.stringify(
-            CoverageMessage.serializer(),
-            CoverageMessage(CoverageEventType.CLASS_BYTES, classJson)
-        )
-        Sender.sendMessage("coverage", message)
+        sendMessage(CoverageEventType.CLASS_BYTES, classJson)
     }
 
     private fun sendExecutionData(exData: List<ExDataTemp>) {
         val exDataJson = JSON.stringify(ExDataTemp.serializer().list, exData)
+        sendMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
+    }
+
+    private fun sendMessage(type: CoverageEventType, str: String) {
         val message = JSON.stringify(
             CoverageMessage.serializer(),
-            CoverageMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
+            CoverageMessage(type, str)
         )
         Sender.sendMessage("coverage", message)
     }

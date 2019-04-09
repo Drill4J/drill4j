@@ -37,6 +37,23 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 prevJavaClasses.putAll(javaClasses)
                 javaClasses.clear()
             }
+            CoverageEventType.CLASS_BYTES -> {
+                val classData = JSON.parse(ClassBytes.serializer(), parse.data)
+                val className = classData.className
+                val bytes = classData.bytes.toByteArray()
+                initialClassBytes[className] = bytes
+            }
+            CoverageEventType.INITIALIZED -> {
+                println(parse.data) //log initialized message
+                val coverageBuilder = CoverageBuilder()
+                val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
+                initialClassBytes.forEach { (name, bytes) ->
+                    analyzer.analyzeClass(bytes, name)
+                }
+                val bundleCoverage = coverageBuilder.getBundle("all")
+                fillJavaClasses(bundleCoverage)
+                println("Classes loaded ${initialClassBytes.count()}")
+            }
             CoverageEventType.COVERAGE_DATA -> {
                 val coverageBuilder = CoverageBuilder()
                 val dataStore = ExecutionDataStore()
@@ -59,7 +76,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val totalCoverage = bundleCoverage.instructionCounter.coveredRatio
                 val totalCoveragePercent = if (totalCoverage.isFinite()) totalCoverage * 100 else null
 
-                fillJavaClasses(bundleCoverage)
 
                 val classesCount = bundleCoverage.classCounter.totalCount
                 val methodsCount = bundleCoverage.methodCounter.totalCount
@@ -120,12 +136,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     "/coverage-by-packages",
                     JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
                 )
-            }
-            CoverageEventType.CLASS_BYTES -> {
-                val classData = JSON.parse(ClassBytes.serializer(), parse.data)
-                val className = classData.className
-                val bytes = classData.bytes.toByteArray()
-                initialClassBytes[className] = bytes
             }
         }
         return ""
