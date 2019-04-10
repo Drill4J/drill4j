@@ -2,6 +2,8 @@
 
 package com.epam.drill.endpoints
 
+import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.agentmanager.self
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
@@ -29,6 +31,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val app: Application by instance()
     private val mc: MongoClient by instance()
     private val sessionStorage: MutableMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
+    private val agentStorage: AgentStorage by instance()
 
     override fun getPlWsSession(): Set<String> {
         return sessionStorage.keys
@@ -74,7 +77,9 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     saveSession(event)
                                     val objects = mc.storage<Message>(
                                         subscribeInfo.agentId,
-                                        event.destination + ":" + subscribeInfo.buildVersion
+                                        event.destination + ":" + (subscribeInfo.buildVersion ?: agentStorage.self(
+                                            subscribeInfo.agentId
+                                        )?.buildVersion)
                                     )
                                         .find()
                                         .iterator()
@@ -120,4 +125,4 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
 }
 
-data class SubscribeInfo(val agentId: String, val buildVersion: String)
+data class SubscribeInfo(val agentId: String, val buildVersion: String? = null)

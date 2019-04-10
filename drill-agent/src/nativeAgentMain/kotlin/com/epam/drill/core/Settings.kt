@@ -22,7 +22,7 @@ fun parseConfigs() = runBlocking {
     di {
         agentInfo = agInfo
         //fixme retrieve a real IP
-        agInfo.ipAddress = "127.0.0.1"
+        agInfo.ipAddress = "127.0.0.3"
         agInfo.additionalInfo = AgentAdditionalInfo(
             listOf(),
             4,

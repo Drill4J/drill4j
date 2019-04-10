@@ -15,6 +15,8 @@ operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
     return this.entries.associate { it.key.ipAddress to it.value }[k]
 }
 
+fun AgentStorage.self(k: String) = this.keys.find { it.ipAddress == k }
+
 fun AgentStorage.byId(agentId: String): AgentInfo? {
     return this.keys.firstOrNull { it.ipAddress == agentId }
 }
