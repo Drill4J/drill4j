@@ -35,39 +35,41 @@ fun classLoadEvent(
             if (loader != null && protection_domain != null) {
 
 
-                val instrumentedPlugin = di { pInstrumentedStorage }["coverage"]
-                if (instrumentedPlugin != null) {
-                    val newByteArray: jbyteArray? = NewByteArray(classDataLen)
-                    ExceptionDescribe()
-                    SetByteArrayRegion(
-                        newByteArray,
-                        0,
-                        classDataLen,
-                        getBytes(newByteArray, classDataLen, classData)
-                    )
-                    ExceptionDescribe()
-                    val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
+                if (kClassName.contains("/drilspringframework")) {
 
-                    val getByteArrayElements1 = GetByteArrayElements(instrument, null)
-                    val size = GetArrayLength(instrument)
-                    Allocate(size.toLong(), newData)
-                    for (i in 0 until size) {
-                        val pointed = newData!!.pointed
-                        val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
-                        value[i] = getByteArrayElements1!![i].toUByte()
+                    val instrumentedPlugin = di { pInstrumentedStorage }["coverage"]
+                    if (instrumentedPlugin != null) {
+                        val newByteArray: jbyteArray? = NewByteArray(classDataLen)
+                        ExceptionDescribe()
+                        SetByteArrayRegion(
+                            newByteArray,
+                            0,
+                            classDataLen,
+                            getBytes(newByteArray, classDataLen, classData)
+                        )
+                        ExceptionDescribe()
+                        val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
+
+                        val getByteArrayElements1 = GetByteArrayElements(instrument, null)
+                        val size = GetArrayLength(instrument)
+                        Allocate(size.toLong(), newData)
+                        for (i in 0 until size) {
+                            val pointed = newData!!.pointed
+                            val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
+                            value[i] = getByteArrayElements1!![i].toUByte()
+                        }
+
+
+                        val byteArray = ByteArray(size)
+
+                        for (i in 0 until size) {
+                            byteArray[i] = getByteArrayElements1!![i].toByte()
+                        }
+
+                        newClassDataLen!!.pointed.value = size
                     }
-
-
-                    val byteArray = ByteArray(size)
-
-                    for (i in 0 until size) {
-                        byteArray[i] = getByteArrayElements1!![i].toByte()
-                    }
-
-                    newClassDataLen!!.pointed.value = size
-                }
 //                }
-
+                }
 //
             }
         }
