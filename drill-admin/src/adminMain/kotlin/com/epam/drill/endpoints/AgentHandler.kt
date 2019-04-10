@@ -42,7 +42,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     println("Agent registered")
                                 }
                                 MessageType.PLUGIN_DATA -> {
-                                    logger.info(message.message)
+                                    agLog.info(message.message)
                                     pd.processPluginData(message.message, agentInfo!!)
                                 }
                                 else -> {

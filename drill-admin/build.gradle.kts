@@ -53,6 +53,7 @@ kotlin {
         jvm("admin").compilations["test"].defaultSourceSet {
             dependencies {
                 implementation("io.ktor:ktor-server-test-host:$ktorVersion")
+                implementation("org.testcontainers:testcontainers:1.11.1")
             }
         }
 

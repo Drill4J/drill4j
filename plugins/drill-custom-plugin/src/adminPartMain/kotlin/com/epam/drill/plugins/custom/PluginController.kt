@@ -10,9 +10,9 @@ import com.epam.drill.plugin.api.message.DrillMessage
 
 class PluginController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
 
-    override suspend fun processData(agentId: AgentInfo, dm: DrillMessage): Any {
+    override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val sessionId = dm.sessionId
-        ws.convertAndSend(id + (sessionId ?: ""), dm.content!!)
+        ws.convertAndSend(agentInfo, id + (sessionId ?: ""), dm.content!!)
         return ""
     }
 

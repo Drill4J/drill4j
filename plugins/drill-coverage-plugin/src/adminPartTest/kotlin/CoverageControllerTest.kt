@@ -102,7 +102,7 @@ class WsServiceStub : WsService {
 
     val sent = mutableListOf<Pair<String, Any>>()
 
-    override suspend fun convertAndSend(destination: String, message: Any) {
+    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         sent.add(destination to message)
     }
 

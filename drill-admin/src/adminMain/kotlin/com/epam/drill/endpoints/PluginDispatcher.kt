@@ -49,7 +49,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             plugins.plugins[pluginId]?.first?.processData(agentInfo, message.drillMessage)
 //                                    val processData = dp?.serverInstance?.processData(message.drillMessage)
 //            dp?.serverInstance?.sender?.convertAndSend(destination, message)
-            wsService.convertAndSend(destination, message)
+//            wsService.convertAndSend(destination, message)
         } catch (ee: Exception) {
             ee.printStackTrace()
             //fixme log
