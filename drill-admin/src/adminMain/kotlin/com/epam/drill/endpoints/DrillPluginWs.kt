@@ -41,7 +41,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         val messageForSend = Message(MessageType.MESSAGE, destination, message)
 
         val collection = mc.storage<Message>(
-            agentInfo.ipAddress,
+            agentInfo.id,
             destination + ":" + agentInfo.buildVersion
         )
         collection.insertOne(messageForSend)

@@ -125,9 +125,9 @@ class DrillPluginWsTest {
                 val destination = "/pluginTopic"
                 val messageForTest = "testMessage"
                 val agentInfo = AgentInfo(
-                    id = "id",
+                    id = agentId,
                     name = "test",
-                    ipAddress = agentId,
+                    ipAddress = "1.7.2.23",
                     groupName = "test",
                     description = "test",
                     isEnable = true,
@@ -161,9 +161,9 @@ class DrillPluginWsTest {
                 val destination = "/pluginTopic"
                 val messageForTest = "testMessage"
                 val agentInfo = AgentInfo(
-                    id = "id",
+                    id = agentId,
                     name = "test",
-                    ipAddress = agentId,
+                    ipAddress = "1.2.23.2",
                     groupName = "test",
                     description = "test",
                     isEnable = true,

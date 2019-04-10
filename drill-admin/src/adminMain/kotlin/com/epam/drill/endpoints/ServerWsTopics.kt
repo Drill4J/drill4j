@@ -32,13 +32,13 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 sessionStorage.sendTo(it.keys.toAgentInfosWebSocket().messageEvent(destination))
             }
             agentStorage.onAdd += add(mutableSetOf()) { k, _ ->
-                val destination = app.toLocation(WsRoutes.GetAgent(k.ipAddress))
+                val destination = app.toLocation(WsRoutes.GetAgent(k.id))
                 if (sessionStorage.exists(destination))
                     sessionStorage.sendTo(k.toAgentInfoWebSocket().messageEvent(destination))
             }
 
             agentStorage.onRemove += remove(mutableSetOf()) { k ->
-                val destination = app.toLocation(WsRoutes.GetAgent(k.ipAddress))
+                val destination = app.toLocation(WsRoutes.GetAgent(k.id))
                 if (sessionStorage.exists(destination))
                     sessionStorage.sendTo(Message(MessageType.DELETE, destination, ""))
             }
