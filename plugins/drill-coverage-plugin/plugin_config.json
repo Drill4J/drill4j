@@ -4,5 +4,5 @@
   "description": "This is the awesome custom plugin",
   "type": "Custom",
   "enabled": true,
-  "config": "{\"packageNames\": [\"org.drilspringframework.samples.petclinic\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+  "config": "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
 }

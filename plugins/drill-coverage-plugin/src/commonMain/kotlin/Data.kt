@@ -3,7 +3,7 @@ package com.epam.drill.plugins.coverage
 
 @kotlinx.serialization.Serializable
 data class CoverConfig(
-    val packageNames: List<String>,
+    val pathPrefixes: List<String>,
     val message: String
 )
 
