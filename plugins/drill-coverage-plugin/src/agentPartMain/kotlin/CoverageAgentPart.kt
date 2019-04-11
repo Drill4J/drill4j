@@ -27,16 +27,18 @@ class CoveragePlugin @JvmOverloads constructor(
         sendMessage(CoverageEventType.INIT, initializingMessage)
 
         @Suppress("UnstableApiUsage")
-        ClassPath.from(ClassLoader.getSystemClassLoader()).topLevelClasses
-            .filter { classInfo ->  config.packageNames.any { it in classInfo.packageName } }
-            .forEach {
-                val resourceName = it.resourceName.substringBeforeLast('.') //strip ".class" suffix
-                classNameSet.add(resourceName)
-                val bytes = it.asByteSource().read()
-                sendClass(ClassBytes(resourceName, bytes.toList()))
-
-            }
-
+        ClassPath.from(ClassLoader.getSystemClassLoader()).topLevelClasses.mapNotNull { classInfo ->
+            val resourceName = classInfo.resourceName
+                .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                .removeSuffix(".class")
+            if (config.pathPrefixes.any { resourceName.startsWith(it) }) {
+                Pair(resourceName, classInfo)
+            } else null
+        }.forEach { (resourceName, classInfo) ->
+            classNameSet.add(resourceName)
+            val bytes = classInfo.asByteSource().read()
+            sendClass(ClassBytes(resourceName, bytes.toList()))
+        }
         val initializedStr = "Plugin $id initialized!"
         sendMessage(CoverageEventType.INITIALIZED, initializedStr)
         println(initializedStr)
