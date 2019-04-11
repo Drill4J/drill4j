@@ -36,7 +36,8 @@ kotlin {
         jvm("javaAgent").compilations["main"].defaultSourceSet {
             dependencies {
                 implementation("com.soywiz:klogger:$kloggerVersion")
-                implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+                implementation(kotlin("stdlib-jdk8"))
+                implementation(kotlin("reflect")) //TODO jarhell quick fix for kotlin jvm apps
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
                 implementation(project(":drill-common"))
