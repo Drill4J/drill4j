@@ -30,6 +30,7 @@ kotlin {
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
+                api("com.google.code.gson:gson:2.8.5")
                 api("org.jacoco:org.jacoco.core:0.8.3")
                 api("com.google.guava:guava:27.1-jre") //only for loading classes from package
             }

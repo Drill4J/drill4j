@@ -3,7 +3,7 @@
 package com.epam.drill.api
 
 import com.epam.drill.core.messanger.MessageQueue
-import com.epam.drill.core.request.DrillRequest
+import com.epam.drill.core.request.*
 import com.epam.drill.jvmapi.JNI
 import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
@@ -79,13 +79,17 @@ fun currentThread() = memScoped {
 }
 
 @CName("drillRequest")
-fun drillRequest() = drillCRequest()?.get()
+fun drillRequest() = drillCRequest()?.get()?.toDrillRequest()
+
+
+@CName("drillHeaders")
+fun httpRequest() = drillCRequest()?.get()?.getCurrentHeaders()
 
 
 fun drillCRequest(thread: jthread? = currentThread()) = memScoped {
     val drillReq = alloc<COpaquePointerVar>()
     GetThreadLocalStorage(thread, drillReq.ptr)
-    drillReq.value?.asStableRef<DrillRequest>()
+    drillReq.value?.asStableRef<HttpRequest>()
 }
 
 

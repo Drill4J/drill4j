@@ -37,7 +37,7 @@ fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBu
 
                 SetThreadLocalStorage(
                     com.epam.drill.api.currentThread(),
-                    StableRef.create(parseHttpRequest.toDrillRequest()).asCPointer()
+                    StableRef.create(parseHttpRequest).asCPointer()
                 )
             }
 

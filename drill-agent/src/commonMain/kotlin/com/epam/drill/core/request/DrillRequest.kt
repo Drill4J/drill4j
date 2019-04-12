@@ -58,6 +58,8 @@ fun HttpRequest.toDrillRequest(): DrillRequest {
     )
 }
 
+fun HttpRequest.getCurrentHeaders() : Map<String, String> = this.headers
+
 fun RawHttpRequest.toRequestQuery(): Query {
     val queryValues = this.split(" ")
     return Query(queryValues[0], queryValues[1], queryValues[2])

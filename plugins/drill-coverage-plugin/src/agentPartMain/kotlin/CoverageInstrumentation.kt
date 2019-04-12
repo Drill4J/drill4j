@@ -1,5 +1,7 @@
 package com.epam.drill.plugins.coverage
 
+import com.epam.drill.session.DrillRequest.currentHeaders
+import com.google.gson.Gson
 import org.jacoco.core.instr.Instrumenter
 import org.jacoco.core.internal.data.CRC64
 import org.jacoco.core.internal.flow.ClassProbesAdapter
@@ -40,6 +42,8 @@ open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> 
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = sessionIdProvider()
+        val currentHeaders = currentHeaders()
+        val currentHeadersMap = Gson().fromJson<HashMap<String, String>>(currentHeaders, HashMap::class.java)
         val runtime = sessionId?.let { sessionRuntimes[it] }
         return runtime?.run {
             getExecutionData(id, name, probeCount).probes

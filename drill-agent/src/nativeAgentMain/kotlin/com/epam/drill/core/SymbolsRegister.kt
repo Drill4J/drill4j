@@ -3,9 +3,11 @@
 package com.epam.drill.core
 
 import com.epam.drill.api.drillRequest
+import com.epam.drill.api.httpRequest
 import com.epam.drill.api.sendToSocket
 import com.epam.drill.jvmapi.JNIEnvPointer
 import com.epam.drill.jvmapi.toKString
+import com.soywiz.korio.serialization.json.Json
 import jvmapi.*
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.cstr
@@ -32,5 +34,14 @@ fun sendFromJava(env: JNIEnv, thiz: jobject, pluginId: jstring, message: jstring
 @CName("Java_com_epam_drill_session_DrillRequest_currentSession")
 fun currentsession4java(env: JNIEnv, thiz: jobject): jobject? {
     return NewStringUTF(drillRequest()?.drillSessionId)
+
+}
+@Suppress("UNUSED_PARAMETER")
+@CName("Java_com_epam_drill_session_DrillRequest_currentHeaders")
+fun currentHeaders4Java(env: JNIEnv, thiz: jobject): jobject? {
+
+    val utf = httpRequest()
+    val stringify = Json.stringify(utf)
+    return NewStringUTF(stringify)
 
 }
