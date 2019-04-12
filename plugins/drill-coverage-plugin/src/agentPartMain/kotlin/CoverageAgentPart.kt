@@ -24,10 +24,10 @@ class CoveragePlugin @JvmOverloads constructor(
     override fun initPlugin() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
         println(initializingMessage)
-        sendMessage(CoverageEventType.INIT, initializingMessage)
-
         @Suppress("UnstableApiUsage")
-        ClassPath.from(ClassLoader.getSystemClassLoader()).topLevelClasses.mapNotNull { classInfo ->
+        val classPath = ClassPath.from(ClassLoader.getSystemClassLoader())
+        sendMessage(CoverageEventType.INIT, initializingMessage)
+        classPath.topLevelClasses.mapNotNull { classInfo ->
             val resourceName = classInfo.resourceName
                 .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                 .removeSuffix(".class")
