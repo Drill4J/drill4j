@@ -12,9 +12,11 @@ operator fun AgentStorage.invoke(block: AgentStorage.() -> Unit) {
 }
 
 operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
-    return this.entries.associate { it.key.ipAddress to it.value }[k]
+    return this.entries.associate { it.key.id to it.value }[k]
 }
 
+fun AgentStorage.self(k: String) = this.keys.find { it.id == k }
+
 fun AgentStorage.byId(agentId: String): AgentInfo? {
-    return this.keys.firstOrNull { it.ipAddress == agentId }
+    return this.keys.firstOrNull { it.id == agentId }
 }

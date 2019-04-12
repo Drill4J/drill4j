@@ -47,7 +47,7 @@ import java.time.Duration
 
 val storage = Kodein.Module(name = "agentStorage") {
     bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
-    bind<MongoClient>() with singleton { MongoClient() }
+    bind<MongoClient>() with singleton { MongoClient(kodein) }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }

@@ -13,6 +13,7 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.invoke
 
 const val SocketDispatcher = "Lsun/nio/ch/SocketDispatcher;"
+const val FileDispatcherImpl = "Lsun/nio/ch/FileDispatcherImpl;"
 
 fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBufferAddress, len: jint): Int {
     initRuntimeIfNeeded()
@@ -20,6 +21,40 @@ fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBu
     if (retVal > 0) {
 
         val request = address.rawString(retVal)
+        try {
+            if (request.startsWith("OPTIONS ") ||
+                request.startsWith("GET ") ||
+                request.startsWith("HEAD ") ||
+                request.startsWith("POST ") ||
+                request.startsWith("PUT ") ||
+                request.startsWith("PATCH ") ||
+                request.startsWith("DELETE ") ||
+                request.startsWith("TRACE ") ||
+                request.startsWith("CONNECT ")
+            ) {
+                drillCRequest()?.dispose()
+                val parseHttpRequest = parseHttpRequest(request)
+
+                SetThreadLocalStorage(
+                    com.epam.drill.api.currentThread(),
+                    StableRef.create(parseHttpRequest.toDrillRequest()).asCPointer()
+                )
+            }
+
+        } catch (ex: Throwable) {
+            println(ex.message)
+        }
+    }
+    return retVal
+}
+
+fun readv0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBufferAddress, len: jint): Int {
+    initRuntimeIfNeeded()
+    val retVal = di { originalMethod[::readv0](env, obj, fd, address, len) }
+    if (retVal > 0) {
+
+        val request = address.rawString(retVal)
+        println(request)
         try {
             if (request.startsWith("OPTIONS ") ||
                 request.startsWith("GET ") ||

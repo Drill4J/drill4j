@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 @Suppress("unused")
 @Serializable
 open class AgentInfoWebSocket(
+    val id: String,
     val name: String,
     val description: String,
     val group: String,
@@ -28,6 +29,7 @@ open class AgentInfoWebSocket(
 
 @Suppress("unused")
 class AgentInfoWebSocketSingle(
+    id: String,
     name: String,
     description: String,
     group: String,
@@ -40,6 +42,7 @@ class AgentInfoWebSocketSingle(
     pluginsCount: Int = 0,
     val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf()
 ) : AgentInfoWebSocket(
+    id = id,
     name = name,
     description = description,
     group = group,
@@ -52,6 +55,7 @@ class AgentInfoWebSocketSingle(
 )
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
+    id = id,
     name = name,
     description = description,
     group = groupName,
@@ -69,6 +73,7 @@ fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
 fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
     it.run {
         AgentInfoWebSocket(
+            id = id,
             name = name,
             description = description,
             group = groupName,

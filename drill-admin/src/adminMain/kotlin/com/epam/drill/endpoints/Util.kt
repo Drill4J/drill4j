@@ -3,6 +3,7 @@ package com.epam.drill.endpoints
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import io.ktor.http.cio.websocket.Frame
 import kotlin.reflect.KClass
 
@@ -14,4 +15,10 @@ fun agentWsMessage(destination: String, message: Any): Frame.Text {
     return Frame.Text(toJson)
 }
 
-inline infix fun <reified T : Any> KClass<T>.fromJson(json: String) = Gson().fromJson(json, this.java)
+inline infix fun <reified T : Any> KClass<T>.fromJson(json: String) =
+    try {
+        Gson().fromJson(json, this.java)
+    } catch (ex: JsonSyntaxException) {
+        null
+    }
+

@@ -1,6 +1,7 @@
 package com.epam.drill.plugins.coverage
 
 
+import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
@@ -16,7 +17,7 @@ import org.javers.core.diff.changetype.NewObject
 class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
 
     val initialClassBytes = mutableMapOf<String, ByteArray>()
-    
+
     val javaClasses = mutableMapOf<String, JavaClass>()
 
     //TODO Only the last prev state at this moment - use JaVers repositories
@@ -24,11 +25,11 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
 
     private val javers = JaversBuilder.javers().build()
 
-    override suspend fun processData(dm: DrillMessage): Any {
+    override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val sessionId = dm.sessionId
         val content = dm.content
         val parse = JSON.parse(CoverageMessage.serializer(), content!!)
-        when(parse.type) {
+        when (parse.type) {
             CoverageEventType.INIT -> {
                 println(parse.data) //log init message
                 //change maps
@@ -88,7 +89,11 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     uncoveredMethodsCount = uncoveredMethodsCount
                 )
                 println(coverageBlock)
-                ws.convertAndSend("/coverage", JSON.stringify(CoverageBlock.serializer(), coverageBlock))
+                ws.convertAndSend(
+                    agentInfo,
+                    "/coverage",
+                    JSON.stringify(CoverageBlock.serializer(), coverageBlock)
+                )
 
                 //TODO Diff should be calculated after all classes has been parsed
                 val diff = javers.compareCollections(
@@ -119,6 +124,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
 
                 // TODO extend destination with plugin id
                 ws.convertAndSend(
+                    agentInfo,
                     "/coverage-new",
                     JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
                 )
@@ -126,6 +132,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val classCoverage = classCoverage(bundleCoverage)
                 println(classCoverage)
                 ws.convertAndSend(
+                    agentInfo,
                     "/coverage-by-classes",
                     JSON.stringify(JavaClassCoverage.serializer().list, classCoverage)
                 )
@@ -133,6 +140,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val packageCoverage = packageCoverage(bundleCoverage)
                 println(packageCoverage)
                 ws.convertAndSend(
+                    agentInfo,
                     "/coverage-by-packages",
                     JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
                 )
@@ -162,7 +170,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     }
 
     private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
-        .flatMap { it.classes}
+        .flatMap { it.classes }
         .map { classCoverage ->
             JavaClassCoverage(
                 name = classCoverage.name.substringAfterLast('/'),
@@ -194,7 +202,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }.toList()
 }
 
-fun ICoverageNode.coverage() : Double? {
+fun ICoverageNode.coverage(): Double? {
     val ratio = this.instructionCounter.coveredRatio
     return if (ratio.isFinite()) ratio * 100.0 else null
 }
