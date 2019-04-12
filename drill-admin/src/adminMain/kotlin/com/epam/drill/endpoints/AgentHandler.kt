@@ -3,9 +3,11 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.common.AgentBuildVersion
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.storage.MongoClient
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -15,11 +17,13 @@ import kotlinx.coroutines.channels.consumeEach
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
+import org.litote.kmongo.getCollection
 import org.slf4j.LoggerFactory
 
 
 class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
+    private val mc: MongoClient by instance()
     private val agentStorage: AgentStorage by instance()
     private val pd: PluginDispatcher by kodein.instance()
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
@@ -39,6 +43,16 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     agentInfo = AgentInfo::class fromJson message.message
                                     agentStorage.put(agentInfo!!, this)
                                     send(agentWsMessage("/plugins/agent-attached", ""))
+                                    val collection =
+                                        mc.client!!
+                                        .getDatabase(agentInfo!!.id)
+                                        .getCollection<AgentBuildVersion>("agent-build-versions")
+                                    val buildVersion = AgentBuildVersion(agentInfo!!.buildVersion)
+                                    val buildVersions = collection.find()
+                                    if (buildVersions.count() == 0 || buildVersions.any { it != buildVersion })
+                                        collection.insertOne(buildVersion)
+
+                                    println("Build version's count: ${collection.find().count()}")
                                     println("Agent registered")
                                 }
                                 MessageType.PLUGIN_DATA -> {

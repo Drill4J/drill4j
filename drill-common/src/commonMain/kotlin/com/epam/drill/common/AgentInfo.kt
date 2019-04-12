@@ -51,3 +51,6 @@ data class AgentAdditionalInfo(
     val version: String,
     val systemProperties: Map<String, String>
 )
+
+@Serializable
+data class AgentBuildVersion (val version: String)
