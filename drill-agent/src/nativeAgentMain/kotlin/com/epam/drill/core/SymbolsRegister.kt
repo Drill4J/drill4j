@@ -34,3 +34,9 @@ fun currentsession4java(env: JNIEnv, thiz: jobject): jobject? {
     return NewStringUTF(drillRequest()?.drillSessionId)
 
 }
+
+@Suppress("UNUSED_PARAMETER")
+@CName("Java_com_epam_drill_session_DrillRequest_get")
+fun getHeader4java(env: JNIEnv, thiz: jobject, key: jstring): jobject? {
+    return NewStringUTF(drillRequest()?.get(key.toKString()))
+}

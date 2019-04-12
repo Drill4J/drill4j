@@ -1,6 +1,13 @@
 package com.epam.drill.core.request
 
-data class DrillRequest(val drillSessionId: String?, val host: String?, val additionalConfig: String?)
+data class DrillRequest(
+    val drillSessionId: String?,
+    val host: String?,
+    val additionalConfig: String?,
+    val headers: Map<String, String>
+) {
+    fun get(key: String?): String? = headers[key]
+}
 
 typealias RawHttpRequest = String
 
@@ -54,7 +61,8 @@ fun HttpRequest.toDrillRequest(): DrillRequest {
     return DrillRequest(
         this.headers["DrillSessionId"] ?: this.cookies["DrillSessionId"],
         this.headers["Host"],
-        this.headers["DrillAdditionalConfig"]
+        this.headers["DrillAdditionalConfig"],
+        this.headers
     )
 }
 
