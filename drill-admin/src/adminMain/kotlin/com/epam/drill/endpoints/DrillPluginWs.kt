@@ -19,6 +19,7 @@ import io.ktor.routing.routing
 import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
+import org.bson.BsonMaximumSizeExceededException
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -44,7 +45,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
             agentInfo.id,
             destination + ":" + agentInfo.buildVersion
         )
-        collection.insertOne(messageForSend)
+        try {
+            collection.insertOne(messageForSend)
+        } catch (e: BsonMaximumSizeExceededException) {
+            println("payload is too long")
+        }
         sessionStorage[destination]?.apply {
             val iterator = this.iterator()
             while (iterator.hasNext()) {

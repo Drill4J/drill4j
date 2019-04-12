@@ -24,7 +24,7 @@ val initLogger: Logger
 fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVar>?, thread: jthread?) = runBlocking {
     startWs()
     println("WM IS INIT")
-    val timeoutSec = 15
+    val timeoutSec = 60
     val startTime = DateTime.now()
     val pluginId = "coverage"
     while (di { pInstrumentedStorage }[pluginId] == null) {

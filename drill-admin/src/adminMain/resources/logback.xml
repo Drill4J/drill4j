@@ -19,5 +19,6 @@
     <logger name="DrillPluginWs" level="TRACE"/>
     <logger name="com.epam.drill.endpoints.DrillPluginWs" level="TRACE"/>
     <logger name="com.epam.drill.plugins.AgentPlugins" level="TRACE"/>
+    <logger name="com.epam.drill.endpoints.AgentHandler" level="TRACE"/>
     <!--<logger name="" level="OFF"/>-->
 </configuration>

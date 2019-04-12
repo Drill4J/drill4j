@@ -204,8 +204,13 @@ open class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
 
 }
 
+interface IInstrumented {
+    fun instrument(className: String, x1: jbyteArray): jobject?
+    fun doRawAction(action: String)
+}
+
 @ExperimentalUnsignedTypes
-class Instrumented(pf: DrillPluginFile) : NativePluginController(pf) {
+open class Instrumented(pf: DrillPluginFile) : NativePluginController(pf), IInstrumented {
 
     var qs: jmethodID? = null
 
@@ -213,7 +218,7 @@ class Instrumented(pf: DrillPluginFile) : NativePluginController(pf) {
         qs = GetMethodID(pluginApiClass, "instrument", "(Ljava/lang/String;[B)[B")
     }
 
-    fun instrument(className: String, x1: jbyteArray): jobject? {
+    override fun instrument(className: String, x1: jbyteArray): jobject? {
         val callObjectMethodA =
             CallObjectMethod(userPlugin, qs, NewStringUTF(className), x1)
 
@@ -222,7 +227,7 @@ class Instrumented(pf: DrillPluginFile) : NativePluginController(pf) {
 
     }
 
-    fun doRawAction(action: String) {
+    override fun doRawAction(action: String) {
         CallVoidMethod(
             userPlugin,
             GetMethodID(pluginApiClass, "doRawAction", "(Ljava/lang/String;)V"),

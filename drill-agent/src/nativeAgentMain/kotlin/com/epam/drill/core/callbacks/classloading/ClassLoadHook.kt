@@ -3,6 +3,7 @@ package com.epam.drill.core.callbacks.classloading
 import com.epam.drill.core.JClassVersions
 import com.epam.drill.core.addNewVersion
 import com.epam.drill.core.di
+import com.epam.drill.core.exec
 import com.soywiz.kmem.buildByteArray
 import drillInternal.addClass
 import jvmapi.*
@@ -35,42 +36,39 @@ fun classLoadEvent(
             if (loader != null && protection_domain != null) {
 
 
-                if (kClassName.contains("/drilspringframework")) {
-
-                    val instrumentedPlugin = di { pInstrumentedStorage }["coverage"]
-                    if (instrumentedPlugin != null) {
-                        val newByteArray: jbyteArray? = NewByteArray(classDataLen)
-                        ExceptionDescribe()
-                        SetByteArrayRegion(
-                            newByteArray,
-                            0,
-                            classDataLen,
-                            getBytes(newByteArray, classDataLen, classData)
-                        )
-                        ExceptionDescribe()
-                        val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
-
-                        val getByteArrayElements1 = GetByteArrayElements(instrument, null)
-                        val size = GetArrayLength(instrument)
-                        Allocate(size.toLong(), newData)
-                        for (i in 0 until size) {
-                            val pointed = newData!!.pointed
-                            val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
-                            value[i] = getByteArrayElements1!![i].toUByte()
-                        }
-
-
-                        val byteArray = ByteArray(size)
-
-                        for (i in 0 until size) {
-                            byteArray[i] = getByteArrayElements1!![i].toByte()
-                        }
-
-                        newClassDataLen!!.pointed.value = size
-                    }
-//                }
+                val instrumentedPlugin = exec  {
+                    pInstrumentedStorage["coverage"]
                 }
-//
+                if (instrumentedPlugin != null) {
+                    val newByteArray: jbyteArray? = NewByteArray(classDataLen)
+                    ExceptionDescribe()
+                    SetByteArrayRegion(
+                        newByteArray,
+                        0,
+                        classDataLen,
+                        getBytes(newByteArray, classDataLen, classData)
+                    )
+                    ExceptionDescribe()
+                    val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
+
+                    val getByteArrayElements1 = GetByteArrayElements(instrument, null)
+                    val size = GetArrayLength(instrument)
+                    Allocate(size.toLong(), newData)
+                    for (i in 0 until size) {
+                        val pointed = newData!!.pointed
+                        val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
+                        value[i] = getByteArrayElements1!![i].toUByte()
+                    }
+
+
+                    val byteArray = ByteArray(size)
+
+                    for (i in 0 until size) {
+                        byteArray[i] = getByteArrayElements1!![i].toByte()
+                    }
+
+                    newClassDataLen!!.pointed.value = size
+                }
             }
         }
 
