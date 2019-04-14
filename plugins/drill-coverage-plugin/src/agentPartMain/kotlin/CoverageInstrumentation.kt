@@ -30,16 +30,20 @@ interface SessionProbeArrayProvider : ProbeArrayProvider {
     fun stop(sessionId: String): RuntimeData?
 }
 
+interface InstrContext : () -> String? {
+    operator fun get(key: String): String?
+}
+
 /**
  * Simple probe array provider that employs ConcurrentHashMap for runtime data storage.
  * This class is intended to be an ancestor for a concrete probe array provider object.
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
-open class SimpleSessionProbeArrayProvider(private val sessionIdProvider: () -> String?) : SessionProbeArrayProvider {
-    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>()
+open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContext) : SessionProbeArrayProvider {
+    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>(1)
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
-        val sessionId = sessionIdProvider()
+        val sessionId = instrContext()
         val runtime = sessionId?.let { sessionRuntimes[it] }
         return runtime?.run {
             getExecutionData(id, name, probeCount).probes

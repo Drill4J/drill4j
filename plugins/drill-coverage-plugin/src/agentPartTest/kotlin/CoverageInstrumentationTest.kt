@@ -9,18 +9,29 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
-const val sessionId = "xxx"
-
-object TestProbeArrayProvider : SimpleSessionProbeArrayProvider({ sessionId })
-
 class InstrumentationTests {
+
+    companion object {
+        const val sessionId = "xxx"
+
+        val instrContextStub: InstrContext = object : InstrContext {
+            override fun get(key: String): String? = null
+
+            override fun invoke(): String? = sessionId
+
+        }
+    }
+
+
+    object TestProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContextStub)
+
 
     val instrument = instrumenter(TestProbeArrayProvider)
 
     val memoryClassLoader = MemoryClassLoader()
-    
+
     val targetClass = TestTarget::class.java
-    
+
     val originalBytes = targetClass.readBytes()
 
     @Test
@@ -73,5 +84,3 @@ class MemoryClassLoader : ClassLoader() {
         }
     }
 }
-
-

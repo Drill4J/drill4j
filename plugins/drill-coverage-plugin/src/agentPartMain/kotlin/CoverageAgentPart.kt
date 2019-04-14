@@ -9,7 +9,13 @@ import kotlinx.serialization.list
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.data.SessionInfoStore
 
-object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(DrillRequest::currentSession)
+val instrContext = object : InstrContext {
+    override fun invoke(): String? = DrillRequest.currentSession()
+
+    override fun get(key: String): String? = DrillRequest[key]
+}
+
+object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 
 @Suppress("unused")
 class CoveragePlugin @JvmOverloads constructor(
