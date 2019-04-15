@@ -4,8 +4,8 @@ import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.agentInfo
-import com.epam.drill.core.di
 import com.epam.drill.core.drillInstallationDir
+import com.epam.drill.core.exec
 import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.core.plugin.pluginConfigById
@@ -70,11 +70,11 @@ fun topicRegister() =
         }
         topic("/plugins/action").rawMessage { action ->
             topicLogger.warn { "actionPluign event: message is $action " }
-            di { loadedClasses }.forEach {
+            exec { loadedClasses }.forEach {
                 println(it)
             }
             //fixme thi hardcode
-            val agentPluginPart = di.pInstrumentedStorage["coverage"]
+            val agentPluginPart = exec { pInstrumentedStorage["coverage"] }
             agentPluginPart?.doRawAction(action)
 
         }

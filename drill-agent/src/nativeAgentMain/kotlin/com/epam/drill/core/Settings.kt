@@ -19,7 +19,8 @@ fun parseConfigs() = runBlocking {
         AgentInfo.serializer(),
         localVfs("${"$path/"}drillConfig.json").readString()
     )
-    di {
+    val loggerProperties = localVfs("${"$path/"}logger.properties").readProperties()
+    exec {
         agentInfo = agInfo
         //fixme retrieve a real IP
         agInfo.ipAddress = "127.0.0.3"
@@ -31,16 +32,15 @@ fun parseConfigs() = runBlocking {
             "10",
             mapOf()
         )
-
-        loggerConfig = localVfs("${"$path/"}logger.properties").readProperties()
+        loggerConfig = loggerProperties
     }
 
 }
 
 var agentInfo: AgentInfo
-    get() = di { agentInfo }
+    get() = exec { agentInfo }
     set(value) {
-        di { agentInfo = value }
+        exec { agentInfo = value }
         value.dumpConfigToFileSystem()
     }
 

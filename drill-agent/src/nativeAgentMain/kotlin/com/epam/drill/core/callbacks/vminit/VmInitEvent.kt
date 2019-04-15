@@ -2,7 +2,7 @@
 
 package com.epam.drill.core.callbacks.vminit
 
-import com.epam.drill.core.di
+import com.epam.drill.core.exec
 import com.epam.drill.core.ws.startWs
 import com.epam.drill.logger.DLogger
 import com.soywiz.klock.DateTime
@@ -27,7 +27,7 @@ fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVa
     val timeoutSec = 60
     val startTime = DateTime.now()
     val pluginId = "coverage"
-    while (di { pInstrumentedStorage }[pluginId] == null) {
+    while (exec { pInstrumentedStorage[pluginId] } == null) {
         if (DateTime.now().minus(startTime).seconds > timeoutSec) {
             println("Can't loaded the $pluginId plugin in $timeoutSec seconds")
             break

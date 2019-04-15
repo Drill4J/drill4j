@@ -1,8 +1,8 @@
 package com.epam.drill.core.plugin.loader
 
 import com.epam.drill.DrillPluginFile
-import com.epam.drill.core.di
 import com.epam.drill.core.exceptions.PluginLoadException
+import com.epam.drill.core.exec
 import com.epam.drill.iterateThroughPlugins
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
@@ -32,7 +32,7 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
         if (pluginConfig.id == "coverage") {
             println("coverage load as plugin")
             val nativePluginController = Instrumented(pluginFile)
-            di {
+            exec {
                 pInstrumentedStorage["coverage"] = nativePluginController
             }
         } else {
