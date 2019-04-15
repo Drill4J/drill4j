@@ -197,7 +197,22 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 coveredClassesCount = packageCoverage.classCounter.coveredCount,
                 totalMethodsCount = packageCoverage.methodCounter.totalCount,
                 coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
-                classes = classCoverage(bundleCoverage)
+                classes = packageCoverage.classes.map {classCoverage ->
+                    JavaClassCoverage(
+                        name = classCoverage.name.substringAfterLast('/'),
+                        path = classCoverage.name,
+                        coverage = classCoverage.coverage(),
+                        totalMethodsCount = classCoverage.methodCounter.totalCount,
+                        coveredMethodsCount = classCoverage.methodCounter.coveredCount,
+                        methods = classCoverage.methods.map { methodCoverage ->
+                            JavaMethodCoverage(
+                                name = methodCoverage.name,
+                                desc = methodCoverage.desc,
+                                coverage = methodCoverage.coverage()
+                            )
+                        }.toList()
+                    )
+                }.toList()
             )
         }.toList()
 }
