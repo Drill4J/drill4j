@@ -171,6 +171,22 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
 
     private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
         .flatMap { it.classes }
+        .let { classCoverage(it) }
+
+    private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
+        .map { packageCoverage ->
+            JavaPackageCoverage(
+                name = packageCoverage.name,
+                coverage = packageCoverage.coverage(),
+                totalClassesCount = packageCoverage.classCounter.totalCount,
+                coveredClassesCount = packageCoverage.classCounter.coveredCount,
+                totalMethodsCount = packageCoverage.methodCounter.totalCount,
+                coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
+                classes = classCoverage(packageCoverage.classes)
+            )
+        }.toList()
+
+    private fun classCoverage(classCoverages: Collection<IClassCoverage>): List<JavaClassCoverage> = classCoverages
         .map { classCoverage ->
             JavaClassCoverage(
                 name = classCoverage.name.substringAfterLast('/'),
@@ -188,18 +204,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             )
         }.toList()
 
-    private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
-        .map { packageCoverage ->
-            JavaPackageCoverage(
-                name = packageCoverage.name,
-                coverage = packageCoverage.coverage(),
-                totalClassesCount = packageCoverage.classCounter.totalCount,
-                coveredClassesCount = packageCoverage.classCounter.coveredCount,
-                totalMethodsCount = packageCoverage.methodCounter.totalCount,
-                coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
-                classes = classCoverage(bundleCoverage)
-            )
-        }.toList()
 }
 
 fun ICoverageNode.coverage(): Double? {
