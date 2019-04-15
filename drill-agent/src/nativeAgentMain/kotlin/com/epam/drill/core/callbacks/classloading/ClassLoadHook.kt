@@ -2,7 +2,6 @@ package com.epam.drill.core.callbacks.classloading
 
 import com.epam.drill.core.JClassVersions
 import com.epam.drill.core.addNewVersion
-import com.epam.drill.core.di
 import com.epam.drill.core.exec
 import com.soywiz.kmem.buildByteArray
 import drillInternal.addClass
@@ -83,7 +82,7 @@ fun saveClassDataToStorage(
     bytes: ByteArray
 ) {
 
-    di {
+    exec {
         val jClassVersions = loadedClasses[kClassName]
 
         if (jClassVersions == null) {

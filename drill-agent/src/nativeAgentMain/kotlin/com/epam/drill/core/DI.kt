@@ -104,18 +104,6 @@ val work = Worker.start(true)
 val dsa = DI()
 
 
-@ThreadLocal
-var threadLocalDiVariable: DI? = null
-
-
-inline val di: DI
-    get() {
-        return work.execute(TransferMode.UNSAFE, {}) {
-            dsa
-        }.result
-
-    }
-
 private typealias Core<E> = LockFreeMPSCQueueCore<E>
 
 /**
