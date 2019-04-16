@@ -13,6 +13,7 @@ import org.jacoco.core.runtime.RuntimeData
 import org.objectweb.asm.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 /**
  * Provides boolean array for the probe.
@@ -27,11 +28,31 @@ typealias DrillInstrumenter = (String, ByteArray) -> ByteArray
 
 interface SessionProbeArrayProvider : ProbeArrayProvider {
     fun start(sessionId: String)
-    fun stop(sessionId: String): RuntimeData?
+    fun stop(sessionId: String): Collection<RuntimeData>?
 }
 
 interface InstrContext : () -> String? {
     operator fun get(key: String): String?
+}
+
+/**
+ * A container for session runtime data and optionally runtime data of tests
+ * TODO ad hoc implementation, rewrite to something more descent
+ */
+class SessionRuntime {
+    val sessionData = RuntimeData().apply { sessionId = "" }
+    val testsData: ConcurrentMap<String, RuntimeData> = ConcurrentHashMap<String, RuntimeData>(1)
+
+    fun get(testName: String?): RuntimeData =
+        if (!testName.isNullOrBlank()) {
+            testsData.getOrPut(testName) {
+                RuntimeData().apply {
+                    sessionId = testName
+                }
+            }
+        } else sessionData
+    
+    fun collect() = listOf(sessionData) + testsData.values
 }
 
 /**
@@ -40,21 +61,24 @@ interface InstrContext : () -> String? {
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
 open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContext) : SessionProbeArrayProvider {
-    private val sessionRuntimes = ConcurrentHashMap<String, RuntimeData>(1)
+    private val sessionRuntimes = ConcurrentHashMap<String, SessionRuntime>(1)
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = instrContext()
-        val runtime = sessionId?.let { sessionRuntimes[it] }
+        val runtime = sessionId?.let {
+            val testName = instrContext["DrillTestName"]
+            sessionRuntimes[it]?.get(testName)
+        }
         return runtime?.run {
             getExecutionData(id, name, probeCount).probes
         } ?: BooleanArray(probeCount)
     }
 
     override fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = RuntimeData()
+        sessionRuntimes[sessionId] = SessionRuntime()
     }
 
-    override fun stop(sessionId: String): RuntimeData? = sessionRuntimes.remove(sessionId)
+    override fun stop(sessionId: String): Collection<RuntimeData>? = sessionRuntimes.remove(sessionId)?.collect()
 }
 
 /**

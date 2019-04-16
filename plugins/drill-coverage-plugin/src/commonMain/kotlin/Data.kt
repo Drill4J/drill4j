@@ -28,7 +28,12 @@ enum class CoverageEventType {
 }
 
 @kotlinx.serialization.Serializable
-data class ExDataTemp(val id: Long, val className: String, val probes: List<Boolean>)
+data class ExDataTemp(
+    val id: Long,
+    val className: String,
+    val probes: List<Boolean>,
+    val testName: String? = null
+)
 
 
 @kotlinx.serialization.Serializable

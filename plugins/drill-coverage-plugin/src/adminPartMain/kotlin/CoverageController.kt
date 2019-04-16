@@ -63,6 +63,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // Get new probes from message and populate dataStore with them
                 val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
                 probes.forEach { exData ->
+                    if (exData.testName != null) println("${exData.className} ---- ${exData.testName}")
                     dataStore.put(ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray()))
                 }
 
@@ -176,8 +177,9 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
         .map { packageCoverage ->
             JavaPackageCoverage(
+                id = packageCoverage.name.crc64, 
                 name = packageCoverage.name,
-                coverage = packageCoverage.coverage(),
+                coverage = packageCoverage.coverage,
                 totalClassesCount = packageCoverage.classCounter.totalCount,
                 coveredClassesCount = packageCoverage.classCounter.coveredCount,
                 totalMethodsCount = packageCoverage.methodCounter.totalCount,
@@ -189,24 +191,21 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun classCoverage(classCoverages: Collection<IClassCoverage>): List<JavaClassCoverage> = classCoverages
         .map { classCoverage ->
             JavaClassCoverage(
+                id = classCoverage.name.crc64,
                 name = classCoverage.name.substringAfterLast('/'),
                 path = classCoverage.name,
-                coverage = classCoverage.coverage(),
+                coverage = classCoverage.coverage,
                 totalMethodsCount = classCoverage.methodCounter.totalCount,
                 coveredMethodsCount = classCoverage.methodCounter.coveredCount,
                 methods = classCoverage.methods.map { methodCoverage ->
                     JavaMethodCoverage(
+                        id = "${classCoverage.name}.${methodCoverage.name}${methodCoverage.desc}".crc64,
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
-                        coverage = methodCoverage.coverage()
+                        coverage = methodCoverage.coverage
                     )
                 }.toList()
             )
         }.toList()
-
 }
 
-fun ICoverageNode.coverage(): Double? {
-    val ratio = this.instructionCounter.coveredRatio
-    return if (ratio.isFinite()) ratio * 100.0 else null
-}

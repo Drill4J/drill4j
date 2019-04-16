@@ -49,7 +49,7 @@ class InstrumentationTests {
         runnable.run()
         val runtimeData = TestProbeArrayProvider.stop(sessionId)
         val executionData = ExecutionDataStore()
-        runtimeData?.collect(executionData, SessionInfoStore(), false)
+        runtimeData?.first()?.collect(executionData, SessionInfoStore(), false)
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(executionData, coverageBuilder)
         analyzer.analyzeClass(originalBytes, targetClass.name)

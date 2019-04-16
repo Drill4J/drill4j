@@ -20,10 +20,10 @@ object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 @Suppress("unused")
 class CoveragePlugin @JvmOverloads constructor(
     override val id: String,
-    private val probeArrayProvider: SessionProbeArrayProvider = DrillProbeArrayProvider
+    private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
 ) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
 
-    val instrumenter = instrumenter(probeArrayProvider)
+    val instrumenter = instrumenter(instrContext)
     
     private val classNameSet = mutableSetOf<String>()
 
@@ -55,19 +55,20 @@ class CoveragePlugin @JvmOverloads constructor(
         val record = action.isRecord
         if (record) {
             println("Start recording for session ${action.sessionId}")
-            probeArrayProvider.start(action.sessionId)
+            instrContext.start(action.sessionId)
         } else {
             println("End of recording for session ${action.sessionId}")
-            val runtimeData = probeArrayProvider.stop(action.sessionId)
-            runtimeData?.apply {
+            val runtimeData = instrContext.stop(action.sessionId)
+            runtimeData?.forEach {execData ->
                 val dataStore = ExecutionDataStore()
                 val sessionInfos = SessionInfoStore()
-                runtimeData.collect(dataStore, sessionInfos, false)
+                execData.collect(dataStore, sessionInfos, false)
                 sendExecutionData(dataStore.contents.map { exData ->
                     ExDataTemp(
-                        exData.id,
-                        exData.name,
-                        exData.probes.toList()
+                        id = exData.id,
+                        className = exData.name,
+                        probes = exData.probes.toList(),
+                        testName = execData.sessionId.takeIf { !it.isNullOrBlank() }
                     )
                 })
             }
