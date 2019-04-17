@@ -50,6 +50,7 @@ internal class DrillServerWsTest {
                 outgoing.send(Message(MessageType.SUBSCRIBE, "/mytopic2", "").textFrame())
                 assertNotNull(incoming.receive())
                 assertEquals(2, pluginStorage.size)
+                assertEquals(2, pluginStorage.map { it.url }.toSet().size)
             }
         }
 
