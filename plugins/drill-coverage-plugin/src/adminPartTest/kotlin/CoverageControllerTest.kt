@@ -3,11 +3,12 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
+import com.epam.drill.plugins.coverage.test.bar.BarDummy
+import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JSON
-import kotlin.test.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlinx.serialization.list
+import kotlin.test.*
 
 class CoverageControllerTest {
     private val agentInfo = AgentInfo(
@@ -81,6 +82,38 @@ class CoverageControllerTest {
         assertTrue { ws.sent.any { it.first == "/coverage-by-packages" } }
     }
 
+    @Test
+    fun `should preserve coverage for packages`() {
+        // Count of Classes in package for test
+        val countClassesInPackage = 1
+        // Count of packages for test
+        val countPackages = 3
+        // Total count of Classes for test
+        val countAllClasses = 3
+        // Total count of Methods for test
+        val countAllMethods = 6
+
+        prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
+        val message = CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]")
+
+        runBlocking {
+            coverageController.processData(
+                agentInfo,
+                DrillMessage("", JSON.stringify(CoverageMessage.serializer(), message))
+            )
+        }
+
+        assertNotNull(JavaPackageCoverage)
+
+        val methods = ws.javaPackagesCoverage.flatMap { it.classes }.flatMap { it.methods }
+
+        assertEquals(countClassesInPackage, ws.javaPackagesCoverage.first().classes.size)
+        assertEquals("Dummy",  ws.javaPackagesCoverage.first().classes.first().name)
+        assertEquals(countPackages, ws.javaPackagesCoverage.size)
+        assertEquals(countAllClasses, ws.javaPackagesCoverage.count { it.classes.isNotEmpty() })
+        assertEquals(countAllMethods, methods.size)
+    }
+
     private fun prepareClasses(vararg classes: Class<*>) {
         for (clazz in classes) {
             val bytes = clazz.readBytes()
@@ -102,8 +135,12 @@ class WsServiceStub : WsService {
 
     val sent = mutableListOf<Pair<String, Any>>()
 
+    lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
+
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         sent.add(destination to message)
+        if (destination == "/coverage-by-packages")
+            javaPackagesCoverage = JSON.parse(JavaPackageCoverage.serializer().list, message)
     }
 
     override fun getPlWsSession() = setOf<String>()

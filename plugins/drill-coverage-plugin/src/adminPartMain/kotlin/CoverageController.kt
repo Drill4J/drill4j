@@ -203,6 +203,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }
     }
 
+    @Deprecated(message="Deprecated 4/17/19")
     private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
         .flatMap { it.classes }
         .let { classCoverage(it) }
@@ -210,7 +211,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
         .map { packageCoverage ->
             JavaPackageCoverage(
-                id = packageCoverage.name.crc64, 
+                id = packageCoverage.name.crc64,
                 name = packageCoverage.name,
                 coverage = packageCoverage.coverage,
                 totalClassesCount = packageCoverage.classCounter.totalCount,
