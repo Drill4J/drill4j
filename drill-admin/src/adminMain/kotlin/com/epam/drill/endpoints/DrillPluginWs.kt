@@ -23,6 +23,7 @@ import org.bson.BsonMaximumSizeExceededException
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
+import org.litote.kmongo.deleteMany
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -46,6 +47,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
             destination + ":" + agentInfo.buildVersion
         )
         try {
+            collection.deleteMany()
             collection.insertOne(messageForSend)
         } catch (e: BsonMaximumSizeExceededException) {
             println("payload is too long")
