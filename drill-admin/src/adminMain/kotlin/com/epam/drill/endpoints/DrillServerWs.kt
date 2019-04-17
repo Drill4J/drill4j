@@ -25,13 +25,15 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
 
         app.routing {
             webSocket("/ws/drill-admin-socket") {
-                val wsSession = DrillWsSession(null, this)
+                val rawWsSession = this
                 try {
                     incoming.consumeEach { frame ->
+
                         val json = (frame as Frame.Text).readText()
                         val event = Gson().fromJson(json, Message::class.java)
                         when (event.type) {
                             MessageType.SUBSCRIBE -> {
+                                val wsSession = DrillWsSession(event.destination, rawWsSession)
                                 subscribe(wsSession, event)
                             }
                             MessageType.MESSAGE -> {
@@ -48,7 +50,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                     }
                 } catch (ex: Throwable) {
                     println("Session was removed")
-                    sessionStorage.remove(wsSession)
+                    sessionStorage.remove(rawWsSession)
                 }
 
             }
@@ -59,7 +61,6 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
         wsSession: DrillWsSession,
         event: Message
     ) {
-        wsSession.url = event.destination
         sessionStorage += (wsSession)
         println("${event.destination} is subscribed")
         app.run {
