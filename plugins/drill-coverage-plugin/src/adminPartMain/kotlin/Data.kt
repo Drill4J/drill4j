@@ -33,7 +33,7 @@ data class NewCoverageBlock(
 
 @Serializable
 data class JavaPackageCoverage(
-    val id: Long,
+    val id: String,
     val name: String,
     val coverage: Double?,
     val totalClassesCount: Int,
@@ -45,7 +45,7 @@ data class JavaPackageCoverage(
 
 @Serializable
 data class JavaClassCoverage(
-    val id: Long,
+    val id: String,
     val name: String,
     val path: String,
     val coverage: Double?,
@@ -56,8 +56,15 @@ data class JavaClassCoverage(
 
 @Serializable
 data class JavaMethodCoverage(
-    val id: Long,
+    val id: String,
     val name: String,
     val desc: String,
     val coverage: Double?
 )
+
+@Serializable
+data class AssociatedTests(
+    val id: String,
+    val tests: List<String>
+)
+
