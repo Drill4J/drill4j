@@ -61,9 +61,26 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val analyzer = Analyzer(dataStore, coverageBuilder)
 
                 // Get new probes from message and populate dataStore with them
+                //also fill up assoc tests
                 val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
-                probes.forEach { exData ->
-                    dataStore.put(ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray()))
+                val assocTests = probes.flatMap { exData ->
+                    if (exData.testName != null) println("${exData.className} ---- ${exData.testName}")
+                    val executionData = ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray())
+                    dataStore.put(executionData)
+                    when (exData.testName) {
+                        null -> emptyList()
+                        else -> collectAssocTestPairs(executionData, exData.testName)
+                    }
+                }.groupBy({ it.first }) { it.second } //group by test names
+                    .map { (id, tests) -> AssociatedTests(id = id, tests = tests.distinct()) }
+                if (assocTests.isNotEmpty()) {
+                    println("Assoc tests - ids count: ${assocTests.count()}")
+                    println(assocTests)
+                    ws.convertAndSend(
+                        agentInfo,
+                        "/associated-tests",
+                        JSON.stringify(AssociatedTests.serializer().list, assocTests)
+                    )
                 }
 
                 // Analyze all existing classes
@@ -74,8 +91,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // TODO possible to store existing bundles to work with obsolete coverage results
                 val bundleCoverage = coverageBuilder.getBundle("all")
 
-                val totalCoverage = bundleCoverage.instructionCounter.coveredRatio
-                val totalCoveragePercent = if (totalCoverage.isFinite()) totalCoverage * 100 else null
+                val totalCoveragePercent = bundleCoverage.coverage
 
 
                 val classesCount = bundleCoverage.classCounter.totalCount
@@ -169,6 +185,24 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             }.toMap(javaClasses)
     }
 
+    private fun collectAssocTestPairs(
+        executionData: ExecutionData,
+        testName: String
+    ): List<Pair<String, String>> {
+        val cb = CoverageBuilder()
+        Analyzer(ExecutionDataStore().apply { put(executionData) }, cb).analyzeClass(
+            initialClassBytes[executionData.name],
+            executionData.name
+        )
+        return cb.getBundle("").packages.flatMap { p ->
+            listOf(p.name.crc64 to testName) + p.classes.flatMap { c ->
+                listOf(c.name.crc64 to testName) + c.methods.flatMap { m ->
+                    listOf(methodCoverageId(c, m) to testName)
+                }
+            }
+        }
+    }
+
     private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
         .flatMap { it.classes }
         .let { classCoverage(it) }
@@ -176,8 +210,9 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
         .map { packageCoverage ->
             JavaPackageCoverage(
+                id = packageCoverage.name.crc64, 
                 name = packageCoverage.name,
-                coverage = packageCoverage.coverage(),
+                coverage = packageCoverage.coverage,
                 totalClassesCount = packageCoverage.classCounter.totalCount,
                 coveredClassesCount = packageCoverage.classCounter.coveredCount,
                 totalMethodsCount = packageCoverage.methodCounter.totalCount,
@@ -189,24 +224,26 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun classCoverage(classCoverages: Collection<IClassCoverage>): List<JavaClassCoverage> = classCoverages
         .map { classCoverage ->
             JavaClassCoverage(
+                id = classCoverage.name.crc64,
                 name = classCoverage.name.substringAfterLast('/'),
                 path = classCoverage.name,
-                coverage = classCoverage.coverage(),
+                coverage = classCoverage.coverage,
                 totalMethodsCount = classCoverage.methodCounter.totalCount,
                 coveredMethodsCount = classCoverage.methodCounter.coveredCount,
                 methods = classCoverage.methods.map { methodCoverage ->
                     JavaMethodCoverage(
+                        id = methodCoverageId(classCoverage, methodCoverage),
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
-                        coverage = methodCoverage.coverage()
+                        coverage = methodCoverage.coverage
                     )
                 }.toList()
             )
         }.toList()
 
+    private fun methodCoverageId(
+        classCoverage: IClassCoverage,
+        methodCoverage: IMethodCoverage
+    ) = "${classCoverage.name}.${methodCoverage.name}${methodCoverage.desc}".crc64
 }
 
-fun ICoverageNode.coverage(): Double? {
-    val ratio = this.instructionCounter.coveredRatio
-    return if (ratio.isFinite()) ratio * 100.0 else null
-}
