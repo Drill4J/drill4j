@@ -40,7 +40,8 @@ data class JavaPackageCoverage(
     val coveredClassesCount: Int,
     val totalMethodsCount: Int,
     val coveredMethodsCount: Int,
-    val classes: List<JavaClassCoverage>
+    val classes: List<JavaClassCoverage>,
+    val assocTestsCount: Int?
 )
 
 @Serializable
@@ -51,7 +52,8 @@ data class JavaClassCoverage(
     val coverage: Double?,
     val totalMethodsCount: Int,
     val coveredMethodsCount: Int,
-    val methods: List<JavaMethodCoverage>
+    val methods: List<JavaMethodCoverage>,
+    val assocTestsCount: Int?
 )
 
 @Serializable
@@ -59,7 +61,8 @@ data class JavaMethodCoverage(
     val id: String,
     val name: String,
     val desc: String,
-    val coverage: Double?
+    val coverage: Double?,
+    val assocTestsCount: Int?
 )
 
 @Serializable

@@ -63,7 +63,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
                 val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
-                val assocTests = probes.flatMap { exData ->
+                val assocTestsMap = probes.flatMap { exData ->
                     if (exData.testName != null) println("${exData.className} ---- ${exData.testName}")
                     val executionData = ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray())
                     dataStore.put(executionData)
@@ -72,7 +72,10 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         else -> collectAssocTestPairs(executionData, exData.testName)
                     }
                 }.groupBy({ it.first }) { it.second } //group by test names
-                    .map { (id, tests) -> AssociatedTests(id = id, tests = tests.distinct()) }
+                    .mapValues { (_, tests) -> tests.distinct() }
+                val assocTests = assocTestsMap.map { (id, tests) ->
+                    AssociatedTests(id = id, tests = tests)
+                }
                 if (assocTests.isNotEmpty()) {
                     println("Assoc tests - ids count: ${assocTests.count()}")
                     println(assocTests)
@@ -145,7 +148,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
                 )
 
-                val classCoverage = classCoverage(bundleCoverage)
+                val classCoverage = classCoverage(bundleCoverage, assocTestsMap)
                 println(classCoverage)
                 ws.convertAndSend(
                     agentInfo,
@@ -153,7 +156,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(JavaClassCoverage.serializer().list, classCoverage)
                 )
 
-                val packageCoverage = packageCoverage(bundleCoverage)
+                val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
                 println(packageCoverage)
                 ws.convertAndSend(
                     agentInfo,
@@ -203,40 +206,55 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         }
     }
 
-    @Deprecated(message="Deprecated 4/17/19")
-    private fun classCoverage(bundleCoverage: IBundleCoverage): List<JavaClassCoverage> = bundleCoverage.packages
+    @Deprecated(message = "Deprecated 4/17/19")
+    private fun classCoverage(
+        bundleCoverage: IBundleCoverage,
+        assocTestsMap: Map<String, List<String>>
+    ): List<JavaClassCoverage> = bundleCoverage.packages
         .flatMap { it.classes }
-        .let { classCoverage(it) }
+        .let { classCoverage(it, assocTestsMap) }
 
-    private fun packageCoverage(bundleCoverage: IBundleCoverage): List<JavaPackageCoverage> = bundleCoverage.packages
+    private fun packageCoverage(
+        bundleCoverage: IBundleCoverage,
+        assocTestsMap: Map<String, List<String>>
+    ): List<JavaPackageCoverage> = bundleCoverage.packages
         .map { packageCoverage ->
+            val packageId = packageCoverage.name.crc64
             JavaPackageCoverage(
-                id = packageCoverage.name.crc64,
+                id = packageId,
                 name = packageCoverage.name,
                 coverage = packageCoverage.coverage,
                 totalClassesCount = packageCoverage.classCounter.totalCount,
                 coveredClassesCount = packageCoverage.classCounter.coveredCount,
                 totalMethodsCount = packageCoverage.methodCounter.totalCount,
                 coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
-                classes = classCoverage(packageCoverage.classes)
+                assocTestsCount = assocTestsMap[packageId]?.count(),
+                classes = classCoverage(packageCoverage.classes, assocTestsMap)
             )
         }.toList()
 
-    private fun classCoverage(classCoverages: Collection<IClassCoverage>): List<JavaClassCoverage> = classCoverages
+    private fun classCoverage(
+        classCoverages: Collection<IClassCoverage>,
+        assocTestsMap: Map<String, List<String>>
+    ): List<JavaClassCoverage> = classCoverages
         .map { classCoverage ->
+            val classId = classCoverage.name.crc64
             JavaClassCoverage(
-                id = classCoverage.name.crc64,
+                id = classId,
                 name = classCoverage.name.substringAfterLast('/'),
                 path = classCoverage.name,
                 coverage = classCoverage.coverage,
                 totalMethodsCount = classCoverage.methodCounter.totalCount,
                 coveredMethodsCount = classCoverage.methodCounter.coveredCount,
+                assocTestsCount = assocTestsMap[classId]?.count(),
                 methods = classCoverage.methods.map { methodCoverage ->
+                    val methodId = methodCoverageId(classCoverage, methodCoverage)
                     JavaMethodCoverage(
-                        id = methodCoverageId(classCoverage, methodCoverage),
+                        id = methodId,
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
-                        coverage = methodCoverage.coverage
+                        coverage = methodCoverage.coverage,
+                        assocTestsCount = assocTestsMap[methodId]?.count()
                     )
                 }.toList()
             )
