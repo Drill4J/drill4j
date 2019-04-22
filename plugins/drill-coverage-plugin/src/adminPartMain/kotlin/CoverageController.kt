@@ -73,8 +73,14 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     }
                 }.groupBy({ it.first }) { it.second } //group by test names
                     .mapValues { (_, tests) -> tests.distinct() }
-                val assocTests = assocTestsMap.map { (id, tests) ->
-                    AssociatedTests(id = id, tests = tests)
+                val assocTests = assocTestsMap.map { (key, tests) ->
+                    AssociatedTests(
+                        id = key.id,
+                        packageName = key.packageName,
+                        className = key.className,
+                        methodName = key.methodName,
+                        tests = tests
+                    )
                 }
                 if (assocTests.isNotEmpty()) {
                     println("Assoc tests - ids count: ${assocTests.count()}")
@@ -191,16 +197,16 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     private fun collectAssocTestPairs(
         executionData: ExecutionData,
         testName: String
-    ): List<Pair<String, String>> {
+    ): List<Pair<CoverageKey, String>> {
         val cb = CoverageBuilder()
         Analyzer(ExecutionDataStore().apply { put(executionData) }, cb).analyzeClass(
             initialClassBytes[executionData.name],
             executionData.name
         )
         return cb.getBundle("").packages.flatMap { p ->
-            listOf(p.name.crc64 to testName) + p.classes.flatMap { c ->
-                listOf(c.name.crc64 to testName) + c.methods.flatMap { m ->
-                    listOf(methodCoverageId(c, m) to testName)
+            listOf(p.coverageKey() to testName) + p.classes.flatMap { c ->
+                listOf(c.coverageKey() to testName) + c.methods.flatMap { m ->
+                    listOf(m.coverageKey(c) to testName)
                 }
             }
         }
@@ -209,52 +215,52 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     @Deprecated(message = "Deprecated 4/17/19")
     private fun classCoverage(
         bundleCoverage: IBundleCoverage,
-        assocTestsMap: Map<String, List<String>>
+        assocTestsMap: Map<CoverageKey, List<String>>
     ): List<JavaClassCoverage> = bundleCoverage.packages
         .flatMap { it.classes }
         .let { classCoverage(it, assocTestsMap) }
 
     private fun packageCoverage(
         bundleCoverage: IBundleCoverage,
-        assocTestsMap: Map<String, List<String>>
+        assocTestsMap: Map<CoverageKey, List<String>>
     ): List<JavaPackageCoverage> = bundleCoverage.packages
         .map { packageCoverage ->
-            val packageId = packageCoverage.name.crc64
+            val packageKey = packageCoverage.coverageKey()
             JavaPackageCoverage(
-                id = packageId,
+                id = packageKey.id,
                 name = packageCoverage.name,
                 coverage = packageCoverage.coverage,
                 totalClassesCount = packageCoverage.classCounter.totalCount,
                 coveredClassesCount = packageCoverage.classCounter.coveredCount,
                 totalMethodsCount = packageCoverage.methodCounter.totalCount,
                 coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
-                assocTestsCount = assocTestsMap[packageId]?.count(),
+                assocTestsCount = assocTestsMap[packageKey]?.count(),
                 classes = classCoverage(packageCoverage.classes, assocTestsMap)
             )
         }.toList()
 
     private fun classCoverage(
         classCoverages: Collection<IClassCoverage>,
-        assocTestsMap: Map<String, List<String>>
+        assocTestsMap: Map<CoverageKey, List<String>>
     ): List<JavaClassCoverage> = classCoverages
         .map { classCoverage ->
-            val classId = classCoverage.name.crc64
+            val classKey = classCoverage.coverageKey()
             JavaClassCoverage(
-                id = classId,
+                id = classKey.id,
                 name = classCoverage.name.substringAfterLast('/'),
                 path = classCoverage.name,
                 coverage = classCoverage.coverage,
                 totalMethodsCount = classCoverage.methodCounter.totalCount,
                 coveredMethodsCount = classCoverage.methodCounter.coveredCount,
-                assocTestsCount = assocTestsMap[classId]?.count(),
+                assocTestsCount = assocTestsMap[classKey]?.count(),
                 methods = classCoverage.methods.map { methodCoverage ->
-                    val methodId = methodCoverageId(classCoverage, methodCoverage)
+                    val methodKey = methodCoverage.coverageKey(classCoverage)
                     JavaMethodCoverage(
-                        id = methodId,
+                        id = methodKey.id,
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
                         coverage = methodCoverage.coverage,
-                        assocTestsCount = assocTestsMap[methodId]?.count()
+                        assocTestsCount = assocTestsMap[methodKey]?.count()
                     )
                 }.toList()
             )

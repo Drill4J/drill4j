@@ -68,6 +68,9 @@ data class JavaMethodCoverage(
 @Serializable
 data class AssociatedTests(
     val id: String,
+    val packageName: String?,
+    val className: String?,
+    val methodName: String?,
     val tests: List<String>
 )
 
