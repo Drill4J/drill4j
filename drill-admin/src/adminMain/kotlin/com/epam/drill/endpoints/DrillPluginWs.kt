@@ -104,6 +104,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     }
 
                                 }
+                                MessageType.UNSUBSCRIBE -> {
+                                    sessionStorage[event.destination]?.let {
+                                        it.removeIf { ses -> ses == this }
+                                    }
+                                }
                                 else -> {
                                     close(RuntimeException("Event '${event.type}' is not implemented yet"))
                                 }
