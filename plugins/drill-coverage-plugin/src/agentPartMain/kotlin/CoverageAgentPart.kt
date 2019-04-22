@@ -12,7 +12,7 @@ import org.jacoco.core.data.SessionInfoStore
 val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
 
-    override fun get(key: String): String? = DrillRequest[key]
+    override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
 
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)

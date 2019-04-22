@@ -58,11 +58,12 @@ fun HttpRequest.toRawRequestString() =
             "$COOKIE_HEADER_NAME:  ${cookies.map { it.key + "=" + it.value }.joinToString("; ")}"
 
 fun HttpRequest.toDrillRequest(): DrillRequest {
+    val optimizedHeaders = this.headers.mapKeys { it.key.toLowerCase() }
     return DrillRequest(
-        this.headers["DrillSessionId"] ?: this.cookies["DrillSessionId"],
+        optimizedHeaders["DrillSessionId".toLowerCase()] ?: this.cookies["DrillSessionId"],
         this.headers["Host"],
         this.headers["DrillAdditionalConfig"],
-        this.headers
+        optimizedHeaders
     )
 }
 
