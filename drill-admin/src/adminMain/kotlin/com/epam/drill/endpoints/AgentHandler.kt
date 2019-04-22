@@ -49,7 +49,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                         .getCollection<AgentBuildVersion>("agent-build-versions")
                                     val buildVersion = AgentBuildVersion(agentInfo!!.buildVersion)
                                     val buildVersions = collection.find()
-                                    if (buildVersions.count() == 0 || buildVersions.any { it != buildVersion })
+                                    if (buildVersions.count() == 0 || buildVersions.all { it != buildVersion })
                                         collection.insertOne(buildVersion)
 
                                     println("Build version's count: ${collection.find().count()}")
