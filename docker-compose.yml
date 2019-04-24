@@ -33,7 +33,6 @@ services:
         - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
     restart: always
 
-
   uat:
     image: reportportal/service-authorization:4.2.0
     #ports:
