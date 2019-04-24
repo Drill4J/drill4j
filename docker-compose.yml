@@ -33,7 +33,6 @@ services:
         - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
     restart: always
 
-
   uat:
     image: reportportal/service-authorization:4.2.0
     #ports:
@@ -45,21 +44,6 @@ services:
       - RP_SESSION_LIVE=86400 #in seconds
 #      - RP_MONGO_URI=mongodb://localhost:27017
     restart: always
-
-### Another option for gateway
-### Can be used instead of traefik
-#  gateway:
-#    image: fabiolb/fabio:1.5.8-go1.10
-#    ports:
-#      - "9998:9998" # GUI/management
-#      - "8080:9999" # HTTP exposed
-#    environment:
-#      - FABIO_REGISTRY_CONSUL_ADDR=registry:8500
-#      - FABIO_REGISTRY_CONSUL_REGISTER_NAME=gateway
-#      - FABIO_PROXY_ADDR=:9999;rt=300s;wt=300s
-#    restart: always
-
-
 
   gateway:
     image: traefik:1.6.6
@@ -104,58 +88,4 @@ services:
       - RP_SERVER.PORT=8080
       - RP_CONSUL.TAGS=urlprefix-/ui opts strip=/ui
       - RP_CONSUL.ADDRESS=registry:8500
-    restart: always
-
-  analyzer:
-    image: reportportal/service-analyzer:4.3.0
-    depends_on:
-       - registry
-       - gateway
-       - elasticsearch
-    restart: always
-  
-### Another option for analyzer. Used only for full stacktrace full match
-### Can be used instead of analyzer
-  #analyzer-equals:
-  #  image: reportportal/service-analyzer-equals:4.0.1
-  #  environment:
-  #    - RP_SERVER.PORT=8080
-  #    - RP_CONSUL.TAGS=urlprefix-/analyzer-equals strip=/analyzer-equals analyzer=equals analyzer_priority=1 analyzer_index=true
-  #    - RP_CONSUL.ADDRESS=registry:8500
-  #    - RP_REGISTRY=consul
-  #  depends_on:
-  #     - registry
-  #     - elasticsearch
-  #  restart: always
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.1
-    restart: always
-    volumes:
-        - ./data/elasticsearch:/usr/share/elasticsearch/data
-    environment:
-      - bootstrap.memory_lock=true
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    command: ["elasticsearch", "-Elogger.level=INFO"]
-#    ports:
-#        - "9200:9200"
-
-  jira:
-    image: reportportal/service-jira:4.3.0
-    environment:
-      - RP_PROFILES=docker
-#     - RP_MONGO_URI=mongodb://localhost:27017
-    restart: always
-
-  rally:
-    image: reportportal/service-rally:4.3.0
-    environment:
-      - RP_PROFILES=docker
-#     - RP_MONGO_URI=mongodb://localhost:27017
     restart: always
