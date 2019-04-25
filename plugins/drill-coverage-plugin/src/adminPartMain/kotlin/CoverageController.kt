@@ -10,52 +10,47 @@ import kotlinx.serialization.list
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
-import org.javers.core.JaversBuilder
 import org.javers.core.diff.changetype.NewObject
+import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("unused")
 class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
 
-    val initialClassBytes = mutableMapOf<String, ByteArray>()
-
-    val javaClasses = mutableMapOf<String, JavaClass>()
-
-    //TODO Only the last prev state at this moment - use JaVers repositories
-    val prevJavaClasses = mutableMapOf<String, JavaClass>()
-
-    private val javers = JaversBuilder.javers().build()
+    val agentStates = ConcurrentHashMap<AgentInfo, AgentState>()
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
-        val sessionId = dm.sessionId
+        val agentState = agentStates.getOrPut(agentInfo) { AgentState(agentInfo) }
         val content = dm.content
-        val parse = JSON.parse(CoverageMessage.serializer(), content!!)
+        val message = JSON.parse(CoverageMessage.serializer(), content!!)
+        return processData(agentState, message)
+    }
+    
+    private suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
+        val agentInfo = agentState.agentInfo
         when (parse.type) {
             CoverageEventType.INIT -> {
-                println(parse.data) //log init message
-                //change maps
-                initialClassBytes.clear()
-                prevJavaClasses.clear()
-                prevJavaClasses.putAll(javaClasses)
-                javaClasses.clear()
+                val initInfo = JSON.parse(InitInfo.serializer(), parse.data)
+                agentState.init(initInfo)
+                println(initInfo.message) //log init message
+                println("${initInfo.classesCount} classes to load")
             }
             CoverageEventType.CLASS_BYTES -> {
                 val classData = JSON.parse(ClassBytes.serializer(), parse.data)
                 val className = classData.className
                 val bytes = classData.bytes.toByteArray()
-                initialClassBytes[className] = bytes
+                agentState.addClass(className, bytes)
             }
             CoverageEventType.INITIALIZED -> {
                 println(parse.data) //log initialized message
-                val coverageBuilder = CoverageBuilder()
-                val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
-                initialClassBytes.forEach { (name, bytes) ->
-                    analyzer.analyzeClass(bytes, name)
-                }
-                val bundleCoverage = coverageBuilder.getBundle("all")
-                fillJavaClasses(bundleCoverage)
-                println("Classes loaded ${initialClassBytes.count()}")
+                agentState.initialized()
             }
             CoverageEventType.COVERAGE_DATA -> {
+                // Analyze all existing classes
+                val classesData = agentState.classesData()
+                val initialClassBytes = classesData.classesBytes
+                val javaClasses = classesData.javaClasses
+                val prevJavaClasses = classesData.prevJavaClasses
+
                 val coverageBuilder = CoverageBuilder()
                 val dataStore = ExecutionDataStore()
                 val analyzer = Analyzer(dataStore, coverageBuilder)
@@ -69,7 +64,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     dataStore.put(executionData)
                     when (exData.testName) {
                         null -> emptyList()
-                        else -> collectAssocTestPairs(executionData, exData.testName)
+                        else -> collectAssocTestPairs(initialClassBytes, executionData, exData.testName)
                     }
                 }.groupBy({ it.first }) { it.second } //group by test names
                     .mapValues { (_, tests) -> tests.distinct() }
@@ -92,7 +87,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     )
                 }
 
-                // Analyze all existing classes
+
                 initialClassBytes.forEach { (name, bytes) ->
                     analyzer.analyzeClass(bytes, name)
                 }
@@ -121,7 +116,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 )
 
                 //TODO Diff should be calculated after all classes has been parsed
-                val diff = javers.compareCollections(
+                val diff = agentState.javers.compareCollections(
                     prevJavaClasses.values.toList(),
                     javaClasses.values.toList(),
                     JavaClass::class.java
@@ -174,27 +169,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         return ""
     }
 
-    private fun fillJavaClasses(bundleCoverage: IBundleCoverage) {
-        javaClasses.clear()
-        bundleCoverage.packages
-            .flatMap { it.classes }
-            .map { cc ->
-                cc.name to JavaClass(
-                    name = cc.name.substringAfterLast('/'),
-                    path = cc.name,
-                    methods = cc.methods.map {
-                        JavaMethod(
-                            ownerClass = cc.name,
-                            name = it.name,
-                            desc = it.desc
-                        )
-                    }.toSet()
-
-                )
-            }.toMap(javaClasses)
-    }
-
     private fun collectAssocTestPairs(
+        initialClassBytes: Map<String, ByteArray>,
         executionData: ExecutionData,
         testName: String
     ): List<Pair<CoverageKey, String>> {

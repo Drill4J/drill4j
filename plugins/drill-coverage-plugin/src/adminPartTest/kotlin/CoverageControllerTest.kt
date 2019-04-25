@@ -3,12 +3,16 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
+import com.epam.drill.plugins.coverage.CoverageEventType.*
 import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class CoverageControllerTest {
     private val agentInfo = AgentInfo(
@@ -25,42 +29,35 @@ class CoverageControllerTest {
     private val coverageController = CoverageController(ws, "test")
 
     @Test
-    fun `should have empty state after init`() {
-        assertTrue { coverageController.initialClassBytes.isEmpty() }
-        assertTrue { coverageController.javaClasses.isEmpty() }
-        assertTrue { coverageController.prevJavaClasses.isEmpty() }
+    fun `should have empty state before init`() {
+        assertTrue { coverageController.agentStates.isEmpty() }
     }
 
     @Test
-    fun `should preserve class data for diff`() {
-        val message = CoverageMessage(CoverageEventType.INIT, "hello")
+    fun `should switch agent data ref to ClassDataBuilder on init`() = runBlocking {
+        val initInfo = InitInfo(1, "hello")
+        val message = CoverageMessage(CoverageEventType.INIT, JSON.stringify(InitInfo.serializer(), initInfo))
 
-        coverageController.javaClasses["TestClass"] = JavaClass("TestClass", "TestClass", emptySet())
+        sendMessage(message)
 
-        runBlocking {
-            coverageController.processData(
-                agentInfo,
-                DrillMessage("", JSON.stringify(CoverageMessage.serializer(), message))
-            )
-        }
-
-        coverageController.apply {
-            assertTrue { initialClassBytes.isEmpty() }
-            assertTrue { javaClasses.isEmpty() }
-            assertTrue { prevJavaClasses.isNotEmpty() }
-        }
+        assertEquals(1, coverageController.agentStates.count())
+        val agentData = coverageController.agentStates[agentInfo]?.dataRef?.get()
+        assertTrue { agentData is ClassDataBuilder && agentData.count == initInfo.classesCount }
     }
 
     @Test
-    fun `should add class bytes on receiving a CLASS_BYTES message`() {
-        val clazz = Dummy::class.java
-        val bytes = clazz.readBytes()
-        prepareClasses(clazz)
+    fun `should add class bytes on receiving a CLASS_BYTES message`() = runBlocking {
+        val dummyClass = Dummy::class.java
+        val dummyBytes = dummyClass.readBytes()
 
-        coverageController.apply {
-            val path = clazz.path
-            assertNotNull(initialClassBytes[path])
-            assertTrue { bytes.contentEquals(initialClassBytes[path]!!) }
+        sendInit(dummyClass)
+        sendClass(dummyClass)
+
+        coverageController.agentStates[agentInfo]!!.run {
+            val agentData = dataRef.get() as ClassDataBuilder
+            val (name, bytes) = agentData.chan.poll()!!
+            assertEquals(dummyClass.path, name)
+            assertTrue { dummyBytes.contentEquals(bytes) }
         }
     }
 
@@ -108,26 +105,40 @@ class CoverageControllerTest {
         val methods = ws.javaPackagesCoverage.flatMap { it.classes }.flatMap { it.methods }
 
         assertEquals(countClassesInPackage, ws.javaPackagesCoverage.first().classes.size)
-        assertEquals("Dummy",  ws.javaPackagesCoverage.first().classes.first().name)
+        assertEquals("Dummy", ws.javaPackagesCoverage.first().classes.first().name)
         assertEquals(countPackages, ws.javaPackagesCoverage.size)
         assertEquals(countAllClasses, ws.javaPackagesCoverage.count { it.classes.isNotEmpty() })
         assertEquals(countAllMethods, methods.size)
     }
 
     private fun prepareClasses(vararg classes: Class<*>) {
-        for (clazz in classes) {
-            val bytes = clazz.readBytes()
-            val classBytes = ClassBytes(clazz.path, bytes.toList())
-            val messageString = JSON.stringify(ClassBytes.serializer(), classBytes)
-            val message = CoverageMessage(CoverageEventType.CLASS_BYTES, messageString)
-
-            runBlocking {
-                coverageController.processData(
-                    agentInfo,
-                    DrillMessage("", JSON.stringify(CoverageMessage.serializer(), message))
-                )
+        runBlocking {
+            sendInit(*classes)
+            for (clazz in classes) {
+                sendClass(clazz)
             }
+            sendMessage(CoverageMessage(INITIALIZED, "Initialized!"))
         }
+    }
+
+    private suspend fun sendClass(clazz: Class<*>) {
+        val bytes = clazz.readBytes()
+        val classBytes = ClassBytes(clazz.path, bytes.toList())
+        val messageString = JSON.stringify(ClassBytes.serializer(), classBytes)
+        val message = CoverageMessage(CLASS_BYTES, messageString)
+        sendMessage(message)
+    }
+
+    private suspend fun sendInit(vararg classes: Class<*>) {
+        val initInfo = InitInfo(classes.count(), "Start initialization")
+        sendMessage(CoverageMessage(INIT, JSON.stringify(InitInfo.serializer(), initInfo)))
+    }
+
+    private suspend fun sendMessage(message: CoverageMessage) {
+        coverageController.processData(
+            agentInfo,
+            DrillMessage("", JSON.stringify(CoverageMessage.serializer(), message))
+        )
     }
 }
 

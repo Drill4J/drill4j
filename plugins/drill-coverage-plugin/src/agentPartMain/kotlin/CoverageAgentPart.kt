@@ -32,15 +32,17 @@ class CoveragePlugin @JvmOverloads constructor(
         println(initializingMessage)
         @Suppress("UnstableApiUsage")
         val classPath = ClassPath.from(ClassLoader.getSystemClassLoader())
-        sendMessage(CoverageEventType.INIT, initializingMessage)
-        classPath.topLevelClasses.mapNotNull { classInfo ->
+        val classInfoPairs = classPath.topLevelClasses.mapNotNull { classInfo ->
             val resourceName = classInfo.resourceName
                 .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                 .removeSuffix(".class")
             if (config.pathPrefixes.any { resourceName.startsWith(it) }) {
                 Pair(resourceName, classInfo)
             } else null
-        }.forEach { (resourceName, classInfo) ->
+        }.distinctBy { it.first }
+        val initInfo = InitInfo(classInfoPairs.count(), initializingMessage)
+        sendMessage(CoverageEventType.INIT, JSON.stringify(InitInfo.serializer(), initInfo))
+        classInfoPairs.forEach { (resourceName, classInfo) ->
             classNameSet.add(resourceName)
             val bytes = classInfo.asByteSource().read()
             sendClass(ClassBytes(resourceName, bytes.toList()))

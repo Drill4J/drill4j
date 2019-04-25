@@ -5,12 +5,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AgentInfo(
-    var id: String,
+    val id: String,
     val name: String,
     val groupName: String,
     val description: String,
     var isEnable: Boolean,
-    var buildVersion: String,
+    val buildVersion: String,
 
     @Optional
     val adminUrl: String = "",
@@ -22,22 +22,21 @@ data class AgentInfo(
     var additionalInfo: AgentAdditionalInfo? = null
 
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
         other as AgentInfo
 
-        if (name != other.name) return false
-        if (ipAddress != other.ipAddress) return false
+        if (id != other.id) return false
+        if (buildVersion != other.buildVersion) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + ipAddress.hashCode()
+        var result = id.hashCode()
+        result = 31 * result + buildVersion.hashCode()
         return result
     }
 }
