@@ -25,14 +25,16 @@ import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
 import org.litote.kmongo.deleteMany
 import org.slf4j.LoggerFactory
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val logger = LoggerFactory.getLogger(DrillPluginWs::class.java)
     private val app: Application by instance()
     private val mc: MongoClient by instance()
-    private val sessionStorage: MutableMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
+    private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
     private val agentStorage: AgentStorage by instance()
 
     override fun getPlWsSession(): Set<String> {
@@ -46,25 +48,21 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
             agentInfo.id,
             destination + ":" + agentInfo.buildVersion
         )
+        collection.deleteMany()
         try {
-            collection.deleteMany()
             collection.insertOne(messageForSend)
         } catch (e: BsonMaximumSizeExceededException) {
             println("payload is too long")
         }
-        sessionStorage[destination]?.apply {
-            val iterator = this.iterator()
-            while (iterator.hasNext()) {
-                val session = iterator.next()
+        sessionStorage[destination]?.let { sessionSet -> 
+            for (session in sessionSet) {
                 try {
                     session.send(Frame.Text(Gson().toJson(messageForSend)))
                 } catch (ex: Exception) {
-                    iterator.remove()
+                    sessionSet.remove(session)
                 }
             }
         }
-
-
     }
 
     init {
@@ -130,9 +128,10 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     }
 
     private fun DefaultWebSocketServerSession.saveSession(event: Message) {
-        if (sessionStorage[event.destination] == null)
-            sessionStorage[event.destination] = mutableSetOf(this)
-        sessionStorage[event.destination]?.add(this)
+        val sessionSet = sessionStorage.getOrPut(event.destination) { 
+            Collections.newSetFromMap(ConcurrentHashMap())
+        }
+        sessionSet.add(this)
     }
 
 }
