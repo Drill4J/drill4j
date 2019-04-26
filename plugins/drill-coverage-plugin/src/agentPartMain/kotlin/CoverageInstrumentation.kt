@@ -13,7 +13,6 @@ import org.jacoco.core.runtime.RuntimeData
 import org.objectweb.asm.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 /**
  * Provides boolean array for the probe.
@@ -26,9 +25,16 @@ typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
  */
 typealias DrillInstrumenter = (String, ByteArray) -> ByteArray
 
+class ExecDatum(
+    val id: Long,
+    val name: String,
+    val probes: BooleanArray,
+    val testName: String? = null
+)
+
 interface SessionProbeArrayProvider : ProbeArrayProvider {
     fun start(sessionId: String)
-    fun stop(sessionId: String): Collection<RuntimeData>?
+    fun stop(sessionId: String): List<ExecDatum>?
 }
 
 interface InstrContext : () -> String? {
@@ -39,20 +45,20 @@ interface InstrContext : () -> String? {
  * A container for session runtime data and optionally runtime data of tests
  * TODO ad hoc implementation, rewrite to something more descent
  */
-class SessionRuntime {
-    val sessionData = RuntimeData().apply { sessionId = "" }
-    val testsData: ConcurrentMap<String, RuntimeData> = ConcurrentHashMap<String, RuntimeData>(1)
+class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
 
-    fun get(testName: String?): RuntimeData =
-        if (!testName.isNullOrBlank()) {
-            testsData.getOrPut(testName) {
-                RuntimeData().apply {
-                    sessionId = testName
-                }
-            }
-        } else sessionData
-    
-    fun collect() = listOf(sessionData) + testsData.values
+    val execData = ConcurrentHashMap<Long, ExecDatum>()
+
+    val testRuntimes = ConcurrentHashMap<String, ExecRuntime>() 
+
+    operator fun get(testName: String): ExecRuntime =
+        testRuntimes.getOrPut(testName) { ExecRuntime(testName) }
+
+    override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
+        ExecDatum(id, name, BooleanArray(probeCount))
+    }.probes
+
+    fun collect() = execData.values + testRuntimes.values.flatMap { it.execData.values }
 }
 
 /**
@@ -61,24 +67,23 @@ class SessionRuntime {
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
 open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContext) : SessionProbeArrayProvider {
-    private val sessionRuntimes = ConcurrentHashMap<String, SessionRuntime>(1)
+    private val sessionRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = instrContext()
-        val runtime = sessionId?.let {
+        val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
+        return if (sessionRuntime != null) {
             val testName = instrContext["DrillTestName"]
-            sessionRuntimes[it]?.get(testName)
-        }
-        return runtime?.run {
-            getExecutionData(id, name, probeCount).probes
-        } ?: BooleanArray(probeCount)
+            val runtime = if (testName != null) sessionRuntime[testName] else sessionRuntime
+            runtime(id, name, probeCount)
+        } else BooleanArray(probeCount)
     }
 
     override fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = SessionRuntime()
+        sessionRuntimes[sessionId] = ExecRuntime()
     }
 
-    override fun stop(sessionId: String): Collection<RuntimeData>? = sessionRuntimes.remove(sessionId)?.collect()
+    override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
 }
 
 /**
