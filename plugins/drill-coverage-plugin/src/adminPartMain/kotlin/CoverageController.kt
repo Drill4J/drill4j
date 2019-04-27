@@ -59,12 +59,16 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 //also fill up assoc tests
                 val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
                 val assocTestsMap = probes.flatMap { exData ->
-                    if (exData.testName != null) println("${exData.className} ---- ${exData.testName}")
-                    val executionData = ExecutionData(exData.id, exData.className, exData.probes.toBooleanArray())
+                    val probeArray = exData.probes.toBooleanArray()
+                    val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
                     dataStore.put(executionData)
                     when (exData.testName) {
                         null -> emptyList()
-                        else -> collectAssocTestPairs(initialClassBytes, executionData, exData.testName)
+                        else -> collectAssocTestPairs(
+                            initialClassBytes,
+                            ExecutionData(exData.id, exData.className, probeArray.copyOf()),
+                            exData.testName
+                        )
                     }
                 }.groupBy({ it.first }) { it.second } //group by test names
                     .mapValues { (_, tests) -> tests.distinct() }

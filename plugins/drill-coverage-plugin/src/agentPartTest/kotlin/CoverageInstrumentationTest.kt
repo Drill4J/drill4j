@@ -2,8 +2,8 @@ package com.epam.drill.plugins.coverage
 
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
+import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
-import org.jacoco.core.data.SessionInfoStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -49,7 +49,7 @@ class InstrumentationTests {
         runnable.run()
         val runtimeData = TestProbeArrayProvider.stop(sessionId)
         val executionData = ExecutionDataStore()
-        runtimeData?.first()?.collect(executionData, SessionInfoStore(), false)
+        runtimeData?.forEach { executionData.put(ExecutionData(it.id, it.name, it.probes)) }
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(executionData, coverageBuilder)
         analyzer.analyzeClass(originalBytes, targetClass.name)

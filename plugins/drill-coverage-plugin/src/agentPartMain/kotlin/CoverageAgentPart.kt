@@ -6,8 +6,6 @@ import com.epam.drill.session.DrillRequest
 import com.google.common.reflect.ClassPath
 import kotlinx.serialization.json.JSON
 import kotlinx.serialization.list
-import org.jacoco.core.data.ExecutionDataStore
-import org.jacoco.core.data.SessionInfoStore
 
 val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
@@ -61,18 +59,16 @@ class CoveragePlugin @JvmOverloads constructor(
         } else {
             println("End of recording for session ${action.sessionId}")
             val runtimeData = instrContext.stop(action.sessionId)
-            runtimeData?.forEach {execData ->
-                val dataStore = ExecutionDataStore()
-                val sessionInfos = SessionInfoStore()
-                execData.collect(dataStore, sessionInfos, false)
-                sendExecutionData(dataStore.contents.map { exData ->
+            runtimeData?.apply { 
+                val dataToSend = map { datum ->
                     ExDataTemp(
-                        id = exData.id,
-                        className = exData.name,
-                        probes = exData.probes.toList(),
-                        testName = execData.sessionId.takeIf { !it.isNullOrBlank() }
+                        id = datum.id,
+                        className = datum.name,
+                        probes = datum.probes.toList(),
+                        testName = datum.testName
                     )
-                })
+                }
+                sendExecutionData(dataToSend)
             }
         }
     }
