@@ -9,7 +9,6 @@ import org.jacoco.core.internal.instr.ClassInstrumenter
 import org.jacoco.core.internal.instr.IProbeArrayStrategy
 import org.jacoco.core.internal.instr.InstrSupport
 import org.jacoco.core.runtime.IExecutionDataAccessorGenerator
-import org.jacoco.core.runtime.RuntimeData
 import org.objectweb.asm.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -55,7 +54,11 @@ class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
         testRuntimes.getOrPut(testName) { ExecRuntime(testName) }
 
     override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
-        ExecDatum(id, name, BooleanArray(probeCount))
+        ExecDatum(
+            id = id,
+            name = name,
+            probes = BooleanArray(probeCount),
+            testName = testName)
     }.probes
 
     fun collect() = execData.values + testRuntimes.values.flatMap { it.execData.values }
