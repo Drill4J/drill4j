@@ -43,6 +43,11 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             CoverageEventType.INITIALIZED -> {
                 println(parse.data) //log initialized message
                 agentState.initialized()
+                val classesData = agentState.classesData()
+                val prevJavaClasses = classesData.prevJavaClasses
+                if (prevJavaClasses.isEmpty()) {
+                    processData(agentState, CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]"))
+                }
             }
             CoverageEventType.COVERAGE_DATA -> {
                 // Analyze all existing classes
