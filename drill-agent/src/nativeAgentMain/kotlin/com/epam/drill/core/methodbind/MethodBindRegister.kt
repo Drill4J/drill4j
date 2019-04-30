@@ -14,28 +14,30 @@ val nativeMethodBindMapper =
     mapOf(
         SocketDispatcher + ::read0.name to { initialMethod: COpaquePointer ->
             exec {
-                originalMethod.misfeatureToFunctionDictionary[::read0] = initialMethod.reinterpret<CFunction<*>>()
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::read0] = reinterpret
                 staticCFunction(::read0)
             }
         },
         SocketDispatcher + ::readv0.name to { initialMethod: COpaquePointer ->
             exec {
-                originalMethod.misfeatureToFunctionDictionary[::readv0] = initialMethod.reinterpret<CFunction<*>>()
-                staticCFunction(::readv0)
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::read0] = reinterpret
+                staticCFunction(::read0)
             }
         },
-
-
         FileDispatcherImpl + ::read0.name to { initialMethod: COpaquePointer ->
             exec {
-                originalMethod.misfeatureToFunctionDictionary[::read0] = initialMethod.reinterpret<CFunction<*>>()
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::read0] = reinterpret
                 staticCFunction(::read0)
             }
         },
         FileDispatcherImpl + ::readv0.name to { initialMethod: COpaquePointer ->
             exec {
-                originalMethod.misfeatureToFunctionDictionary[::readv0] = initialMethod.reinterpret<CFunction<*>>()
-                staticCFunction(::readv0)
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::read0] = reinterpret
+                staticCFunction(::read0)
             }
         }
     )

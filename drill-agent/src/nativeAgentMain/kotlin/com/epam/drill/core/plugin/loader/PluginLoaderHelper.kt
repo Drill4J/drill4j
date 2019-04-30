@@ -92,13 +92,12 @@ open class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
             pluginConfigById.dumpConfigToFileSystem()
         }
 
-    var userPlugin: jobject =
-        NewObjectA(
+    var userPlugin: jobject = NewGlobalRef(NewObjectA(
             pluginApiClass,
             GetMethodID(pluginApiClass, "<init>", "(Ljava/lang/String;)V"),
             nativeHeap.allocArray(1.toLong()) {
                 l = NewStringUTF(id)
-            })!!
+            }))!!
 
 
     init {

@@ -1,6 +1,5 @@
 package com.epam.drill.core.methodbind
 
-import com.epam.drill.api.drillCRequest
 import com.epam.drill.core.exec
 import com.epam.drill.core.request.parseHttpRequest
 import com.epam.drill.core.request.toDrillRequest
@@ -18,7 +17,7 @@ const val FileDispatcherImpl = "Lsun/nio/ch/FileDispatcherImpl;"
 
 fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBufferAddress, len: jint): Int {
     initRuntimeIfNeeded()
-    val retVal = exec { originalMethod[::read0](env, obj, fd, address, len) }
+    val retVal = exec { originalMethod[::read0] }(env, obj, fd, address, len)
     if (retVal > 8) {
         val prefix = address.rawString(min(8, retVal))
         try {
@@ -32,14 +31,13 @@ fun read0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectBu
                 prefix.startsWith("TRACE ") ||
                 prefix.startsWith("CONNECT ")
             ) {
-                drillCRequest()?.dispose()
                 val request = address.rawString(retVal)
                 val parseHttpRequest = parseHttpRequest(request)
 
-                SetThreadLocalStorage(
-                    com.epam.drill.api.currentThread(),
-                    StableRef.create(parseHttpRequest.toDrillRequest()).asCPointer()
-                )
+                val thread = com.epam.drill.api.currentThread()
+                val any = parseHttpRequest.toDrillRequest()
+                val data = StableRef.create(any).asCPointer()
+                SetThreadLocalStorage(thread, data)
             }
 
         } catch (ex: Throwable) {
