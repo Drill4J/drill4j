@@ -186,7 +186,9 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         return cb.getBundle("").packages.flatMap { p ->
             listOf(p.coverageKey() to testName) + p.classes.flatMap { c ->
                 listOf(c.coverageKey() to testName) + c.methods.flatMap { m ->
-                    listOf(m.coverageKey(c) to testName)
+                    if (m.instructionCounter.coveredCount > 0) {
+                        listOf(m.coverageKey(c) to testName)
+                    } else emptyList()
                 }
             }
         }
