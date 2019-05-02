@@ -19,6 +19,7 @@ inline infix fun <reified T : Any> KClass<T>.fromJson(json: String) =
     try {
         Gson().fromJson(json, this.java)
     } catch (ex: JsonSyntaxException) {
+        ex.printStackTrace()
         null
     }
 

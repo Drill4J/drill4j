@@ -41,6 +41,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                             when (message.type) {
                                 MessageType.AGENT_REGISTER -> {
                                     agentInfo = AgentInfo::class fromJson message.message
+                                    agentInfo?.ipAddress = call.request.local.remoteHost
                                     agentStorage.put(agentInfo!!, this)
                                     send(agentWsMessage("/plugins/agent-attached", ""))
                                     val collection =
@@ -70,6 +71,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 } catch (ex: Exception) {
                     ex.printStackTrace()
                 } finally {
+                    agLog.error("agentDisconnected!")
                     if (agentInfo != null)
                         agentStorage.remove(agentInfo!!)
                 }

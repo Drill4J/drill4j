@@ -32,6 +32,7 @@ services:
     command: ./gradlew runDrillAdmin --project-cache-dir .gradle_admin
     ports:
       - 8090:8090
+      - 5006:5006
     networks:
       - drill4j-dev-network
     environment:

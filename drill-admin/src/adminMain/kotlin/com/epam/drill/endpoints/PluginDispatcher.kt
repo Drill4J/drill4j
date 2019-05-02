@@ -45,15 +45,9 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         val destination = pluginId + sessionId
 
         try {
-            //fixme
             plugins.plugins[pluginId]?.first?.processData(agentInfo, message.drillMessage)
-//                                    val processData = dp?.serverInstance?.processData(message.drillMessage)
-//            dp?.serverInstance?.sender?.convertAndSend(destination, message)
-//            wsService.convertAndSend(destination, message)
         } catch (ee: Exception) {
             ee.printStackTrace()
-            //fixme log
-//                logError("we should rework the plugin API.")
         }
 
         try {
@@ -63,8 +57,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
         } catch (ex: Exception) {
             ex.printStackTrace()
-            //fixme log
-//            logError("cannot save the message, $ex")
         }
     }
 
@@ -113,8 +105,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             fromJson.id = UUID.randomUUID().toString()
             return fromJson
         } catch (ex: Exception) {
-            //fixme log
-//            logError("cannot parse the incoming message $readText")
+            ex.printStackTrace()
             throw ex
         }
     }
