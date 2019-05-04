@@ -10,16 +10,15 @@ import kotlinx.serialization.list
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
-import org.javers.core.diff.changetype.NewObject
 import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("unused")
 class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
 
-    val agentStates = ConcurrentHashMap<AgentInfo, AgentState>()
+    internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
-        val agentState = agentStates.getOrPut(agentInfo) { AgentState(agentInfo) }
+        val agentState = agentStates.getOrPut(agentInfo.id) { AgentState(agentInfo) }
         val content = dm.content
         val message = JSON.parse(CoverageMessage.serializer(), content!!)
         return processData(agentState, message)
@@ -44,8 +43,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 println(parse.data) //log initialized message
                 agentState.initialized()
                 val classesData = agentState.classesData()
-                val prevJavaClasses = classesData.prevJavaClasses
-                if (prevJavaClasses.isEmpty()) {
+                val newMethods = classesData.newMethods
+                if (newMethods.isNotEmpty()) {
                     processData(agentState, CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]"))
                 }
             }
@@ -53,8 +52,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 // Analyze all existing classes
                 val classesData = agentState.classesData()
                 val initialClassBytes = classesData.classesBytes
-                val javaClasses = classesData.javaClasses
-                val prevJavaClasses = classesData.prevJavaClasses
 
                 val coverageBuilder = CoverageBuilder()
                 val dataStore = ExecutionDataStore()
@@ -124,13 +121,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(CoverageBlock.serializer(), coverageBlock)
                 )
 
-                //TODO Diff should be calculated after all classes has been parsed
-                val diff = agentState.javers.compareCollections(
-                    prevJavaClasses.values.toList(),
-                    javaClasses.values.toList(),
-                    JavaClass::class.java
-                )
-                val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
+                val newMethods = classesData.newMethods
                 val newCoverageBlock = if (newMethods.isNotEmpty()) {
                     println("New methods count: ${newMethods.count()}")
                     val newMethodSet = newMethods.toSet()
@@ -258,4 +249,3 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         methodCoverage: IMethodCoverage
     ) = "${classCoverage.name}.${methodCoverage.name}${methodCoverage.desc}".crc64
 }
-

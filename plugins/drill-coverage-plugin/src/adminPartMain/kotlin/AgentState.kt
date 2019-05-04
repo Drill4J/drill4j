@@ -1,11 +1,12 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.common.AgentInfo
-import kotlinx.coroutines.channels.Channel
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.data.ExecutionDataStore
 import org.javers.core.JaversBuilder
+import org.javers.core.diff.changetype.NewObject
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -19,7 +20,7 @@ class AgentState(
 ) {
     internal val dataRef = AtomicReference<AgentData>(NoData)
 
-    internal val javers = JaversBuilder.javers().build()
+    private val javers = JaversBuilder.javers().build()
 
     fun init(initInfo: InitInfo) {
         dataRef.updateAndGet { prevData ->
@@ -69,11 +70,18 @@ class AgentState(
 
                 )
             }.toMap()
+        val diff = javers.compareCollections(
+            agentData.prevJavaClasses.values.toList(),
+            javaClasses.values.toList(),
+            JavaClass::class.java
+        )
+        val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
+
         dataRef.set(
             ClassesData(
                 classesBytes = classBytes,
                 javaClasses = javaClasses,
-                prevJavaClasses = agentData.prevJavaClasses
+                newMethods = newMethods
             )
         )
     }
@@ -90,11 +98,12 @@ class ClassDataBuilder(
     val count: Int,
     val prevJavaClasses: Map<String, JavaClass>
 ) : AgentData() {
-    internal val chan = Channel<Pair<String, ByteArray>>(count)
+    internal val chan = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 }
 
 class ClassesData(
     val classesBytes: Map<String, ByteArray>,
     val javaClasses: Map<String, JavaClass>,
-    val prevJavaClasses: Map<String, JavaClass>
+    val newMethods: List<JavaMethod>
 ) : AgentData()
+
