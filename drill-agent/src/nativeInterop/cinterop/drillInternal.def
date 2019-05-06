@@ -68,6 +68,13 @@ int size(){
 }
 
 
+char *first() {
+    if (messageQu->used == 0) {
+        return NULL;
+    }
+   return messageQu->array[0];
+}
+
 char *getMessage() {
     if (messageQu->used == 0) {
         pthread_mutex_unlock(&mutex);

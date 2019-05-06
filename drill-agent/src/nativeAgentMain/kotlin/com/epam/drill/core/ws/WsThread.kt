@@ -4,6 +4,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.core.agentInfo
+import com.epam.drill.core.exec
 import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.core.plugin.loader.pluginLoadCommand
 import com.epam.drill.logger.DLogger
@@ -110,8 +111,11 @@ private fun websocket() = runBlocking {
             wsClient.send(message)
             while (true) {
                 delay(5)
-                MessageQueue.retrieveMessage()?.apply {
+                MessageQueue.first()?.apply {
                     wsClient.send(this)
+
+                    //remove message from queue.
+                    MessageQueue.retrieveMessage()
                 }
             }
         }
