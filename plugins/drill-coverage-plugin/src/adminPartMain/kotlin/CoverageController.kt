@@ -18,7 +18,12 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
-        val agentState = agentStates.getOrPut(agentInfo.id) { AgentState(agentInfo) }
+        val agentState = agentStates.compute(agentInfo.id) { _, state ->
+            when(state?.agentInfo) {
+                agentInfo -> state
+                else -> AgentState(agentInfo)
+            }
+        }!!
         val content = dm.content
         val message = JSON.parse(CoverageMessage.serializer(), content!!)
         return processData(agentState, message)
