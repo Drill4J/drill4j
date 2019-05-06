@@ -23,7 +23,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         val message = JSON.parse(CoverageMessage.serializer(), content!!)
         return processData(agentState, message)
     }
-    
+
     private suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
         val agentInfo = agentState.agentInfo
         when (parse.type) {
@@ -85,7 +85,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 }
                 if (assocTests.isNotEmpty()) {
                     println("Assoc tests - ids count: ${assocTests.count()}")
-                    println(assocTests)
                     ws.convertAndSend(
                         agentInfo,
                         "/associated-tests",
@@ -114,7 +113,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     methodsCount = methodsCount,
                     uncoveredMethodsCount = uncoveredMethodsCount
                 )
-                println(coverageBlock)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage",
@@ -140,7 +138,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         newCoverage * 100
                     )
                 } else NewCoverageBlock()
-                println(newCoverageBlock)
 
                 // TODO extend destination with plugin id
                 ws.convertAndSend(
@@ -150,7 +147,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 )
 
                 val classCoverage = classCoverage(bundleCoverage, assocTestsMap)
-                println(classCoverage)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-by-classes",
@@ -158,7 +154,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 )
 
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
-                println(packageCoverage)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-by-packages",
