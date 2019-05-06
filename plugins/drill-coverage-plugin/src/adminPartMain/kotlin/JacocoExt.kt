@@ -45,3 +45,28 @@ fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when
     )
     else -> CoverageKey(this.name.crc64)
 }
+
+fun CoverageKey.declaration(desc: String): String {
+    val argsString = desc.substringAfter('(').replace(")", "")
+    val declList = mutableListOf<String>()
+    val args = if (argsString.endsWith(';')) argsString.substringBeforeLast(';').split(';')
+    else argsString.split(';')
+
+    args.forEach {arg ->
+        when (arg) {
+            "V" -> declList.add("; void")
+            "L" -> declList.add("; long")
+            "Z" -> declList.add("; boolean")
+            "I" -> declList.add("; int")
+            "F" -> declList.add("; float")
+            "B" -> declList.add("; byte")
+            "D" -> declList.add("; double")
+            "S" -> declList.add("; short")
+            "C" -> declList.add("; char")
+            else -> declList.add("; ${arg.substringAfterLast('/')}")
+        }
+    }
+    var decl = "$declList".replace("]", "").replace('[', '(')
+    decl = "${decl.substringBeforeLast("; ")}) : ${decl.substringAfterLast("; ")}".replace("(; ", "(").replace(", ", "")
+    return decl
+}
