@@ -34,7 +34,11 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
         runBlocking {
             agentStorage.onUpdate += update(mutableSetOf()) {
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
-                sessionStorage.sendTo(it.keys.toAgentInfosWebSocket().messageEvent(destination))
+                sessionStorage.sendTo(
+                    it.keys.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
+                        destination
+                    )
+                )
             }
             agentStorage.onAdd += add(mutableSetOf()) { k, _ ->
                 val destination = app.toLocation(WsRoutes.GetAgent(k.id))
