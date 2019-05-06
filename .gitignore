@@ -8,7 +8,10 @@
 /distr/
 /composite/spring-petclinic-kotlin/hs_err_pid.*.log
 /*.iml
-/test.log
+/*.log
+/*/*.log
+/*/*/*.log
+/data/
 /docker-compose/data/
 /plugins/drill-exception-plugin-native/drill-api/
 /temp/
