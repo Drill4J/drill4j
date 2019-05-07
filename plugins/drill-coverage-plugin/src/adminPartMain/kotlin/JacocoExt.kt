@@ -68,6 +68,5 @@ fun CoverageKey.declaration(desc: String): String {
     }
     var decl = declList.joinToString(prefix = "(")
     decl = "${decl.substringBeforeLast("; ")}) : ${decl.substringAfterLast("; ")}".replace("(; ", "(").replace(", ", "")
-    println(decl)
     return decl
 }
