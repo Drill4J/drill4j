@@ -60,9 +60,9 @@ fun HttpRequest.toRawRequestString() =
 fun HttpRequest.toDrillRequest(): DrillRequest {
     val optimizedHeaders = this.headers.mapKeys { it.key.toLowerCase() }
     return DrillRequest(
-        optimizedHeaders["DrillSessionId".toLowerCase()] ?: this.cookies["DrillSessionId"],
-        this.headers["Host"],
-        this.headers["DrillAdditionalConfig"],
+        optimizedHeaders["drill-session-id"] ?: this.cookies["DrillSessionId"],
+        this.headers["host"],
+        this.headers["drill-additional-config"],
         optimizedHeaders
     )
 }

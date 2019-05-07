@@ -76,7 +76,7 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         val sessionId = instrContext()
         val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
         return if (sessionRuntime != null) {
-            val testName = instrContext["DrillTestName"]
+            val testName = instrContext["drill-test-name"]
             val runtime = if (testName != null) sessionRuntime[testName] else sessionRuntime
             runtime(id, name, probeCount)
         } else BooleanArray(probeCount)
