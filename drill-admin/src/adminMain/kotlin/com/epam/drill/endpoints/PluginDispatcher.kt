@@ -20,6 +20,7 @@ import io.ktor.locations.patch
 import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.kodein.di.Kodein
@@ -75,7 +76,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 }
             }
             authenticate {
-                patch<Routes.Api.Agent.PluginAction> { ll ->
+                post<Routes.Api.Agent.PluginAction> { ll ->
                     val message = call.receive<String>()
 
                     agentStorage[ll.agentId]
