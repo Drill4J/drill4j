@@ -50,10 +50,28 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val classesData = agentState.classesData()
                 val newMethods = classesData.newMethods
                 if (newMethods.isNotEmpty()) {
-                    processData(agentState, CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]"))
+                    classesData.execData.start()
+                    processData(agentState, CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
                 }
             }
-            CoverageEventType.COVERAGE_DATA -> {
+            CoverageEventType.SESSION_STARTED -> {
+                val classesData = agentState.classesData()
+                classesData.execData.start()
+                println("Session ${parse.data} started.")
+            }
+            CoverageEventType.SESSION_CANCELLED -> {
+                val classesData = agentState.classesData()
+                classesData.execData.stop()
+                println("Session ${parse.data} cancelled.")
+            }
+            CoverageEventType.COVERAGE_DATA_PART -> {
+                val classesData = agentState.classesData()
+                val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
+                probes.forEach { 
+                    classesData.execData.add(it)
+                }
+            }
+            CoverageEventType.SESSION_FINISHED -> {
                 // Analyze all existing classes
                 val classesData = agentState.classesData()
                 val initialClassBytes = classesData.classesBytes
@@ -64,7 +82,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
 
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
-                val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
+                val probes = classesData.execData.stop()
                 val assocTestsMap = probes.flatMap { exData ->
                     val probeArray = exData.probes.toBooleanArray()
                     val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
