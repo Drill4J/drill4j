@@ -70,9 +70,6 @@ fun topicRegister() =
         }
         topic("/plugins/action").rawMessage { action ->
             topicLogger.warn { "actionPluign event: message is $action " }
-            exec { loadedClasses }.forEach {
-                println(it)
-            }
             //fixme thi hardcode
             val agentPluginPart = exec { pInstrumentedStorage["coverage"] }
             agentPluginPart?.doRawAction(action)

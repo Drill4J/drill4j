@@ -19,10 +19,10 @@ object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 class CoveragePlugin @JvmOverloads constructor(
     override val id: String,
     private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
-) : InstrumentedPlugin<CoverConfig, CoverageAction>() {
+) : InstrumentedPlugin<CoverConfig, Action>() {
 
     val instrumenter = instrumenter(instrContext)
-    
+
     private val classNameSet = mutableSetOf<String>()
 
     override fun initPlugin() {
@@ -51,26 +51,35 @@ class CoveragePlugin @JvmOverloads constructor(
         println("Loaded ${classNameSet.count()} classes: $classNameSet")
     }
 
-    override fun doAction(action: CoverageAction) {
-        val record = action.isRecord
-        if (record) {
-            println("Start recording for session ${action.sessionId}")
-            instrContext.start(action.sessionId)
-        } else {
-            println("End of recording for session ${action.sessionId}")
-            val runtimeData = instrContext.stop(action.sessionId)
-            runtimeData?.apply { 
-                val dataToSend = map { datum ->
-                    ExDataTemp(
-                        id = datum.id,
-                        className = datum.name,
-                        probes = datum.probes.toList(),
-                        testName = datum.testName
-                    )
+    override fun doAction(action: Action) {
+        val sessionId = action.payload.sessionId
+        when (action.type) {
+            ActionType.START -> {
+                println("Start recording for session $sessionId")
+                instrContext.start(sessionId)
+            }
+            ActionType.STOP -> {
+                println("End of recording for session $sessionId")
+                val runtimeData = instrContext.stop(sessionId)
+                runtimeData?.apply {
+                    val dataToSend = map { datum ->
+                        ExDataTemp(
+                            id = datum.id,
+                            className = datum.name,
+                            probes = datum.probes.toList(),
+                            testName = datum.testName
+                        )
+                    }
+                    sendExecutionData(dataToSend)
                 }
-                sendExecutionData(dataToSend)
+            }
+            ActionType.CANCEL -> {
+                println("Cancellation of recording for session $sessionId")
+                //TODO think about event
+                instrContext.cancel(sessionId)
             }
         }
+
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray {
@@ -104,6 +113,6 @@ class CoveragePlugin @JvmOverloads constructor(
 
 
     override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
-    override var actionSerializer: kotlinx.serialization.KSerializer<CoverageAction> = CoverageAction.serializer()
+    override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
 
 }
