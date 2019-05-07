@@ -26,9 +26,9 @@ class DrillRequestTest {
 
     private fun constructRequest(drillSessionInHeader: Boolean = false, drillSessionInCookie: Boolean = false): String {
         if (drillSessionInHeader)
-            headers += Pair("DrillSessionId", drillSessionId)
+            headers += Pair("drill-session-id", drillSessionId)
         if (drillSessionInCookie)
-            cookies += Pair("DrillSessionId", drillSessionId)
+            cookies += Pair("drill-session-id", drillSessionId)
 
         return HttpRequest(
             "GET /test/url HTTP/1.1".toRequestQuery(),
