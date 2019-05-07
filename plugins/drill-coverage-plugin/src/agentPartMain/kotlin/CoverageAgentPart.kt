@@ -99,11 +99,8 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     private fun sendExecutionData(exData: List<ExDataTemp>) {
-        val chunked = exData.chunked(3)
-        chunked.forEach {
-            val exDataJson = JSON.stringify(ExDataTemp.serializer().list, it)
-            sendMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
-        }
+        val exDataJson = JSON.stringify(ExDataTemp.serializer().list, exData)
+        sendMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
     }
 
     private fun sendMessage(type: CoverageEventType, str: String) {
