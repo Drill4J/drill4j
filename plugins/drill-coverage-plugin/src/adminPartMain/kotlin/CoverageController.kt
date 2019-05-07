@@ -151,13 +151,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
                 )
 
-                val classCoverage = classCoverage(bundleCoverage, assocTestsMap)
-                ws.convertAndSend(
-                    agentInfo,
-                    "/coverage-by-classes",
-                    JSON.stringify(JavaClassCoverage.serializer().list, classCoverage)
-                )
-
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
                 ws.convertAndSend(
                     agentInfo,
@@ -189,14 +182,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
             }
         }
     }
-
-    @Deprecated(message = "Deprecated 4/17/19")
-    private fun classCoverage(
-        bundleCoverage: IBundleCoverage,
-        assocTestsMap: Map<CoverageKey, List<String>>
-    ): List<JavaClassCoverage> = bundleCoverage.packages
-        .flatMap { it.classes }
-        .let { classCoverage(it, assocTestsMap) }
 
     private fun packageCoverage(
         bundleCoverage: IBundleCoverage,
