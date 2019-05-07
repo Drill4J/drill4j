@@ -54,19 +54,22 @@ fun CoverageKey.declaration(desc: String): String {
 
     args.forEach {arg ->
         when (arg) {
-            "V" -> declList.add("; void")
-            "L" -> declList.add("; long")
-            "Z" -> declList.add("; boolean")
-            "I" -> declList.add("; int")
-            "F" -> declList.add("; float")
-            "B" -> declList.add("; byte")
-            "D" -> declList.add("; double")
-            "S" -> declList.add("; short")
-            "C" -> declList.add("; char")
-            else -> declList.add("; ${arg.substringAfterLast('/')}")
+            "V" -> declList.add("void")
+            "L" -> declList.add("long")
+            "Z" -> declList.add("boolean")
+            "I" -> declList.add("int")
+            "F" -> declList.add("float")
+            "B" -> declList.add("byte")
+            "D" -> declList.add("double")
+            "S" -> declList.add("short")
+            "C" -> declList.add("char")
+            else -> declList.add("${arg.substringAfterLast('/')}")
         }
     }
-    var decl = declList.joinToString(prefix = "(")
-    decl = "${decl.substringBeforeLast("; ")}) : ${decl.substringAfterLast("; ")}".replace("(; ", "(").replace(", ", "")
+    var decl = declList.joinToString(separator = "; ")
+    decl =
+        if (decl.contains(";")) "(${decl.substringBeforeLast("; ")}) : ${decl.substringAfterLast("; ")}"
+        else "() : $decl"
+    println(decl)
     return decl
 }
