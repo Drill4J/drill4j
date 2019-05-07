@@ -55,7 +55,7 @@ class CoverageControllerTest {
 
         coverageController.agentStates[agentInfo.id]!!.run {
             val agentData = dataRef.get() as ClassDataBuilder
-            val (name, bytes) = agentData.chan.poll()!!
+            val (name, bytes) = agentData.classData.poll()!!
             assertEquals(dummyClass.path, name)
             assertTrue { dummyBytes.contentEquals(bytes) }
         }
@@ -64,7 +64,7 @@ class CoverageControllerTest {
     @Test
     fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
-        val message = CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]")
+        val message = CoverageMessage(CoverageEventType.SESSION_FINISHED, "")
 
 
         runBlocking {
@@ -90,7 +90,7 @@ class CoverageControllerTest {
         val countAllMethods = 6
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
-        val message = CoverageMessage(CoverageEventType.COVERAGE_DATA, "[]")
+        val message = CoverageMessage(CoverageEventType.SESSION_FINISHED, "")
 
         runBlocking {
             coverageController.processData(

@@ -27,7 +27,10 @@ enum class CoverageEventType {
     INIT,
     CLASS_BYTES,
     INITIALIZED,
-    COVERAGE_DATA
+    SESSION_STARTED,
+    COVERAGE_DATA_PART,
+    SESSION_FINISHED,
+    SESSION_CANCELLED
 }
 
 @kotlinx.serialization.Serializable

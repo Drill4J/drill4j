@@ -37,7 +37,7 @@ class AgentState(
     fun addClass(key: String, bytes: ByteArray) {
         //throw ClassCastException if the ref value is in the wrong state
         val agentData = dataRef.get() as ClassDataBuilder
-        agentData.chan.offer(key to bytes)
+        agentData.classData.offer(key to bytes)
     }
 
     fun initialized() {
@@ -47,7 +47,7 @@ class AgentState(
         val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
         val classBytes = LinkedHashMap<String, ByteArray>(agentData.count)
         while (true) {
-            val pair = agentData.chan.poll()
+            val pair = agentData.classData.poll()
             if (pair != null) {
                 classBytes[pair.first] = pair.second
                 analyzer.analyzeClass(pair.second, pair.first)
@@ -98,12 +98,28 @@ class ClassDataBuilder(
     val count: Int,
     val prevJavaClasses: Map<String, JavaClass>
 ) : AgentData() {
-    internal val chan = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
+    internal val classData = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 }
 
 class ClassesData(
     val classesBytes: Map<String, ByteArray>,
     val javaClasses: Map<String, JavaClass>,
     val newMethods: List<JavaMethod>
-) : AgentData()
+) : AgentData() {
+    val execData = ExecData()
+}
+
+class ExecData {
+
+    private val dataRef = AtomicReference<MutableCollection<ExDataTemp>>()
+    
+    fun start() = dataRef.set(ConcurrentLinkedQueue())
+
+    fun add(probe: ExDataTemp) {
+        dataRef.get()!!.add(probe)
+    }
+
+    fun stop() = dataRef.getAndSet(null) as Collection<ExDataTemp>? ?: emptyList()
+    
+}
 

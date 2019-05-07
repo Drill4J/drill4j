@@ -57,6 +57,7 @@ class CoveragePlugin @JvmOverloads constructor(
             ActionType.START -> {
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId)
+                sendMessage(CoverageEventType.SESSION_STARTED, sessionId)
             }
             ActionType.STOP -> {
                 println("End of recording for session $sessionId")
@@ -70,13 +71,17 @@ class CoveragePlugin @JvmOverloads constructor(
                             testName = datum.testName
                         )
                     }
-                    sendExecutionData(dataToSend)
+                    //send data in chunk of 10
+                    dataToSend.chunked(10) { dataChunk ->
+                        sendExecutionData(dataChunk)
+                    }
+                    sendMessage(CoverageEventType.SESSION_FINISHED, sessionId)
                 }
             }
             ActionType.CANCEL -> {
                 println("Cancellation of recording for session $sessionId")
-                //TODO think about event
                 instrContext.cancel(sessionId)
+                sendMessage(CoverageEventType.SESSION_CANCELLED, sessionId)
             }
         }
 
@@ -100,7 +105,7 @@ class CoveragePlugin @JvmOverloads constructor(
 
     private fun sendExecutionData(exData: List<ExDataTemp>) {
         val exDataJson = JSON.stringify(ExDataTemp.serializer().list, exData)
-        sendMessage(CoverageEventType.COVERAGE_DATA, exDataJson)
+        sendMessage(CoverageEventType.COVERAGE_DATA_PART, exDataJson)
     }
 
     private fun sendMessage(type: CoverageEventType, str: String) {
