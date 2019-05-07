@@ -28,7 +28,7 @@ class DrillRequestTest {
         if (drillSessionInHeader)
             headers += Pair("drill-session-id", drillSessionId)
         if (drillSessionInCookie)
-            cookies += Pair("DrillSessionId", drillSessionId)
+            cookies += Pair("drill-session-id", drillSessionId)
 
         return HttpRequest(
             "GET /test/url HTTP/1.1".toRequestQuery(),
