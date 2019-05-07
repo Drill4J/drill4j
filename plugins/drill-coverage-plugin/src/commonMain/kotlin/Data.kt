@@ -10,10 +10,15 @@ data class CoverConfig(
 
 @kotlinx.serialization.Serializable
 data class CoverageAction(
-    val sessionId: String,
-    val isRecord: Boolean
+    val sessionId: String
 )
 
+@kotlinx.serialization.Serializable
+data class Action(val type: ActionType, val payload: CoverageAction)
+
+enum class ActionType {
+    START, STOP, CANCEL
+}
 
 @kotlinx.serialization.Serializable
 data class CoverageMessage(val type: CoverageEventType, val data: String)

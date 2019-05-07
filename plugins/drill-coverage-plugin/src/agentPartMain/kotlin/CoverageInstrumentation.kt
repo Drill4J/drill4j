@@ -34,6 +34,7 @@ class ExecDatum(
 interface SessionProbeArrayProvider : ProbeArrayProvider {
     fun start(sessionId: String)
     fun stop(sessionId: String): List<ExecDatum>?
+    fun cancel(sessionId: String)
 }
 
 interface InstrContext : () -> String? {
@@ -48,7 +49,7 @@ class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
 
     val execData = ConcurrentHashMap<Long, ExecDatum>()
 
-    val testRuntimes = ConcurrentHashMap<String, ExecRuntime>() 
+    val testRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
     operator fun get(testName: String): ExecRuntime =
         testRuntimes.getOrPut(testName) { ExecRuntime(testName) }
@@ -58,7 +59,8 @@ class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
             id = id,
             name = name,
             probes = BooleanArray(probeCount),
-            testName = testName)
+            testName = testName
+        )
     }.probes
 
     fun collect() = execData.values + testRuntimes.values.flatMap { it.execData.values }
@@ -87,6 +89,11 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
     }
 
     override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
+
+    override fun cancel(sessionId: String) {
+        sessionRuntimes.remove(sessionId)
+    }
+
 }
 
 /**
@@ -100,7 +107,7 @@ private class CustomInstrumenter(
     private val probeArrayProvider: ProbeArrayProvider
 ) : Instrumenter(EmptyExecutionDataAccessorGenerator), DrillInstrumenter {
 
-    override fun invoke(className: String, classBody: ByteArray): ByteArray = instrument(classBody, className) 
+    override fun invoke(className: String, classBody: ByteArray): ByteArray = instrument(classBody, className)
 
     override fun instrument(buffer: ByteArray?, name: String?): ByteArray {
         try {
