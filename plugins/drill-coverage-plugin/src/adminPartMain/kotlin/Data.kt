@@ -21,8 +21,14 @@ data class CoverageBlock(
     val coverage: Double?,
     val classesCount: Int = 0,
     val methodsCount: Int = 0,
-    val uncoveredMethodsCount: Int = 0
+    val uncoveredMethodsCount: Int = 0,
+    val arrow: ArrowType? = null
 )
+
+enum class ArrowType {
+    INCREASE,
+    DECREASE
+}
 
 @Serializable
 data class NewCoverageBlock(

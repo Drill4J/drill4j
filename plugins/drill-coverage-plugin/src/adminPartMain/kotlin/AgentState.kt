@@ -112,7 +112,10 @@ class ClassesData(
 class ExecData {
 
     private val dataRef = AtomicReference<MutableCollection<ExDataTemp>>()
-    
+
+    @Volatile
+    var coverage: Double? = null
+
     fun start() = dataRef.set(ConcurrentLinkedQueue())
 
     fun add(probe: ExDataTemp) {
@@ -120,6 +123,5 @@ class ExecData {
     }
 
     fun stop() = dataRef.getAndSet(null) as Collection<ExDataTemp>? ?: emptyList()
-    
 }
 
