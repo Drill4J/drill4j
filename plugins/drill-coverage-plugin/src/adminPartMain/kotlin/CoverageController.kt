@@ -128,7 +128,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val arrow = if (totalCoveragePercent != null) {
                     val prevCoverage = classesData.execData.coverage
                     classesData.execData.coverage = totalCoveragePercent
-                    when (compareValues(totalCoveragePercent, prevCoverage)) {
+                    when (compareValues(totalCoveragePercent, prevCoverage ?: 0.0)) {
                         1 -> ArrowType.INCREASE
                         -1 -> ArrowType.DECREASE
                         else -> null
