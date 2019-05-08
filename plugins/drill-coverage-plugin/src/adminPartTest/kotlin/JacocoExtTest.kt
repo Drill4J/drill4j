@@ -27,4 +27,25 @@ class JacocoExtTest {
         assertFalse { counter.coveredRatio.isFinite() }
         assertNull(coverageNode.coverage)
     }
+
+    @Test
+    fun `should convert V to void`() {
+        val asmVoid = "V"
+        val convertedVoid = parseDescType(asmVoid[0], asmVoid.iterator())
+        assertEquals("void", convertedVoid)
+    }
+
+    @Test
+    fun `should covert ASM declaration of array to Java declaration`() {
+        val asmDesc = "[Ljava/lang/Integer;"
+        val convertedDesc = parseDescTypes(asmDesc).first()
+        assertEquals("Integer[]", convertedDesc)
+    }
+    @Test
+    fun `should covert ASM declaration of method to Java declaration`() {
+        val coverageNode = CoverageNodeImpl(ICoverageNode.ElementType.METHOD, "test")
+        val asmDesc = "([JLjava/lang/Integer;[I)Z"
+        val convertedDesc = coverageNode.coverageKey().declaration(asmDesc)
+        assertEquals("(long[], Integer, int[]): boolean", convertedDesc)
+    }
 }

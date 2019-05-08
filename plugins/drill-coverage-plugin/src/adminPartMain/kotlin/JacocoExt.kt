@@ -70,7 +70,7 @@ fun CoverageKey.declaration(desc: String): String {
     } ?: ""
 }
 
-private fun parseDescTypes(argDesc: String): List<String> {
+fun parseDescTypes(argDesc: String): List<String> {
     val types = mutableListOf<String>()
     val descItr = argDesc.iterator()
     while (descItr.hasNext()) {
