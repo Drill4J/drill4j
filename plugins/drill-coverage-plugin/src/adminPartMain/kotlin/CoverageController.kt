@@ -124,6 +124,18 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val bundleCoverage = coverageBuilder.getBundle("all")
 
                 val totalCoveragePercent = bundleCoverage.coverage
+                // change arrow indicator (increase, decrease)
+                val arrow = if (totalCoveragePercent != null) {
+                    val prevCoverage = classesData.execData.coverage
+                    classesData.execData.coverage = totalCoveragePercent
+                    when (compareValues(totalCoveragePercent, prevCoverage)) {
+                        1 -> ArrowType.INCREASE
+                        -1 -> ArrowType.DECREASE
+                        else -> null
+                    }
+                } else null
+                
+                classesData.execData.coverage = totalCoveragePercent
 
 
                 val classesCount = bundleCoverage.classCounter.totalCount
@@ -134,8 +146,10 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     coverage = totalCoveragePercent,
                     classesCount = classesCount,
                     methodsCount = methodsCount,
-                    uncoveredMethodsCount = uncoveredMethodsCount
+                    uncoveredMethodsCount = uncoveredMethodsCount,
+                    arrow = arrow
                 )
+                println(coverageBlock)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage",
@@ -161,6 +175,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         newCoverage * 100
                     )
                 } else NewCoverageBlock()
+                println(newCoverageBlock)
 
                 // TODO extend destination with plugin id
                 ws.convertAndSend(
