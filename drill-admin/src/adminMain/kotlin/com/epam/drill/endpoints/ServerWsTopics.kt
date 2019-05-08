@@ -62,15 +62,16 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                     agentStorage.byId(x.agentId)?.toAgentInfoWebSocket()
                 }
 
-                topic<WsRoutes.GetAgentBuilds> { agent,_ ->
-                    println(agent)
-                    val collection = mc.client!!
-                        .getDatabase(agentStorage.byId(agent.agentId)?.id)
-                        .getCollection<AgentBuildVersion>("agent-build-versions")
-                    val versions = collection.find().toList()
-                    println(versions.stringify())
-                    if (versions.isEmpty()) null
-                    else versions
+                topic<WsRoutes.GetAgentBuilds> { agent, _ ->
+                    agentStorage.byId(agent.agentId)?.let {agInfo->
+                        val collection = mc.client!!
+                            .getDatabase(agInfo.id)
+                            .getCollection<AgentBuildVersion>("agent-build-versions")
+                        val versions = collection.find().toList()
+                        println(versions.stringify())
+                        if (versions.isEmpty()) null
+                        else versions
+                    }
                 }
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
