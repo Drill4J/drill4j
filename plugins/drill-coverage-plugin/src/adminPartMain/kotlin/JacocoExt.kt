@@ -45,3 +45,57 @@ fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when
     )
     else -> CoverageKey(this.name.crc64)
 }
+
+/**
+ * Converts ASM method description to declaration in java style with kotlin style of return type.
+ *
+ * Examples:
+ * - ()V -> (): void
+ * - (IZ)V -> (int, boolean): void
+ * - (ILjava/lang/String;)V -> (int, String): void
+ * - ([Ljava/lang/String;IJ)V -> (String[], int, long): void
+ * - ([[IJLjava/lang/String;)Ljava/lang/String; -> (int[][], long, String): String
+ * @param desc
+ * ASM method description
+ * @return declaration in java style with kotlin style of return type
+ *
+ */
+fun CoverageKey.declaration(desc: String): String {
+    return """\((.*)\)(.+)""".toRegex().matchEntire(desc)?.run {
+        val argDesc = groupValues[1]
+        val returnTypeDesc = groupValues[2]
+        val argTypes = parseDescTypes(argDesc).joinToString(separator = ", ")
+        val returnType = parseDescTypes(returnTypeDesc).first()
+        "($argTypes): $returnType"
+    } ?: ""
+}
+
+private fun parseDescTypes(argDesc: String): List<String> {
+    val types = mutableListOf<String>()
+    val descItr = argDesc.iterator()
+    while (descItr.hasNext()) {
+        val char = descItr.nextChar()
+        val arg = parseDescType(char, descItr)
+        types.add(arg)
+    }
+    return types
+}
+
+fun parseDescType(char: Char, charIterator: CharIterator): String = when(char) {
+    'V' -> "void"
+    'J' -> "long"
+    'Z' -> "boolean"
+    'I' -> "int"
+    'F' -> "float"
+    'B' -> "byte"
+    'D' -> "double"
+    'S' -> "short"
+    'C' -> "char"
+    '[' -> "${parseDescType(charIterator.nextChar(), charIterator)}[]"
+    'L' -> {
+        val objectDescSeq = charIterator.asSequence().takeWhile { it != ';' }
+        val objectDesc = objectDescSeq.fold(StringBuilder()) { sBuilder, char -> sBuilder.append(char) }.toString()
+        objectDesc.substringAfterLast("/")
+    }
+    else -> "!Error"
+}

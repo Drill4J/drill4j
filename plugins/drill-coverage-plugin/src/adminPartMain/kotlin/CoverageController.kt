@@ -240,6 +240,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         id = methodKey.id,
                         name = methodCoverage.name,
                         desc = methodCoverage.desc,
+                        decl = methodKey.declaration(methodCoverage.desc),
                         coverage = methodCoverage.coverage,
                         assocTestsCount = assocTestsMap[methodKey]?.count()
                     )

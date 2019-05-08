@@ -61,6 +61,7 @@ data class JavaMethodCoverage(
     val id: String,
     val name: String,
     val desc: String,
+    val decl: String,
     val coverage: Double?,
     val assocTestsCount: Int?
 )
