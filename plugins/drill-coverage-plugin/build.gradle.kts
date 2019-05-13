@@ -64,6 +64,7 @@ tasks {
     fun Configuration.flattenJars() = this.map { if (it.isDirectory) it else zipTree(it) }
 
     val adminPartJar by existing(Jar::class) {
+        group = "build"
         archiveFileName.set("admin-part.jar")
         from(pluginConfigJson) {
             into("static")
@@ -72,6 +73,7 @@ tasks {
         from(adminPartMainApi.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
+        group = "build"
         archiveFileName.set("agent-part.jar")
         from(pluginConfigJson) {
             into("static")
@@ -80,24 +82,22 @@ tasks {
         from(agentPartMainApi.flattenJars())
     }
 
-    val packPlugin by registering(Jar::class) {
+    val distJar by registering(Jar::class) {
+        group = "build"
         from(adminPartJar, agentPartJar)
-        destinationDirectory.set(file("../../distr/adminStorage"))
-    }
-
-    val buildCoveragePlugin by registering {
-        group = "app"
-        dependsOn(packPlugin)
-
     }
 
     register<Copy>("buildCoveragePluginDev") {
         group = "app"
-        dependsOn(buildCoveragePlugin)
-        from(agentPartJar)
-        from(file("plugin_config.json")) {
-            into("static")
+        from(distJar) {
+            into("adminStorage")
         }
-        destinationDir = file("../../distr/drill-plugins/coverage")
+        from(agentPartJar) {
+            into("drill-plugins/coverage")
+        }
+        from(file("plugin_config.json")) {
+            into("drill-plugins/coverage/static")
+        }
+        destinationDir = file("../../distr")
     }
 }
