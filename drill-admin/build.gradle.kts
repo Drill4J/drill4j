@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
+    id("com.google.cloud.tools.jib") version "1.2.0"
     application
 }
 
@@ -15,20 +16,23 @@ repositories {
     mavenLocal()
 }
 
-val appMainClassName = "io.ktor.server.netty.EngineMain"
+val appMainClassName by extra("io.ktor.server.netty.EngineMain")
+
+val appJvmArgs = listOf(
+    "-server",
+    "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006",
+    "-Djava.awt.headless=true",
+    "-Xms128m",
+    "-Xmx2g",
+    "-XX:+UseG1GC",
+    "-XX:MaxGCPauseMillis=100"
+)
 
 
 application {
     mainClassName = appMainClassName
 
-    applicationDefaultJvmArgs = listOf(
-        "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006",
-        "-Djava.awt.headless=true",
-        "-Xms128m",
-        "-Xmx2g",
-        "-XX:+UseG1GC",
-        "-XX:MaxGCPauseMillis=100"
-    )
+    applicationDefaultJvmArgs = appJvmArgs
 }
 
 
@@ -49,23 +53,32 @@ dependencies {
     implementation("io.ktor:ktor-websockets:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:1.2.1")
-    implementation("ch.qos.logback:logback-classic:1.2.1")
-
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
 }
 
+jib {
+    from {
+        image = "gcr.io/distroless/java:8"
+    }
+    container {
+        ports = listOf("8090", "5006")
+        mainClass = appMainClassName
+
+        jvmFlags = appJvmArgs
+    }
+}
+
+
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
-
-    val run by existing(JavaExec::class)
-
+    
     //TODO Only for backward compatibility, remove after CI/CD has been configured
     register("runDrillAdmin") {
         group = "application"
-        dependsOn(run)
+        dependsOn("run")
     }
 }
