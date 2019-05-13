@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  # requires mongodb container named "drillmongodb" with network "drill4j-dev-network"
+  drill-admin:
+    build:
+      context: ..
+      dockerfile: drill-admin/Dockerfile
+    ports:
+      - 8090:8090
+      - 5006:5006
+    networks:
+      - drill4j-dev-network
+    environment:
+      - isDocker=true
+      - DRILL_HOME=/drill
+    restart: always
+
+networks:
+  drill4j-dev-network:
+    external:
+      name: drill4j-dev-network
