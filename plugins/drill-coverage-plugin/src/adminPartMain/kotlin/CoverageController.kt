@@ -172,7 +172,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     NewCoverageBlock(
                         newMethodsCoverages.count(),
                         newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
-                        newCoverage * 100
+                        newCoverage * 100,
+                        newMethods
                     )
                 } else NewCoverageBlock()
                 println(newCoverageBlock)
