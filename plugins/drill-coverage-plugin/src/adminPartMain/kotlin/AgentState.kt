@@ -16,10 +16,11 @@ import java.util.concurrent.atomic.AtomicReference
  * In case of inconsistencies of the data a ClassCastException is thrown.
  */
 class AgentState(
-    val agentInfo: AgentInfo
+    val agentInfo: AgentInfo,
+    prevState: AgentState?
 ) {
-    internal val dataRef = AtomicReference<AgentData>(NoData)
-
+    internal val dataRef: AtomicReference<AgentData> = AtomicReference(prevState?.dataRef?.get() ?: NoData)
+    
     private val javers = JaversBuilder.javers().build()
 
     fun init(initInfo: InitInfo) {

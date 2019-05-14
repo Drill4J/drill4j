@@ -11,6 +11,7 @@ import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
 
 @Suppress("unused")
 class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
@@ -21,7 +22,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
         val agentState = agentStates.compute(agentInfo.id) { _, state ->
             when(state?.agentInfo) {
                 agentInfo -> state
-                else -> AgentState(agentInfo)
+                else -> AgentState(agentInfo, state)
             }
         }!!
         val content = dm.content
@@ -126,12 +127,13 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 val totalCoveragePercent = bundleCoverage.coverage
                 // change arrow indicator (increase, decrease)
                 val arrow = if (totalCoveragePercent != null) {
-                    val prevCoverage = classesData.execData.coverage
+                    val prevCoverage = classesData.execData.coverage ?: 0.0
                     classesData.execData.coverage = totalCoveragePercent
-                    when (compareValues(totalCoveragePercent, prevCoverage ?: 0.0)) {
-                        1 -> ArrowType.INCREASE
-                        -1 -> ArrowType.DECREASE
-                        else -> null
+                    val diff = totalCoveragePercent - prevCoverage
+                    when {
+                        abs(diff) < 1E-7 -> null
+                        diff > 0.0 -> ArrowType.INCREASE
+                        else -> ArrowType.DECREASE
                     }
                 } else null
                 
