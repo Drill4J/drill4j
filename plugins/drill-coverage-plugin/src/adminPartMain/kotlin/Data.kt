@@ -74,12 +74,7 @@ data class JavaMethodCoverage(
 )
 
 @Serializable
-data class NewMethodsCoverages(
-    val values :List<SimplifiedJavaMethodCoverage> = emptyList()
-)
-
-@Serializable
-data class SimplifiedJavaMethodCoverage(
+data class SimpleJavaMethodCoverage(
     val name: String,
     val desc: String,
     val coverage: Double?

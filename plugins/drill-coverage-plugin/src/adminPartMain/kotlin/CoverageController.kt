@@ -158,9 +158,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(CoverageBlock.serializer(), coverageBlock)
                 )
 
-                var simplifiedMethodsCoverages = NewMethodsCoverages()
                 val newMethods = classesData.newMethods
-                val newCoverageBlock = if (newMethods.isNotEmpty()) {
+                val (newCoverageBlock, newMethodsCoverages) = if (newMethods.isNotEmpty()) {
                     println("New methods count: ${newMethods.count()}")
                     val newMethodSet = newMethods.toSet()
                     val newMethodsCoverages = bundleCoverage.packages
@@ -170,19 +169,17 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                         .map { it.second }
                     val totalCount = newMethodsCoverages.sumBy { it.instructionCounter.totalCount }
                     val coveredCount = newMethodsCoverages.sumBy { it.instructionCounter.coveredCount }
-                    //line coverage
-                    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount else 0.0
-                    simplifiedMethodsCoverages = NewMethodsCoverages(
-                        newMethodsCoverages.map{methodCoverage ->  SimplifiedJavaMethodCoverage(methodCoverage.name,
-                            methodCoverage.desc, methodCoverage.coverage) }
-                    )
+                    //bytecode instruction coverage
+                    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
+
+                    val coverages = newMethodsCoverages.map { it.simpleMethodCoverage() }
                     NewCoverageBlock(
-                        newMethodsCoverages.count(),
-                        newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
-                        newCoverage * 100,
-                        newMethods
-                    )
-                } else NewCoverageBlock()
+                        methodsCount = newMethodsCoverages.count(),
+                        methodsCovered = newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
+                        coverage = newCoverage,
+                        methods = newMethods
+                    ) to coverages
+                } else NewCoverageBlock() to emptyList()
                 println(newCoverageBlock)
 
                 // TODO extend destination with plugin id
@@ -195,7 +192,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                 ws.convertAndSend(
                     agentInfo,
                     "/new-methods",
-                    JSON.stringify(NewMethodsCoverages.serializer(), simplifiedMethodsCoverages)
+                    JSON.stringify(SimpleJavaMethodCoverage.serializer().list, newMethodsCoverages)
                 )
 
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)

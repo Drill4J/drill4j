@@ -46,6 +46,12 @@ fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when
     else -> CoverageKey(this.name.crc64)
 }
 
+fun IMethodCoverage.simpleMethodCoverage(): SimpleJavaMethodCoverage = SimpleJavaMethodCoverage(
+    name = name,
+    desc = desc,
+    coverage = coverage
+)
+
 /**
  * Converts ASM method description to declaration in java style with kotlin style of return type.
  *
