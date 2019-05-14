@@ -156,6 +156,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     JSON.stringify(CoverageBlock.serializer(), coverageBlock)
                 )
 
+                var simplifiedMethodsCoverages = NewMethodsCoverages()
                 val newMethods = classesData.newMethods
                 val newCoverageBlock = if (newMethods.isNotEmpty()) {
                     println("New methods count: ${newMethods.count()}")
@@ -169,11 +170,14 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     val coveredCount = newMethodsCoverages.sumBy { it.instructionCounter.coveredCount }
                     //line coverage
                     val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount else 0.0
+                    simplifiedMethodsCoverages = NewMethodsCoverages(
+                        newMethodsCoverages.map{methodCoverage ->  SimplifiedJavaMethodCoverage(methodCoverage.name,
+                            methodCoverage.desc, methodCoverage.coverage) }
+                    )
                     NewCoverageBlock(
                         newMethodsCoverages.count(),
                         newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
-                        newCoverage * 100,
-                        newMethods
+                        newCoverage * 100
                     )
                 } else NewCoverageBlock()
                 println(newCoverageBlock)
@@ -183,6 +187,12 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     agentInfo,
                     "/coverage-new",
                     JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
+                )
+
+                ws.convertAndSend(
+                    agentInfo,
+                    "/new-methods",
+                    JSON.stringify(NewMethodsCoverages.serializer(), simplifiedMethodsCoverages)
                 )
 
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
