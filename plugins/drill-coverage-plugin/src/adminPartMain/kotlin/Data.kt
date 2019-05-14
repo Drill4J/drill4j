@@ -74,6 +74,18 @@ data class JavaMethodCoverage(
 )
 
 @Serializable
+data class NewMethodsCoverages(
+    val values :List<SimplifiedJavaMethodCoverage> = emptyList()
+)
+
+@Serializable
+data class SimplifiedJavaMethodCoverage(
+    val name: String,
+    val desc: String,
+    val coverage: Double?
+)
+
+@Serializable
 data class AssociatedTests(
     val id: String,
     val packageName: String?,
