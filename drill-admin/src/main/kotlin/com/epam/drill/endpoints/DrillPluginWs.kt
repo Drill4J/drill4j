@@ -54,7 +54,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         } catch (e: BsonMaximumSizeExceededException) {
             println("payload is too long")
         }
-        sessionStorage[destination]?.let { sessionSet -> 
+        sessionStorage[destination]?.let { sessionSet ->
             for (session in sessionSet) {
                 try {
                     session.send(Frame.Text(Gson().toJson(messageForSend)))
@@ -80,11 +80,12 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                         "wrong subs info"
                                     )
                                     saveSession(event)
+                                    val buildVersion = subscribeInfo.buildVersion
                                     val objects = mc.storage<Message>(
                                         subscribeInfo.agentId,
-                                        event.destination + ":" + (subscribeInfo.buildVersion ?: agentStorage.self(
-                                            subscribeInfo.agentId
-                                        )?.buildVersion)
+                                        event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
+                                            agentStorage.self(subscribeInfo.agentId)
+                                        } else buildVersion)
                                     )
                                         .find()
                                         .iterator()
@@ -128,7 +129,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     }
 
     private fun DefaultWebSocketServerSession.saveSession(event: Message) {
-        val sessionSet = sessionStorage.getOrPut(event.destination) { 
+        val sessionSet = sessionStorage.getOrPut(event.destination) {
             Collections.newSetFromMap(ConcurrentHashMap())
         }
         sessionSet.add(this)
