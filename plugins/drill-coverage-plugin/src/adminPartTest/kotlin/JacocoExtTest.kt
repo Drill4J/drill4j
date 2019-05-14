@@ -45,7 +45,7 @@ class JacocoExtTest {
     fun `should covert ASM declaration of method to Java declaration`() {
         val coverageNode = CoverageNodeImpl(ICoverageNode.ElementType.METHOD, "test")
         val asmDesc = "([JLjava/lang/Integer;[I)Z"
-        val convertedDesc = coverageNode.coverageKey().declaration(asmDesc)
+        val convertedDesc = declaration(asmDesc)
         assertEquals("(long[], Integer, int[]): boolean", convertedDesc)
     }
 }

@@ -66,7 +66,7 @@ fun IMethodCoverage.simpleMethodCoverage(): SimpleJavaMethodCoverage = SimpleJav
  * @return declaration in java style with kotlin style of return type
  *
  */
-fun CoverageKey.declaration(desc: String): String {
+fun declaration(desc: String): String {
     return """\((.*)\)(.+)""".toRegex().matchEntire(desc)?.run {
         val argDesc = groupValues[1]
         val returnTypeDesc = groupValues[2]
@@ -100,7 +100,7 @@ fun parseDescType(char: Char, charIterator: CharIterator): String = when(char) {
     '[' -> "${parseDescType(charIterator.nextChar(), charIterator)}[]"
     'L' -> {
         val objectDescSeq = charIterator.asSequence().takeWhile { it != ';' }
-        val objectDesc = objectDescSeq.fold(StringBuilder()) { sBuilder, char -> sBuilder.append(char) }.toString()
+        val objectDesc = objectDescSeq.fold(StringBuilder()) { sBuilder, c -> sBuilder.append(c) }.toString()
         objectDesc.substringAfterLast("/")
     }
     else -> "!Error"
