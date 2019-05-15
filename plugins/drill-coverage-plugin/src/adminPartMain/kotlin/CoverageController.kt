@@ -176,8 +176,7 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     NewCoverageBlock(
                         methodsCount = newMethodsCoverages.count(),
                         methodsCovered = newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
-                        coverage = newCoverage,
-                        methods = newMethods
+                        coverage = newCoverage
                     ) to coverages
                 } else NewCoverageBlock() to emptyList()
                 println(newCoverageBlock)
