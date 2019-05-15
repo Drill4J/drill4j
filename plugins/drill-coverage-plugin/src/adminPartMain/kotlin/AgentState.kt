@@ -27,10 +27,7 @@ class AgentState(
         dataRef.updateAndGet { prevData ->
             ClassDataBuilder(
                 count = initInfo.classesCount,
-                prevJavaClasses = when (prevData) {
-                    is ClassesData -> prevData.javaClasses
-                    else -> emptyMap()
-                }
+                prevData = prevData as? ClassesData
             )
         }
     }
@@ -71,18 +68,20 @@ class AgentState(
 
                 )
             }.toMap()
+        val prevData = agentData.prevData
         val diff = javers.compareCollections(
-            agentData.prevJavaClasses.values.toList(),
+            prevData?.javaClasses?.values?.toList() ?: emptyList(),
             javaClasses.values.toList(),
             JavaClass::class.java
         )
         val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
-
         dataRef.set(
             ClassesData(
+                agentInfo = agentInfo,
                 classesBytes = classBytes,
                 javaClasses = javaClasses,
-                newMethods = newMethods
+                newMethods = newMethods,
+                prevAgentInfo = prevData?.agentInfo
             )
         )
     }
@@ -97,17 +96,21 @@ object NoData : AgentData()
 
 class ClassDataBuilder(
     val count: Int,
-    val prevJavaClasses: Map<String, JavaClass>
+    val prevData: ClassesData?
 ) : AgentData() {
     internal val classData = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 }
 
 class ClassesData(
+    val agentInfo: AgentInfo,
     val classesBytes: Map<String, ByteArray>,
     val javaClasses: Map<String, JavaClass>,
-    val newMethods: List<JavaMethod>
+    val newMethods: List<JavaMethod>,
+    val prevAgentInfo: AgentInfo?
 ) : AgentData() {
     val execData = ExecData()
+
+    val changed = newMethods.isNotEmpty() || agentInfo != prevAgentInfo
 }
 
 class ExecData {

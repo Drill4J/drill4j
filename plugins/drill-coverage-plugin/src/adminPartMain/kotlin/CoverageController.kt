@@ -49,8 +49,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 println(parse.data) //log initialized message
                 agentState.initialized()
                 val classesData = agentState.classesData()
-                val newMethods = classesData.newMethods
-                if (newMethods.isNotEmpty()) {
+                if (classesData.changed) {
                     classesData.execData.start()
                     processData(agentState, CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
                 }
