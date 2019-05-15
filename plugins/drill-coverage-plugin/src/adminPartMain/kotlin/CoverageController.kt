@@ -201,9 +201,50 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     "/coverage-by-packages",
                     JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
                 )
+                val testRelatedBundles = testUsageBundles(initialClassBytes, probes)
+                val testUsages = testUsages(testRelatedBundles)
+                ws.convertAndSend(
+                    agentInfo,
+                    "/tests-usages",
+                    JSON.stringify(TestUsagesInfo.serializer().list, testUsages)
+                )
+                println(JSON.stringify(TestUsagesInfo.serializer().list, testUsages))
             }
         }
         return ""
+    }
+
+    private fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
+        bundleMap.map { (k, v) ->
+            TestUsagesInfo(k, v.methodCounter.totalCount, "Test type", "30.02.2019")
+        }
+
+    private fun testUsageBundles(
+        initialClassBytes: Map<String, ByteArray>,
+        probes: Collection<ExDataTemp>
+    ): Map<String, IBundleCoverage> = probes
+        .filter { it.testName != null }
+        .groupBy { it.testName!! }
+        .mapValues { (_, v) ->
+            val dataStore = ExecutionDataStore()
+            v.forEach {
+                val probeArray = it.probes.toBooleanArray()
+                val executionData = ExecutionData(it.id, it.className, probeArray)
+                dataStore.put(executionData)
+            }
+            testUsageBundle(initialClassBytes, dataStore)
+        }
+
+    private fun testUsageBundle(
+        initialClassBytes: Map<String, ByteArray>,
+        dataStore: ExecutionDataStore
+    ): IBundleCoverage {
+        val coverageBuilder = CoverageBuilder()
+        val analyzer = Analyzer(dataStore, coverageBuilder)
+        dataStore.contents.forEach {
+            analyzer.analyzeClass(initialClassBytes[name], name)
+        }
+        return coverageBuilder.getBundle("all")
     }
 
     private fun collectAssocTestPairs(
