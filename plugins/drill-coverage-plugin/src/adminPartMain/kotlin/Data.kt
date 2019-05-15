@@ -34,8 +34,7 @@ enum class ArrowType {
 data class NewCoverageBlock(
     val methodsCount: Int = 0,
     val methodsCovered: Int = 0,
-    val coverage: Double? = null,
-    val methods: List<JavaMethod> = emptyList()
+    val coverage: Double? = null
 )
 
 @Serializable
@@ -89,3 +88,10 @@ data class AssociatedTests(
     val tests: List<String>
 )
 
+@Serializable
+data class TestUsagesInfo(
+    val testName: String,
+    val methodCalls: Int,
+    val testType: String,
+    val lastModified: String
+)
