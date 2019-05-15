@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 @Suppress("unused")
-class CoverageController(private val ws: WsService, val name: String) : AdminPluginPart(ws, name) {
+class CoverageController(private val ws: WsService, id: String) : AdminPluginPart(ws, id) {
 
     internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
@@ -239,8 +239,8 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
     ): IBundleCoverage {
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(dataStore, coverageBuilder)
-        dataStore.contents.forEach {
-            analyzer.analyzeClass(initialClassBytes[name], name)
+        dataStore.contents.forEach { execData ->
+            analyzer.analyzeClass(initialClassBytes[execData.name], execData.name)
         }
         return coverageBuilder.getBundle("all")
     }
