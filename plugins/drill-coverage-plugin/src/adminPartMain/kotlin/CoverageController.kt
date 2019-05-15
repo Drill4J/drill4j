@@ -208,7 +208,6 @@ class CoverageController(private val ws: WsService, val name: String) : AdminPlu
                     "/tests-usages",
                     JSON.stringify(TestUsagesInfo.serializer().list, testUsages)
                 )
-                println(JSON.stringify(TestUsagesInfo.serializer().list, testUsages))
             }
         }
         return ""
