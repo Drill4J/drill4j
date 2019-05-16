@@ -39,7 +39,6 @@ import kotlin.test.fail
 @ObsoleteCoroutinesApi
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
-@Ignore
 class DrillPluginWsTest {
 
     @ExperimentalCoroutinesApi
