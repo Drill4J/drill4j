@@ -1,0 +1,10 @@
+matrix:
+  include:
+    - os: linux
+      language: java
+      jdk: oraclejdk8
+      env:
+        KBUILD=linux
+        JAVA_OPTS=-Xmx4g
+      script:
+        - ./gradlew -s -i build buildAgent check
