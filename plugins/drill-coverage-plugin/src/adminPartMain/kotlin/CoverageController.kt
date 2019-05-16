@@ -170,7 +170,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     //bytecode instruction coverage
                     val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
 
-                    val coverages = newMethodsCoverages.map { it.second.simpleMethodCoverage(it.first.ownerClass) }
+                    val coverages = newMethodsCoverages.map { (jm, mc) -> mc.simpleMethodCoverage(jm.ownerClass) }
                     NewCoverageBlock(
                         methodsCount = newMethodsCoverages.count(),
                         methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },

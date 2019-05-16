@@ -50,7 +50,7 @@ fun IMethodCoverage.simpleMethodCoverage(ownerClass: String): SimpleJavaMethodCo
     name = name,
     desc = declaration(desc),
     coverage = coverage,
-    address = ownerClass
+    ownerClass = ownerClass
 )
 
 /**

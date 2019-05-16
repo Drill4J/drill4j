@@ -76,7 +76,7 @@ data class JavaMethodCoverage(
 data class SimpleJavaMethodCoverage(
     val name: String,
     val desc: String,
-    val address: String,
+    val ownerClass: String,
     val coverage: Double?
 )
 
