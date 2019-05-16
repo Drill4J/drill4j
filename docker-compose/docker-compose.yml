@@ -8,6 +8,7 @@ services:
     volumes:
       - ../:/home/gradle/project
       - drill_gradle_data:/home/gradle/.gradle
+    user: root
     working_dir: /home/gradle/project
     entrypoint: gradle
     environment:
