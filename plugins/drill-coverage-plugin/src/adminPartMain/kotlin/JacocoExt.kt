@@ -46,10 +46,11 @@ fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when
     else -> CoverageKey(this.name.crc64)
 }
 
-fun IMethodCoverage.simpleMethodCoverage(): SimpleJavaMethodCoverage = SimpleJavaMethodCoverage(
+fun IMethodCoverage.simpleMethodCoverage(ownerClass: String): SimpleJavaMethodCoverage = SimpleJavaMethodCoverage(
     name = name,
-    desc = desc,
-    coverage = coverage
+    desc = declaration(desc),
+    coverage = coverage,
+    ownerClass = ownerClass
 )
 
 /**

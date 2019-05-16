@@ -165,16 +165,15 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                         .flatMap { it.classes }
                         .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
                         .filter { it.first in newMethodSet }
-                        .map { it.second }
-                    val totalCount = newMethodsCoverages.sumBy { it.instructionCounter.totalCount }
-                    val coveredCount = newMethodsCoverages.sumBy { it.instructionCounter.coveredCount }
+                    val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
+                    val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
                     //bytecode instruction coverage
                     val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
 
-                    val coverages = newMethodsCoverages.map { it.simpleMethodCoverage() }
+                    val coverages = newMethodsCoverages.map { (jm, mc) -> mc.simpleMethodCoverage(jm.ownerClass) }
                     NewCoverageBlock(
                         methodsCount = newMethodsCoverages.count(),
-                        methodsCovered = newMethodsCoverages.count { it.methodCounter.coveredCount > 0 },
+                        methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
                         coverage = newCoverage
                     ) to coverages
                 } else NewCoverageBlock() to emptyList()
