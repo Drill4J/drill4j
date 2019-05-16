@@ -1,3 +1,7 @@
+plugins {
+    base
+}
+
 tasks {
 
     val runAgent by registering {
