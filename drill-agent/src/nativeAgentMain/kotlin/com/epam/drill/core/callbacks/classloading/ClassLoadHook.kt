@@ -1,27 +1,42 @@
 package com.epam.drill.core.callbacks.classloading
 
-import com.epam.drill.core.JClassVersions
-import com.epam.drill.core.addNewVersion
 import com.epam.drill.core.exec
-import com.soywiz.kmem.buildByteArray
-import drillInternal.addClass
-import jvmapi.*
-import kotlinx.cinterop.*
+import jvmapi.Allocate
+import jvmapi.DeleteLocalRef
+import jvmapi.ExceptionDescribe
+import jvmapi.GetArrayLength
+import jvmapi.GetByteArrayElements
+import jvmapi.JNI_ABORT
+import jvmapi.NewByteArray
+import jvmapi.ReleaseByteArrayElements
+import jvmapi.SetByteArrayRegion
+import jvmapi.jbyteArray
+import jvmapi.jbyteVar
+import jvmapi.jint
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.UByteVar
+import kotlinx.cinterop.get
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.set
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
 
 @ExperimentalUnsignedTypes
 @Suppress("unused", "UNUSED_PARAMETER")
 @CName("jvmtiEventClassFileLoadHookEvent")
 fun classLoadEvent(
-    jvmtiEnv: kotlinx.cinterop.CPointer<jvmapi.jvmtiEnvVar /* = kotlinx.cinterop.CPointerVarOf<jvmapi.jvmtiEnv /* = kotlinx.cinterop.CPointer<jvmapi.jvmtiInterface_1_> */> */>?,
-    jniEnv: kotlinx.cinterop.CPointer<jvmapi.JNIEnvVar /* = kotlinx.cinterop.CPointerVarOf<jvmapi.JNIEnv /* = kotlinx.cinterop.CPointer<jvmapi.JNINativeInterface_> */> */>?,
-    classBeingRedefined: jvmapi.jclass? /* = kotlinx.cinterop.CPointer<cnames.structs._jobject>? */,
-    loader: jvmapi.jobject? /* = kotlinx.cinterop.CPointer<cnames.structs._jobject>? */,
-    className: kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */>?,
-    protection_domain: jvmapi.jobject? /* = kotlinx.cinterop.CPointer<cnames.structs._jobject>? */,
-    classDataLen: jvmapi.jint /* = kotlin.Int */,
-    classData: kotlinx.cinterop.CPointer<kotlinx.cinterop.UByteVar /* = kotlinx.cinterop.UByteVarOf<kotlin.UByte> */>?,
-    newClassDataLen: kotlinx.cinterop.CPointer<jvmapi.jintVar /* = kotlinx.cinterop.IntVarOf<jvmapi.jint /* = kotlin.Int */> */>?,
-    newData: kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointerVar<kotlinx.cinterop.UByteVar> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<kotlinx.cinterop.UByteVarOf<kotlin.UByte>>> */>?
+    jvmtiEnv: CPointer<jvmapi.jvmtiEnvVar>?,
+    jniEnv: CPointer<jvmapi.JNIEnvVar>?,
+    classBeingRedefined: jvmapi.jclass?,
+    loader: jvmapi.jobject?,
+    className: CPointer<ByteVar>?,
+    protection_domain: jvmapi.jobject?,
+    classDataLen: jint,
+    classData: CPointer<UByteVar>?,
+    newClassDataLen: CPointer<jvmapi.jintVar>?,
+    newData: CPointer<CPointerVar<UByteVar>>?
 
 
 ) {
@@ -31,42 +46,35 @@ fun classLoadEvent(
 
         if (className != null && classData != null) {
             val kClassName = className.toKString()
-            addClass(classData, classDataLen)
             if (loader != null && protection_domain != null) {
-
-
-                val instrumentedPlugin = exec  {
+                exec {
                     pInstrumentedStorage["coverage"]
-                }
-                if (instrumentedPlugin != null) {
+                }?.let { instrumentedPlugin ->
                     val newByteArray: jbyteArray? = NewByteArray(classDataLen)
                     ExceptionDescribe()
                     SetByteArrayRegion(
-                        newByteArray,
-                        0,
-                        classDataLen,
+                        newByteArray, 0, classDataLen,
                         getBytes(newByteArray, classDataLen, classData)
                     )
-                    ExceptionDescribe()
+
                     val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
 
-                    val getByteArrayElements1 = GetByteArrayElements(instrument, null)
                     val size = GetArrayLength(instrument)
                     Allocate(size.toLong(), newData)
-                    for (i in 0 until size) {
-                        val pointed = newData!!.pointed
-                        val value: CPointer<UByteVarOf<UByte>> = pointed.value!!
-                        value[i] = getByteArrayElements1!![i].toUByte()
+
+                    GetByteArrayElements(instrument, null)?.let { nativeBytes ->
+
+                        for (i in 0 until size) {
+                            val pointed = newData!!.pointed
+                            val innerValue = pointed.value!!
+                            innerValue[i] = nativeBytes[i].toUByte()
+                        }
+
+                        ReleaseByteArrayElements(instrument, nativeBytes, JNI_ABORT)
+                        DeleteLocalRef(newByteArray)
+                        newClassDataLen!!.pointed.value = size
                     }
-
-
-                    val byteArray = ByteArray(size)
-
-                    for (i in 0 until size) {
-                        byteArray[i] = getByteArrayElements1!![i].toByte()
-                    }
-
-                    newClassDataLen!!.pointed.value = size
+                    ExceptionDescribe()
                 }
             }
         }
@@ -74,22 +82,6 @@ fun classLoadEvent(
     } catch (ex: Throwable) {
         println(className?.toKString())
         ex.printStackTrace()
-    }
-}
-
-fun saveClassDataToStorage(
-    kClassName: String,
-    bytes: ByteArray
-) {
-
-    exec {
-        val jClassVersions = loadedClasses[kClassName]
-
-        if (jClassVersions == null) {
-            loadedClasses[kClassName] = JClassVersions(bytes)
-        } else {
-            jClassVersions.addNewVersion(bytes)
-        }
     }
 }
 
@@ -108,10 +100,3 @@ private fun getBytes(
     return bytess
 }
 
-
-@ExperimentalUnsignedTypes
-fun CPointer<UByteVar>.toByteArray(size: Int) = buildByteArray {
-    for (i in 0 until size) {
-        append(this@toByteArray[i].toByte())
-    }
-}
