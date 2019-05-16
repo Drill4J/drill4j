@@ -87,7 +87,7 @@ class CoveragePlugin @JvmOverloads constructor(
 
     }
 
-    override fun instrument(className: String, initialBytes: ByteArray): ByteArray {
+    override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
         return if (className in classNameSet) { //instrument only classes from the selected packages
             try {
                 instrumenter(className, initialBytes)
@@ -95,7 +95,7 @@ class CoveragePlugin @JvmOverloads constructor(
                 ex.printStackTrace()
                 throw ex
             }
-        } else initialBytes
+        } else null
     }
 
     private fun sendClass(classBytes: ClassBytes) {

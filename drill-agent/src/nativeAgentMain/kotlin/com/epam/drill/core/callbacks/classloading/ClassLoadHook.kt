@@ -57,23 +57,24 @@ fun classLoadEvent(
                         getBytes(newByteArray, classDataLen, classData)
                     )
 
-                    val instrument = instrumentedPlugin.instrument(kClassName, newByteArray!!)
+                    instrumentedPlugin.instrument(kClassName, newByteArray!!)?.let { instrument ->
 
-                    val size = GetArrayLength(instrument)
-                    Allocate(size.toLong(), newData)
+                        val size = GetArrayLength(instrument)
+                        Allocate(size.toLong(), newData)
 
-                    GetByteArrayElements(instrument, null)?.let { nativeBytes ->
+                        GetByteArrayElements(instrument, null)?.let { nativeBytes ->
 
-                        for (i in 0 until size) {
-                            val pointed = newData!!.pointed
-                            val innerValue = pointed.value!!
-                            innerValue[i] = nativeBytes[i].toUByte()
+                            for (i in 0 until size) {
+                                val pointed = newData!!.pointed
+                                val innerValue = pointed.value!!
+                                innerValue[i] = nativeBytes[i].toUByte()
+                            }
+
+                            ReleaseByteArrayElements(instrument, nativeBytes, JNI_ABORT)
+                            newClassDataLen!!.pointed.value = size
                         }
-
-                        ReleaseByteArrayElements(instrument, nativeBytes, JNI_ABORT)
-                        DeleteLocalRef(newByteArray)
-                        newClassDataLen!!.pointed.value = size
                     }
+                    DeleteLocalRef(newByteArray)
                     ExceptionDescribe()
                 }
             }
