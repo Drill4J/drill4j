@@ -111,7 +111,8 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     ws.convertAndSend(
                         agentInfo,
                         "/associated-tests",
-                        JSON.stringify(AssociatedTests.serializer().list, assocTests)
+                        JSON.stringify(AssociatedTests.serializer().list, assocTests),
+                        parse.data
                     )
                 }
 
@@ -154,7 +155,8 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage",
-                    JSON.stringify(CoverageBlock.serializer(), coverageBlock)
+                    JSON.stringify(CoverageBlock.serializer(), coverageBlock),
+                    parse.data
                 )
 
                 val newMethods = classesData.newMethods
@@ -184,27 +186,31 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-new",
-                    JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
+                    JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock),
+                    parse.data
                 )
 
                 ws.convertAndSend(
                     agentInfo,
                     "/new-methods",
-                    JSON.stringify(SimpleJavaMethodCoverage.serializer().list, newMethodsCoverages)
+                    JSON.stringify(SimpleJavaMethodCoverage.serializer().list, newMethodsCoverages),
+                    parse.data
                 )
 
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-by-packages",
-                    JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
+                    JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage),
+                    parse.data
                 )
                 val testRelatedBundles = testUsageBundles(initialClassBytes, probes)
                 val testUsages = testUsages(testRelatedBundles)
                 ws.convertAndSend(
                     agentInfo,
                     "/tests-usages",
-                    JSON.stringify(TestUsagesInfo.serializer().list, testUsages)
+                    JSON.stringify(TestUsagesInfo.serializer().list, testUsages),
+                    parse.data
                 )
             }
         }

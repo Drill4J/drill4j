@@ -12,7 +12,7 @@ class PluginController(private val ws: WsService, val name: String) : AdminPlugi
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val sessionId = dm.sessionId
-        ws.convertAndSend(agentInfo, id + (sessionId ?: ""), dm.content!!)
+        ws.convertAndSend(agentInfo, id + (sessionId ?: ""), dm.content!!, sessionId ?: "")
         return ""
     }
 

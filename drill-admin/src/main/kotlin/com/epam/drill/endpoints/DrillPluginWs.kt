@@ -41,12 +41,12 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         return sessionStorage.keys
     }
 
-    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
+    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String, sessionId: String) {
         val messageForSend = Message(MessageType.MESSAGE, destination, message)
 
         val collection = mc.storage<Message>(
             agentInfo.id,
-            destination + ":" + agentInfo.buildVersion
+            destination + ":" + agentInfo.buildVersion + " - " + sessionId
         )
         collection.deleteMany()
         try {
@@ -85,7 +85,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                         subscribeInfo.agentId,
                                         event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
                                             agentStorage.self(subscribeInfo.agentId)
-                                        } else buildVersion)
+                                        } else buildVersion) + " - " + subscribeInfo.sessionId
                                     )
                                         .find()
                                         .iterator()
@@ -137,4 +137,4 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
 }
 
-data class SubscribeInfo(val agentId: String, val buildVersion: String? = null)
+data class SubscribeInfo(val agentId: String, val buildVersion: String? = null, val sessionId: String? = null)

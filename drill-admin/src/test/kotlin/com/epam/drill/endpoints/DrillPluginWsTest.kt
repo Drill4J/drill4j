@@ -135,7 +135,7 @@ class DrillPluginWsTest {
                     isEnable = true,
                     buildVersion = buildVersion
                 )
-                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest)
+                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest, "")
                 outgoing.send(
                     Message(
                         MessageType.SUBSCRIBE,
@@ -172,7 +172,7 @@ class DrillPluginWsTest {
                     buildVersion = buildVersion
                 )
                 agentStorage.put(agentInfo, DefWebSocketSessionStub())
-                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest)
+                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest, "")
                 outgoing.send(
                     Message(
                         MessageType.SUBSCRIBE,

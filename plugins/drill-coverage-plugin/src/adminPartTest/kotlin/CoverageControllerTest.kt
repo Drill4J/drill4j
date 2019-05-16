@@ -147,7 +147,7 @@ class WsServiceStub : WsService {
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
-    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
+    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String, sessionId: String) {
         sent.add(destination to message)
         if (destination == "/coverage-by-packages")
             javaPackagesCoverage = JSON.parse(JavaPackageCoverage.serializer().list, message)
