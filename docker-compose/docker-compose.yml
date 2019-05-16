@@ -18,7 +18,7 @@ services:
     image: 'mongo'
     restart: always
     ports:
-      - 27027:27017
+      - 27017:27017
     networks:
       - drill4j-dev-network
 
