@@ -213,7 +213,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
     private fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
         bundleMap.map { (k, v) ->
-            TestUsagesInfo(k, v.methodCounter.totalCount, "Test type", "30.02.2019")
+            TestUsagesInfo(k, v.methodCounter.coveredCount, "Test type", "30.02.2019")
         }
 
     private fun testUsageBundles(
