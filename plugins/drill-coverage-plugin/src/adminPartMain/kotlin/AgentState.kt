@@ -76,14 +76,19 @@ class AgentState(
             currClassesSet,
             JavaClass::class.java
         )
-        val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
+        val diffNewMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
+        val prevAgentInfo = prevData?.agentInfo
+        val (newMethods, changed) = when {
+            agentInfo == prevAgentInfo && diffNewMethods.isEmpty() -> prevData.newMethods to false
+            else -> diffNewMethods to true
+        }
         dataRef.set(
             ClassesData(
                 agentInfo = agentInfo,
                 classesBytes = classBytes,
                 javaClasses = javaClasses,
                 newMethods = newMethods,
-                prevAgentInfo = prevData?.agentInfo
+                changed = changed
             )
         )
     }
@@ -108,11 +113,9 @@ class ClassesData(
     val classesBytes: Map<String, ByteArray>,
     val javaClasses: Map<String, JavaClass>,
     val newMethods: List<JavaMethod>,
-    val prevAgentInfo: AgentInfo?
+    val changed: Boolean
 ) : AgentData() {
     val execData = ExecData()
-
-    val changed = newMethods.isNotEmpty() || agentInfo != prevAgentInfo
 }
 
 class ExecData {
