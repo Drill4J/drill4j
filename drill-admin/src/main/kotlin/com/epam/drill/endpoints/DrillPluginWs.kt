@@ -84,7 +84,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     val objects = mc.storage<Message>(
                                         subscribeInfo.agentId,
                                         event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                            agentStorage.self(subscribeInfo.agentId)
+                                            (agentStorage.self(subscribeInfo.agentId))?.buildVersion
                                         } else buildVersion)
                                     )
                                         .find()
