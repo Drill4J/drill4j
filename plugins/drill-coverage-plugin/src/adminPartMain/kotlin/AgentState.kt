@@ -69,9 +69,11 @@ class AgentState(
                 )
             }.toMap()
         val prevData = agentData.prevData
+        val prevClassesSet = prevData?.javaClasses?.values?.toSet().orEmpty()
+        val currClassesSet = javaClasses.values.toSet()
         val diff = javers.compareCollections(
-            prevData?.javaClasses?.values?.toList() ?: emptyList(),
-            javaClasses.values.toList(),
+            prevClassesSet,
+            currClassesSet,
             JavaClass::class.java
         )
         val newMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
