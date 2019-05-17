@@ -22,8 +22,7 @@ fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
     var pluginApiClass: jclass? = null
 
     this@retrievePluginApiClass.iterateThroughPluginClasses { findClass ->
-
-        if (com.epam.drill.core.plugin.loader.isSuitablePluginClass(findClass))
+        if (isSuitablePluginClass(findClass))
             pluginApiClass = findClass
 
     }
@@ -33,13 +32,14 @@ fun DrillPluginFile.retrievePluginApiClass() = runBlocking {
 }
 
 
-fun isSuitablePluginClass(findClass: jclass) = memScoped {
+fun isSuitablePluginClass(findClass: jclass): Boolean {
+
     val targetClass = AgentPart::class.jniParamName()
     var isApiClassFound = false
     var parentClass = GetSuperclass(findClass)
     ExceptionClear()
     if (parentClass != null) {
-        var name = alloc<CPointerVar<ByteVar>>()
+        val name = nativeHeap.alloc<CPointerVar<ByteVar>>()
         GetClassSignature(parentClass, name.ptr, null)
         ExceptionClear()
         while (name.value?.toKString() != "Ljava/lang/Object;") {
@@ -51,12 +51,13 @@ fun isSuitablePluginClass(findClass: jclass) = memScoped {
 
             parentClass = GetSuperclass(parentClass)
             ExceptionClear()
-            name = alloc()
             GetClassSignature(parentClass, name.ptr, null)
             ExceptionClear()
         }
+        nativeHeap.free(name)
     }
-    isApiClassFound
+
+   return isApiClassFound
 }
 
 fun DrillPluginFile.addPluginsToSystemClassLoader() {
@@ -92,12 +93,14 @@ open class NativePluginController(pf: DrillPluginFile) : PluginRepresenter() {
             pluginConfigById.dumpConfigToFileSystem()
         }
 
-    var userPlugin: jobject = NewGlobalRef(NewObjectA(
+    var userPlugin: jobject = NewGlobalRef(
+        NewObjectA(
             pluginApiClass,
             GetMethodID(pluginApiClass, "<init>", "(Ljava/lang/String;)V"),
             nativeHeap.allocArray(1.toLong()) {
                 l = NewStringUTF(id)
-            }))!!
+            })
+    )!!
 
 
     init {
