@@ -8,7 +8,7 @@ data class AgentInfo(
     val id: String,
     val name: String,
     val groupName: String,
-    val description: String,
+    var description: String,
     var isEnable: Boolean,
     val buildVersion: String,
 
