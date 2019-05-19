@@ -8,3 +8,13 @@ matrix:
         JAVA_OPTS=-Xmx4g
       script:
         - ./gradlew -s -i build buildAgent check
+    - os: osx
+      env:
+        KBUILD=macos
+        JAVA_OPTS=-Xmx2g
+      language: java
+      jdk: openjdk10
+      before_install:
+        - cp $(/usr/libexec/java_home)/lib/security/cacerts "${JAVA_HOME}/lib/security/cacerts"
+      script:
+        - ./gradlew -s -i build buildAgent check
