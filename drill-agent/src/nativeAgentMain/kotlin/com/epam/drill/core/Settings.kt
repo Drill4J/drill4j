@@ -7,8 +7,6 @@ import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.logger.readProperties
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.util.OS
-import drillInternal.config
-import kotlinx.cinterop.toKString
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -45,5 +43,5 @@ var agentInfo: AgentInfo
     }
 
 val drillInstallationDir: String
-    get() = config.drillInstallationDir?.toKString()!!
+    get() = exec { this.drillInstallationDir }
 

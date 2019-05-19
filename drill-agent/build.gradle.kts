@@ -71,11 +71,9 @@ kotlin {
         named("nativeAgentMain") {
             dependencies {
                 implementation("com.soywiz:korio:$korioVersion")
-                implementation("com.soywiz:klogger:$kloggerVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
-                implementation(project(":nativeprojects:drill-kasm"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
                 implementation(project(":drill-common"))
             }

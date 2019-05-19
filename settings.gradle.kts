@@ -6,7 +6,6 @@ include(":drill-plugin-api:drill-admin-part")
 include(":drill-plugin-api:drill-agent-part")
 include(":nativeprojects:drill-jvmapi")
 include(":nativeprojects:drill-kni")
-include(":nativeprojects:drill-kasm")
 include(":nativeprojects:drill-logger")
 
 /**plugin's projects*/

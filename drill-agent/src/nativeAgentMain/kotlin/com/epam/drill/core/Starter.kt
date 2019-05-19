@@ -6,15 +6,29 @@ import com.epam.drill.api.enableJvmtiEventVmInit
 import com.epam.drill.core.callbacks.classloading.classLoadEvent
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
-import com.soywiz.klogger.Logger
-import drillInternal.config
-import drillInternal.createClassLoadingQueue
 import drillInternal.createQueue
-import jvmapi.*
-import kotlinx.cinterop.*
-import kotlinx.coroutines.runBlocking
+import jvmapi.AddCapabilities
+import jvmapi.AddToSystemClassLoaderSearch
+import jvmapi.GetPotentialCapabilities
+import jvmapi.JNI_OK
+import jvmapi.JavaVMVar
+import jvmapi.SetEventCallbacks
+import jvmapi.SetNativeMethodPrefix
+import jvmapi.agentSetup
+import jvmapi.generateDefaultCallbacks
+import jvmapi.gjavaVMGlob
+import jvmapi.jint
+import jvmapi.jvmtiEventCallbacks
+import jvmapi.saveVmToGlobal
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.sizeOf
+import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.useContents
+import kotlinx.cinterop.value
 import platform.posix.getpid
-import storage.loggers
+
 
 @ExperimentalUnsignedTypes
 @Suppress("UNUSED_PARAMETER", "UNUSED")
@@ -38,8 +52,7 @@ private fun initAgentGlobals(vmPointer: CPointer<JavaVMVar>) {
 private fun runAgent(options: String?) {
     options.asAgentParams().apply {
         val drillInstallationDir = this.getValue("drillInstallationDir")
-        initCGlobals(CConfig(drillInstallationDir))
-        initLoggers()
+        exec { this.drillInstallationDir = drillInstallationDir }
         parseConfigs()
         createQueue()
 
@@ -55,21 +68,6 @@ private fun runAgent(options: String?) {
     }
 }
 
-
-fun initCGlobals(cConfig: CConfig) {
-    config.di = StableRef.create(DI()).asCPointer()
-    config.drillInstallationDir = cConfig.drillInstallationDir.cstr.getPointer(Arena())
-}
-
-private fun printStartWarning() {
-    println("________________________________________________________________")
-    println(
-        "NATIVE WARNING: Please fill the config folder in agent args.\n" +
-                "Drill is OFF.\n"
-    )
-    println("________________________________________________________________")
-}
-
 fun String?.asAgentParams(): Map<String, String> {
     if (this.isNullOrEmpty()) return mutableMapOf()
     return try {
@@ -82,9 +80,6 @@ fun String?.asAgentParams(): Map<String, String> {
     }
 }
 
- fun initLoggers() {
-    loggers.logs = StableRef.create(mutableMapOf<String, Logger>()).asCPointer()
-}
 
 @ExperimentalUnsignedTypes
 private fun callbackRegister() {

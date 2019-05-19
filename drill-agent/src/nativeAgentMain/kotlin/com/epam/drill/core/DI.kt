@@ -4,10 +4,12 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.core.plugin.loader.IInstrumented
 import com.epam.drill.logger.Properties
 import com.epam.drill.plugin.api.processing.AgentPart
-import com.soywiz.korio.lang.Thread_sleep
-import drillInternal.anyLock
-import drillInternal.anyUnlock
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.compareAndSet
+import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.update
+import kotlinx.atomicfu.updateAndGet
+import kotlinx.atomicfu.value
 import kotlinx.cinterop.CFunction
 import kotlinx.cinterop.CPointer
 import kotlin.collections.set
@@ -15,7 +17,12 @@ import kotlin.native.concurrent.SharedImmutable
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
-import kotlin.reflect.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KFunction2
+import kotlin.reflect.KFunction3
+import kotlin.reflect.KFunction4
+import kotlin.reflect.KFunction5
 
 data class JClassVersions(val initialBytes: ByteArray, val versions: MutableMap<Int, ByteArray> = mutableMapOf())
 
@@ -25,17 +32,7 @@ fun JClassVersions.addNewVersion(bytes: ByteArray) {
 
 class DI {
 
-    inline operator fun <reified T> invoke(bock: DI.() -> T): T {
-        try {
-            anyLock()
-            Thread_sleep(1)
-            return bock(this)
-        } finally {
-            anyUnlock()
-        }
-    }
-
-
+    lateinit var drillInstallationDir: String
     val objects = mutableMapOf<KClass<*>, Any>()
 
     val loadedClasses = mutableMapOf<String, JClassVersions>()
