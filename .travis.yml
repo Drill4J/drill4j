@@ -13,8 +13,13 @@ matrix:
         KBUILD=macos
         JAVA_OPTS=-Xmx2g
       language: java
-      jdk: openjdk10
+      jdk: oraclejdk8
       before_install:
         - cp $(/usr/libexec/java_home)/lib/security/cacerts "${JAVA_HOME}/lib/security/cacerts"
       script:
         - ./gradlew -s -i build buildAgent check
+    - os: windows
+      env: KBUILD=windows
+      language: shell # java is not supported but jdk is installed
+      script:
+        - powershell -Command "cmd /c gradle/travis_win.bat"

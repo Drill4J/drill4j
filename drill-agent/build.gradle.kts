@@ -1,4 +1,5 @@
 import com.epam.drill.build.*
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
@@ -69,7 +70,10 @@ kotlin {
 
         named("nativeAgentMain") {
             dependencies {
-                implementation("com.soywiz:korio:$korioVersion")
+                if (Os.isFamily(Os.FAMILY_MAC))
+                    implementation("com.soywiz:korio-macosx64:$korioVersion")
+                else
+                    implementation("com.soywiz:korio:$korioVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
