@@ -1,4 +1,6 @@
-import com.epam.drill.build.*
+import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.korioVersion
+import com.epam.drill.build.serializationNativeVersion
 
 
 plugins {
@@ -13,22 +15,13 @@ repositories {
 
 kotlin {
     targets {
-        createNativeTargetForCurrentOs("logger") {
-            mainCompilation {
-                val storage by cinterops.creating
-                storage.apply {
-
-                }
-            }
-        }
+        createNativeTargetForCurrentOs("logger")
     }
 
     sourceSets {
         val loggerMain by getting
         loggerMain.apply {
             dependencies {
-                implementation("com.soywiz:korio:$korioVersion")
-                implementation("com.soywiz:klogger:$kloggerVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
             }
         }

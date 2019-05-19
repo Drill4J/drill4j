@@ -10,6 +10,7 @@ import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.core.plugin.pluginConfigById
 import com.epam.drill.core.util.dumpConfigToFileSystem
+import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.PluginStorage
@@ -19,7 +20,6 @@ import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.json.Json
 import kotlin.native.concurrent.ThreadLocal
 
 val topicLogger
@@ -181,7 +181,7 @@ class GenericTopic<T>(
     val block: suspend (T) -> Unit
 ) : Topic(destination) {
     suspend fun deserializeAndRun(message: String) {
-        block(Json().parse(deserializer, message))
+        block(json.parse(deserializer, message))
     }
 }
 

@@ -32,8 +32,8 @@ class CustomAgentPart(override val id: String) : AgentPart<TestD>() {
         isAlive = true
         thread?.submit {
             while (isAlive) {
-                Thread.sleep(config!!.delayTime)
-                sendMessage(id, config!!.message)
+                Thread.sleep(config.delayTime)
+                sendMessage(id, config.message)
             }
         }
     }

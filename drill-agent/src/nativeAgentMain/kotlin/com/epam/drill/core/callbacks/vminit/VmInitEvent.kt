@@ -5,8 +5,9 @@ package com.epam.drill.core.callbacks.vminit
 import com.epam.drill.core.exec
 import com.epam.drill.core.ws.startWs
 import com.epam.drill.logger.DLogger
+import com.epam.drill.logger.Logger
 import com.soywiz.klock.DateTime
-import com.soywiz.klogger.Logger
+
 import com.soywiz.korio.lang.Thread_sleep
 import jvmapi.JNIEnvVar
 import jvmapi.jthread

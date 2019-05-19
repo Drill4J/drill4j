@@ -4,6 +4,8 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.installation
+import com.epam.drill.kodeinConfig
 import com.epam.drill.module
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.storage.MongoClient
@@ -63,11 +65,11 @@ class DrillPluginWsTest {
                 )
             })
             engine!!.start(wait = false)
-
-            engine!!.application.module({
+            installation={
                 install(WebSockets)
                 install(Locations)
-            }, {
+            }
+            kodeinConfig = {
                 bind<WsService>() with eagerSingleton {
                     wsPluginService = DrillPluginWs(kodein)
                     wsPluginService!!
@@ -75,7 +77,8 @@ class DrillPluginWsTest {
                 bind<WsTopic>() with singleton { WsTopic(kodein) }
                 bind<MongoClient>() with eagerSingleton { MongoClient(kodein) }
                 bind<AgentStorage>() with eagerSingleton { agentStorage }
-            })
+            }
+            engine!!.application.module()
         }
     }
 

@@ -35,7 +35,6 @@ kotlin {
     sourceSets {
         jvm("javaAgent").compilations["main"].defaultSourceSet {
             dependencies {
-                implementation("com.soywiz:klogger:$kloggerVersion")
                 implementation(kotlin("stdlib-jdk8"))
                 implementation(kotlin("reflect")) //TODO jarhell quick fix for kotlin jvm apps
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
@@ -70,12 +69,10 @@ kotlin {
 
         named("nativeAgentMain") {
             dependencies {
-                implementation("com.soywiz:korio:$korioVersion")
-                implementation("com.soywiz:klogger:$kloggerVersion")
+                implementation("com.soywiz:korio-mingwx64:$korioVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
-                implementation(project(":nativeprojects:drill-kasm"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
                 implementation(project(":drill-common"))
             }
