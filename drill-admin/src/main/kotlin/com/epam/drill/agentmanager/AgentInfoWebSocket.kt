@@ -75,7 +75,11 @@ fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
         AgentInfoWebSocket(
             id = id,
             name = name,
-            description = description,
+            description = if(description!= null && description.length > 200){
+                println("Agent description was too long for agent ${name}," +
+                        "had to shorten it to 200 symbols")
+                description.substring(0,200)
+            } else description,
             group = groupName,
             status = isEnable,
             buildVersion = buildVersion,

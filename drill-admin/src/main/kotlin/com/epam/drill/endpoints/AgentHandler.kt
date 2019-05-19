@@ -41,12 +41,6 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                             when (message.type) {
                                 MessageType.AGENT_REGISTER -> {
                                     agentInfo = AgentInfo::class fromJson message.message
-                                    val desc = agentInfo?.description
-                                    if(desc!= null && desc.length > 200){
-                                        agentInfo?.description = desc.substring(0,200)
-                                        println("Agent description was too long for agent ${agentInfo?.name}," +
-                                                "had to shorten it to 200 symbols")
-                                    }
                                     agentInfo?.ipAddress = call.request.local.remoteHost
                                     agentStorage.put(agentInfo!!, this)
                                     send(agentWsMessage("/plugins/agent-attached", ""))
