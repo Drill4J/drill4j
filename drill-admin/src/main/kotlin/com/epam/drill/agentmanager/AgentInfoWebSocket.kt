@@ -73,9 +73,21 @@ fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
 fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
     it.run {
         AgentInfoWebSocket(
-            id = id,
+            id = if (id != null && id.length > 20) {
+                println(
+                    "Agent id was too long for agent ${name}," +
+                            "had to shorten it to 20 symbols"
+                )
+                id.substring(0, 20)
+            } else id,
             name = name,
-            description = description,
+            description = if (description != null && description.length > 200) {
+                println(
+                    "Agent description was too long for agent ${name}," +
+                            "had to shorten it to 200 symbols"
+                )
+                description.substring(0, 200)
+            } else description,
             group = groupName,
             status = isEnable,
             buildVersion = buildVersion,
