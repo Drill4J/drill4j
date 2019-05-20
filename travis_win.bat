@@ -11,5 +11,5 @@ REM SET GRADLE_ERROR_LEVEL=%errorlevel%
 REM CALL gradlew.bat --stop
 REM exit /b %GRADLE_ERROR_LEVEL%
 
-CALL gradlew.bat --no-daemon -s -i build buildAgent check
+CALL gradlew.bat --no-daemon -s -i build buildAgent nativeAgentTest
 
