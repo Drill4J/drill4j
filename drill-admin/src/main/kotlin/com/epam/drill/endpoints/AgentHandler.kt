@@ -43,7 +43,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     agentInfo = AgentInfo::class fromJson message.message
                                     agentInfo?.ipAddress = call.request.local.remoteHost
                                     agentStorage.put(agentInfo!!, this)
-                                    send(agentWsMessage("/plugins/agent-attached", ""))
+//                                    send(agentWsMessage("/plugins/agent-attached", ""))
                                     val collection =
                                         mc.client!!
                                         .getDatabase(agentInfo!!.id)

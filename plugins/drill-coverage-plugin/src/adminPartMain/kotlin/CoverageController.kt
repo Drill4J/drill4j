@@ -22,7 +22,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val agentState = agentStates.compute(agentInfo.id) { _, state ->
-            when(state?.agentInfo) {
+            when (state?.agentInfo) {
                 agentInfo -> state
                 else -> AgentState(agentInfo, state)
             }
@@ -61,11 +61,13 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 val classesData = agentState.classesData()
                 classesData.execData.start()
                 println("Session ${parse.data} started.")
+                updateGatheringState(agentInfo, true)
             }
             CoverageEventType.SESSION_CANCELLED -> {
                 val classesData = agentState.classesData()
                 classesData.execData.stop()
                 println("Session ${parse.data} cancelled.")
+                updateGatheringState(agentInfo, false)
             }
             CoverageEventType.COVERAGE_DATA_PART -> {
                 val classesData = agentState.classesData()
@@ -75,6 +77,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 }
             }
             CoverageEventType.SESSION_FINISHED -> {
+                updateGatheringState(agentInfo, false)
                 // Analyze all existing classes
                 val classesData = agentState.classesData()
                 val initialClassBytes = classesData.classesBytes
@@ -138,7 +141,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                         else -> ArrowType.DECREASE
                     }
                 } else null
-                
+
                 classesData.execData.coverage = totalCoveragePercent
 
 
@@ -211,6 +214,14 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             }
         }
         return ""
+    }
+
+    private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
+        ws.convertAndSend(
+            agentInfo,
+            "/collection-state",
+            Json.stringify(GatheringState.serializer(), GatheringState(state))
+        )
     }
 
     private fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =

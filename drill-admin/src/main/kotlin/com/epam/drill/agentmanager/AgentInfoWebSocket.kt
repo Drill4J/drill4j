@@ -73,9 +73,9 @@ fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
 fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
     it.run {
         AgentInfoWebSocket(
-            id = id,
+            id = id.take(20),
             name = name,
-            description = description,
+            description = description.take(200),
             group = groupName,
             status = isEnable,
             buildVersion = buildVersion,

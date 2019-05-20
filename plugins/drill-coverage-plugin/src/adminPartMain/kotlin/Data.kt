@@ -96,3 +96,6 @@ data class TestUsagesInfo(
     val testType: String,
     val lastModified: String
 )
+
+@Serializable
+data class GatheringState(val state: Boolean)
