@@ -64,6 +64,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 val classesData = agentState.classesData()
                 classesData.execData.stop()
                 println("Session ${parse.data} cancelled.")
+                updateGatheringState(agentInfo, false)
             }
             CoverageEventType.COVERAGE_DATA_PART -> {
                 val classesData = agentState.classesData()
