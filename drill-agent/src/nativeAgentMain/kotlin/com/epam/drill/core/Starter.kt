@@ -28,6 +28,7 @@ import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
+import kotlin.native.concurrent.freeze
 
 
 @ExperimentalUnsignedTypes
@@ -56,6 +57,10 @@ private fun runAgent(options: String?) {
         parseConfigs()
         createQueue()
 
+        setUnhandledExceptionHook({ x: Throwable ->
+            println("AASJdkljaskldjaskljdklasjdklasjkldjal $x")
+        }.freeze())
+
         printAllowedCapabilities()
         AddCapabilities(GetPotentialCapabilities())
         AddToSystemClassLoaderSearch("$drillInstallationDir/drillRuntime.jar")
@@ -80,7 +85,6 @@ fun String?.asAgentParams(): Map<String, String> {
     }
 }
 
-
 @ExperimentalUnsignedTypes
 private fun callbackRegister() {
     generateDefaultCallbacks().useContents {
@@ -93,5 +97,3 @@ private fun callbackRegister() {
     enableJvmtiEventClassFileLoadHook()
     enableJvmtiEventNativeMethodBind()
 }
-
-data class CConfig(val drillInstallationDir: String)

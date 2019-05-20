@@ -41,7 +41,6 @@ class StarterTest {
         assertFailsWith(IllegalArgumentException::class) { "uncontrolledParameter with spaces".asAgentParams() }
     }
 
-
     /**all features is provided by drill-agent/src/nativeInterop/cinterop/drillInternal.def file.*/
     @Test
     fun `Queue for ws messages should create a Clang dynamyc arrays of strings via KN_cinterop`() {

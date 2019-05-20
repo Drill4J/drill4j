@@ -2,6 +2,8 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.installation
+import com.epam.drill.kodeinConfig
 import com.epam.drill.module
 import com.epam.drill.wsHandlers
 import io.ktor.application.install
@@ -28,15 +30,17 @@ internal class DrillServerWsTest {
         val engine = TestApplicationEngine(createTestEnvironment())
         engine.start(wait = false)
         val pluginStorage = HashSet<DrillWsSession>()
-        engine.application.module({
+        installation = {
             install(WebSockets)
             install(Locations)
-        }, {
+        }
+        kodeinConfig = {
             import(wsHandlers)
             bind<WsTopic>() with singleton { WsTopic(kodein) }
             bind<MutableSet<DrillWsSession>>() with eagerSingleton { pluginStorage }
 
-        })
+        }
+        engine.application.module()
 
         with(engine) {
             handleWebSocketConversation("/ws/drill-admin-socket") { incoming, outgoing ->

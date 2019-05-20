@@ -17,5 +17,4 @@ class Logger {
         println(function())
     }
 
-
 }

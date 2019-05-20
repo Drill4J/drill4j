@@ -1,6 +1,5 @@
 package com.epam.drill.common
 
-import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,13 +11,9 @@ data class AgentInfo(
     var isEnable: Boolean,
     val buildVersion: String,
 
-    @Optional
     val adminUrl: String = "",
-    @Optional
     var ipAddress: String = "",
-    @Optional
     val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
-    @Optional
     var additionalInfo: AgentAdditionalInfo? = null
 
 ) {

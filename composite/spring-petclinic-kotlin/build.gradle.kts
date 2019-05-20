@@ -4,8 +4,8 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 import org.springframework.boot.gradle.tasks.run.BootRun
 
 plugins {
-    kotlin("jvm") version ("1.3.21")
-    kotlin("plugin.spring") version ("1.3.21")
+    kotlin("jvm") version ("1.3.30")
+    kotlin("plugin.spring") version ("1.3.30")
     id("org.zeroturnaround.gradle.jrebel") version ("1.1.8")
     id("org.springframework.boot") version ("2.0.0.RELEASE")
     id("io.spring.dependency-management") version ("1.0.4.RELEASE")

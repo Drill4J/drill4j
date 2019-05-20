@@ -4,9 +4,9 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.core.agentInfo
-import com.epam.drill.core.exec
 import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.core.plugin.loader.pluginLoadCommand
+import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager.pluginsState
 import com.soywiz.korio.lang.Thread_sleep
@@ -18,7 +18,6 @@ import kotlinx.cinterop.memScoped
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
@@ -38,7 +37,7 @@ fun startWs(): Future<Unit> {
             wsLogger.debug { "create new Connection" }
             Thread_sleep(5000)
             try {
-                websocket()
+                websocket(agentInfo.adminUrl)
             } catch (sx: Throwable) {
                 wsLogger.error { sx.message }
             }
@@ -46,9 +45,9 @@ fun startWs(): Future<Unit> {
     }
 }
 
-private fun websocket() = runBlocking {
+fun websocket(adminUrl: String) = runBlocking {
     launch {
-        val url = "ws://${agentInfo.adminUrl}/agent/attach"
+        val url = "ws://$adminUrl/agent/attach"
         wsLogger.debug { "try to create websocket $url" }
         val wsClient = WebSocketClient(url)
         wsLogger.debug { "WS created" }
@@ -99,14 +98,13 @@ private fun websocket() = runBlocking {
             throw RuntimeException("close")
         }
 
-//        register()
         launch {
             agentInfo.rawPluginNames.clear()
             agentInfo.rawPluginNames.addAll(pluginsState())
 
-            val message = Json.stringify(
+            val message = json.stringify(
                 Message.serializer(),
-                Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
+                Message(MessageType.AGENT_REGISTER, message = json.stringify(AgentInfo.serializer(), agentInfo))
             )
             wsClient.send(message)
             while (true) {
@@ -122,16 +120,16 @@ private fun websocket() = runBlocking {
     }.join()
 }
 
-private fun String.toWsMessage() = Json().parse(Message.serializer(), this)
+private fun String.toWsMessage() = json.parse(Message.serializer(), this)
 
 private fun register() = memScoped {
     try {
         agentInfo.rawPluginNames.clear()
         agentInfo.rawPluginNames.addAll(pluginsState())
 
-        val message = Json.stringify(
+        val message = json.stringify(
             Message.serializer(),
-            Message(MessageType.AGENT_REGISTER, message = Json.stringify(AgentInfo.serializer(), agentInfo))
+            Message(MessageType.AGENT_REGISTER, message = json.stringify(AgentInfo.serializer(), agentInfo))
         )
 
         addMessage(message.cstr.getPointer(Arena()))

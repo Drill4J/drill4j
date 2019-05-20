@@ -22,7 +22,6 @@ kotlin {
         val loggerMain by getting
         loggerMain.apply {
             dependencies {
-                implementation("com.soywiz:korio:$korioVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
             }
         }

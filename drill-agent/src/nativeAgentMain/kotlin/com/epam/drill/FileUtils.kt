@@ -1,6 +1,7 @@
 package com.epam.drill
 
 import com.epam.drill.common.PluginBean
+import com.epam.drill.core.util.json
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.extension
@@ -11,7 +12,6 @@ import jvmapi.ExceptionClear
 import jvmapi.FindClass
 import jvmapi.jclass
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 
 
 suspend fun DrillPluginFile.extractPluginFacilitiesTo(destination: VfsFile, filter: (VfsFile) -> Boolean = { true }) {
@@ -56,7 +56,7 @@ fun DrillPluginFile.nativePart(): VfsFile {
 
 fun DrillPluginFile.pluginConfig() = runBlocking {
     val pluginContent = this@pluginConfig.parent["static"]["plugin_config.json"].readString()
-    Json().parse(PluginBean.serializer(), pluginContent)
+    json.parse(PluginBean.serializer(), pluginContent)
 }
 
 fun DrillPluginFile.rawPluginConfig() = runBlocking {

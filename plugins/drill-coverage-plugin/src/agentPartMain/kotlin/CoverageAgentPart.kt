@@ -4,7 +4,7 @@ import com.epam.drill.plugin.api.processing.InstrumentedPlugin
 import com.epam.drill.plugin.api.processing.Sender
 import com.epam.drill.session.DrillRequest
 import com.google.common.reflect.ClassPath
-import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 
 val instrContext = object : InstrContext {
@@ -12,6 +12,11 @@ val instrContext = object : InstrContext {
 
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
+
+private val json = Json {
+    prettyPrint = true
+}
+
 
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 
@@ -39,7 +44,7 @@ class CoveragePlugin @JvmOverloads constructor(
             } else null
         }.distinctBy { it.first }
         val initInfo = InitInfo(classInfoPairs.count(), initializingMessage)
-        sendMessage(CoverageEventType.INIT, JSON.stringify(InitInfo.serializer(), initInfo))
+        sendMessage(CoverageEventType.INIT, json.stringify(InitInfo.serializer(), initInfo))
         classInfoPairs.forEach { (resourceName, classInfo) ->
             classNameSet.add(resourceName)
             val bytes = classInfo.asByteSource().read()
@@ -50,6 +55,7 @@ class CoveragePlugin @JvmOverloads constructor(
         println(initializedStr)
         println("Loaded ${classNameSet.count()} classes: $classNameSet")
     }
+
 
     override fun doAction(action: Action) {
         val sessionId = action.payload.sessionId
@@ -99,17 +105,17 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     private fun sendClass(classBytes: ClassBytes) {
-        val classJson = JSON.stringify(ClassBytes.serializer(), classBytes)
+        val classJson = json.stringify(ClassBytes.serializer(), classBytes)
         sendMessage(CoverageEventType.CLASS_BYTES, classJson)
     }
 
     private fun sendExecutionData(exData: List<ExDataTemp>) {
-        val exDataJson = JSON.stringify(ExDataTemp.serializer().list, exData)
+        val exDataJson = json.stringify(ExDataTemp.serializer().list, exData)
         sendMessage(CoverageEventType.COVERAGE_DATA_PART, exDataJson)
     }
 
     private fun sendMessage(type: CoverageEventType, str: String) {
-        val message = JSON.stringify(
+        val message = json.stringify(
             CoverageMessage.serializer(),
             CoverageMessage(type, str)
         )

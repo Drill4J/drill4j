@@ -1,21 +1,25 @@
 import com.epam.drill.build.jvmCoroutinesVersion
+import com.epam.drill.build.serializationRuntimeVersion
 
 plugins {
     `kotlin-multiplatform`
     `kotlinx-serialization`
 }
 
+val agentDeps by configurations.creating{}
+val adminDeps by configurations.creating{}
+
+
 kotlin {
     val jvms = listOf(
         jvm("adminPart"),
         jvm("agentPart")
     )
-
     sourceSets {
         named("commonMain") {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
         }
         named("commonTest") {
@@ -29,9 +33,11 @@ kotlin {
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
+                project.dependencies.add("agentDeps", "org.jacoco:org.jacoco.core:0.8.3")
+                project.dependencies.add("agentDeps", "com.google.guava:guava:27.1-jre")
                 api("org.jacoco:org.jacoco.core:0.8.3")
-                api("com.google.guava:guava:27.1-jre") //only for loading classes from package
+                api("org.javers:javers-core:5.3.4")
             }
         }
         named("adminPartMain") {
@@ -39,9 +45,12 @@ kotlin {
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-admin-part"))
                 implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.1")
-                api("org.jacoco:org.jacoco.core:0.8.3")
-                api("org.javers:javers-core:5.3.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
+                implementation("org.jacoco:org.jacoco.core:0.8.3")
+                implementation("org.javers:javers-core:5.3.4")
+                project.dependencies.add("adminDeps","org.jacoco:org.jacoco.core:0.8.3")
+                project.dependencies.add("adminDeps","org.javers:javers-core:5.3.4")
+
             }
         }
 
@@ -69,8 +78,7 @@ tasks {
         from(pluginConfigJson) {
             into("static")
         }
-        val adminPartMainApi by configurations
-        from(adminPartMainApi.flattenJars())
+        from(adminDeps.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
         group = "build"
@@ -78,8 +86,7 @@ tasks {
         from(pluginConfigJson) {
             into("static")
         }
-        val agentPartMainApi by configurations
-        from(agentPartMainApi.flattenJars())
+        from(agentDeps.flattenJars())
     }
 
     val distJar by registering(Jar::class) {

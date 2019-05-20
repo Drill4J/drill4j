@@ -5,7 +5,8 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
-import kotlinx.serialization.json.JSON
+import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
@@ -13,6 +14,7 @@ import org.jacoco.core.data.ExecutionDataStore
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
+@UnstableDefault
 @Suppress("unused")
 class CoverageController(private val ws: WsService, id: String) : AdminPluginPart(ws, id) {
 
@@ -26,21 +28,22 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             }
         }!!
         val content = dm.content
-        val message = JSON.parse(CoverageMessage.serializer(), content!!)
+        val message = Json.parse(CoverageMessage.serializer(), content!!)
         return processData(agentState, message)
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")// debug problem with private modifier
     suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
         val agentInfo = agentState.agentInfo
         when (parse.type) {
             CoverageEventType.INIT -> {
-                val initInfo = JSON.parse(InitInfo.serializer(), parse.data)
+                val initInfo = Json.parse(InitInfo.serializer(), parse.data)
                 agentState.init(initInfo)
                 println(initInfo.message) //log init message
                 println("${initInfo.classesCount} classes to load")
             }
             CoverageEventType.CLASS_BYTES -> {
-                val classData = JSON.parse(ClassBytes.serializer(), parse.data)
+                val classData = Json.parse(ClassBytes.serializer(), parse.data)
                 val className = classData.className
                 val bytes = classData.bytes.toByteArray()
                 agentState.addClass(className, bytes)
@@ -68,8 +71,8 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             }
             CoverageEventType.COVERAGE_DATA_PART -> {
                 val classesData = agentState.classesData()
-                val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
-                probes.forEach {
+                val probes = Json.parse(ExDataTemp.serializer().list, parse.data)
+                probes.forEach { 
                     classesData.execData.add(it)
                 }
             }
@@ -114,7 +117,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     ws.convertAndSend(
                         agentInfo,
                         "/associated-tests",
-                        JSON.stringify(AssociatedTests.serializer().list, assocTests)
+                        Json.stringify(AssociatedTests.serializer().list, assocTests)
                     )
                 }
 
@@ -157,7 +160,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage",
-                    JSON.stringify(CoverageBlock.serializer(), coverageBlock)
+                    Json.stringify(CoverageBlock.serializer(), coverageBlock)
                 )
 
                 val newMethods = classesData.newMethods
@@ -186,27 +189,27 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-new",
-                    JSON.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
+                    Json.stringify(NewCoverageBlock.serializer(), newCoverageBlock)
                 )
 
                 ws.convertAndSend(
                     agentInfo,
                     "/new-methods",
-                    JSON.stringify(SimpleJavaMethodCoverage.serializer().list, newMethodsCoverages)
+                    Json.stringify(SimpleJavaMethodCoverage.serializer().list, newMethodsCoverages)
                 )
 
                 val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
                 ws.convertAndSend(
                     agentInfo,
                     "/coverage-by-packages",
-                    JSON.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
+                    Json.stringify(JavaPackageCoverage.serializer().list, packageCoverage)
                 )
                 val testRelatedBundles = testUsageBundles(initialClassBytes, probes)
                 val testUsages = testUsages(testRelatedBundles)
                 ws.convertAndSend(
                     agentInfo,
                     "/tests-usages",
-                    JSON.stringify(TestUsagesInfo.serializer().list, testUsages)
+                    Json.stringify(TestUsagesInfo.serializer().list, testUsages)
                 )
             }
         }
@@ -217,7 +220,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         ws.convertAndSend(
             agentInfo,
             "/collection-state",
-            JSON.stringify(GatheringState.serializer(), GatheringState(state))
+            Json.stringify(GatheringState.serializer(), GatheringState(state))
         )
     }
 
