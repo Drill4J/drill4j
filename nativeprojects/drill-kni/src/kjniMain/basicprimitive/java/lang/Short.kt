@@ -1,27 +1,16 @@
 package java.lang
 
-import com.epam.kjni.core.GlobState.env
-import com.epam.kjni.core.GlobState.jni
 import com.epam.kjni.core.Synthetic
 import com.epam.kjni.core.util.CallJavaShortMethod
-import com.epam.kjni.core.util.CallJavaVoidMethod
 import com.epam.kjni.core.util.JavaConstructor
-import com.epam.kjni.core.util.getJString
-import com.epam.kjni.core.util.getKString
 import com.epam.kjni.core.util.toJObjectArray
+import jvmapi.FindClass
+import jvmapi.NewObjectA
 import jvmapi.jclass
 import jvmapi.jobject
-import kotlin.String
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.cstr
 import kotlinx.cinterop.free
-import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.nativeHeap
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.value
 
 class Short : Synthetic {
     override lateinit var javaObject: jobject
@@ -32,45 +21,45 @@ class Short : Synthetic {
 
     constructor(cp0: kotlin.Short) {
         memScoped {
-        javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!
-        val toJObjectArray = toJObjectArray(arrayOf(com.epam.kjni.core.util.X(cp0, true)))
-        val methodName = "<init>".cstr.getPointer(this)
-        val methodSignature = "(S)V".cstr.getPointer(this)
-        val jconstructor = JavaConstructor(javaClass, methodName, methodSignature).getMethod()
-        javaObject = jni.NewObjectA!!(env, javaClass, jconstructor, toJObjectArray)!!
-        nativeHeap.free(toJObjectArray)
+            javaClass = FindClass(className)!!
+            val toJObjectArray = toJObjectArray(arrayOf(com.epam.kjni.core.util.X(cp0, true)))
+            val methodName = "<init>"
+            val methodSignature = "(S)V"
+            val jconstructor = JavaConstructor(javaClass, methodName, methodSignature).getMethod()
+            javaObject = NewObjectA(javaClass, jconstructor, toJObjectArray)!!
+            nativeHeap.free(toJObjectArray)
         }
     }
 
     constructor(cp0: String) {
         memScoped {
-        javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!
-        val toJObjectArray = toJObjectArray(arrayOf(com.epam.kjni.core.util.X(cp0, false)))
-        val methodName = "<init>".cstr.getPointer(this)
-        val methodSignature = "(Ljava/lang/String;)V".cstr.getPointer(this)
-        val jconstructor = JavaConstructor(javaClass, methodName, methodSignature).getMethod()
-        javaObject = jni.NewObjectA!!(env, javaClass, jconstructor, toJObjectArray)!!
-        nativeHeap.free(toJObjectArray)
+            javaClass = FindClass(className)!!
+            val toJObjectArray = toJObjectArray(arrayOf(com.epam.kjni.core.util.X(cp0, false)))
+            val methodName = "<init>"
+            val methodSignature = "(Ljava/lang/String;)V"
+            val jconstructor = JavaConstructor(javaClass, methodName, methodSignature).getMethod()
+            javaObject = NewObjectA(javaClass, jconstructor, toJObjectArray)!!
+            nativeHeap.free(toJObjectArray)
         }
     }
 
     constructor(jobj: jobject) {
         memScoped {
-        javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!
-        javaObject = jobj
+            javaClass = FindClass(className)!!
+            javaObject = jobj
         }
     }
 
     fun toPrimitive(): kotlin.Short {
-        memScoped{
-        val methodName = "shortValue".cstr.getPointer(this)
-        val methodSignature = "()S".cstr.getPointer(this)
-        return CallJavaShortMethod(
-                            javaObject,
-                            javaClass,
-                            methodName,
-                            methodSignature
-                        )()
+        memScoped {
+            val methodName = "shortValue"
+            val methodSignature = "()S"
+            return CallJavaShortMethod(
+                javaObject,
+                javaClass,
+                methodName,
+                methodSignature
+            )()
         }
     }
 }

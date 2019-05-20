@@ -16,7 +16,7 @@ repositories {
     maven { url "https://kotlin.bintray.com/ktor" }
     maven { url "https://dl.bintray.com/spekframework/spek-dev" }
     maven { url "https://kotlin.bintray.com/kotlinx" }
-    maven { url "https://drill4j.bintray.com/nativewebsockets" }
+    maven { url "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/" }
 }
 def preset
 if (Os.isFamily(Os.FAMILY_MAC)) preset = "macosX64"
@@ -58,6 +58,7 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation project(":drill-plugin-api:drill-agent-part")
                 implementation project(":drill-common")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.0"
             }
         }
         adminPartMain {
@@ -65,12 +66,19 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation project(":drill-plugin-api:drill-admin-part")
                 implementation project(":drill-common")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.9.0"
+            }
+        }
+        commonMain {
+            dependencies {
+                implementation "org.jetbrains.kotlin:kotlin-stdlib-common"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.9.1"
+
             }
         }
 
     }
 }
-
 
 
 adminPartJar {

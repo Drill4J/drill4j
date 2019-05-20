@@ -1,6 +1,5 @@
 package org.drilspringframework.samples.petclinic.system
 
-import drl.test.CrashController
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

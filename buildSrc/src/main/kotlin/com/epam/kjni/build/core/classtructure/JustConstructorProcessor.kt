@@ -42,14 +42,12 @@ fun justGenerateDefaultWrapConstructors(
         }
 
         constructorBuilder.addStatement("memScoped {")
-            .addStatement("javaClass = jni.FindClass!!(env, className.cstr.getPointer(this))!!")
+            .addStatement("javaClass = FindClass(className)!!")
             .addStatement("val toJObjectArray = toJObjectArray(arrayOf($joinToString))")
-            .addStatement("val methodName = \"${method.name}\".cstr.getPointer(this)")
-            .addStatement("val methodSignature = \"${method.signature}\".cstr.getPointer(this)")
+            .addStatement("val methodName = \"${method.name}\"")
+            .addStatement("val methodSignature = \"${method.signature}\"")
             .addStatement("val jconstructor = %T(javaClass, methodName, methodSignature).getMethod()", javaConstructor)
-            .addStatement("javaObject = jni.NewObjectA!!(env, javaClass, jconstructor, toJObjectArray)!!")
-            //            .addStatement("jni.DeleteLocalRef!!(env, javaObject)")
-            //            .addStatement("jni.DeleteLocalRef!!(env, javaClass)")
+            .addStatement("javaObject = NewObjectA(javaClass, jconstructor, toJObjectArray)!!")
             .addStatement("nativeHeap.free(toJObjectArray)").addStatement("}")
         constructorBuilder.build()
     }

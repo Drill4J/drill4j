@@ -103,7 +103,7 @@ internal class AnnotationWriter
     // Implementation of the AnnotationVisitor abstract class
     // ------------------------------------------------------------------------
 
-    override fun visit(name: String, value: Any) {
+    override fun visit(name: String?, value: Any) {
         ++size
         if (named) {
             bv.putShort(cw.newUTF8(name))
@@ -175,7 +175,7 @@ internal class AnnotationWriter
         }
     }
 
-    override fun visitEnum(name: String, desc: String,
+    override fun visitEnum(name: String?, desc: String,
                            value: String) {
         ++size
         if (named) {
@@ -184,7 +184,7 @@ internal class AnnotationWriter
         bv.put12('e'.toInt(), cw.newUTF8(desc)).putShort(cw.newUTF8(value))
     }
 
-    override fun visitAnnotation(name: String,
+    override fun visitAnnotation(name: String?,
                                  desc: String): AnnotationVisitor {
         ++size
         if (named) {
@@ -192,6 +192,8 @@ internal class AnnotationWriter
         }
         // write tag and type, and reserve space for values count
         bv.put12('@'.toInt(), cw.newUTF8(desc)).putShort(0)
+        println(name)
+        println(desc)
         return AnnotationWriter(cw, true, bv, bv, bv.length - 2)
     }
 

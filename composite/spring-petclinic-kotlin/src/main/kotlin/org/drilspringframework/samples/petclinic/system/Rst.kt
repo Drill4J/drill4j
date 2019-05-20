@@ -14,8 +14,8 @@ class Rst {
         return "jsonValid"
     }
 
-     public fun abc(s: String) {
-println("privert")
+    public fun abc(s: String) {
+        println("privert")
 
     }
 }

@@ -94,7 +94,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
             val size: Int
             when (b[index].toInt()) {
                 ClassWriter.FIELD, ClassWriter.METH, ClassWriter.IMETH, ClassWriter.INT, ClassWriter.FLOAT, ClassWriter.NAME_TYPE, ClassWriter.INDY -> size =
-                        5
+                    5
                 ClassWriter.LONG, ClassWriter.DOUBLE -> {
                     size = 9
                     ++i
@@ -1768,6 +1768,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
         v: Int, buf: CharArray?, name: String?,
         av: AnnotationVisitor?
     ): Int {
+
         var v = v
         var i: Int
         if (av == null) {
@@ -1781,19 +1782,21 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                 else -> return v + 3
             }
         }
-        when ((b[v++].toInt() and 0xFF).toChar()) {
+        val toChar = (b[v++].toInt() and 0xFF).toChar()
+        when (toChar) {
+
             'I' // pointer to CONSTANT_Integer
                 , 'J' // pointer to CONSTANT_Long
                 , 'F' // pointer to CONSTANT_Float
                 , 'D' // pointer to CONSTANT_Double
             -> {
-                av.visit(name!!, readConst(readUnsignedShort(v), buf)!!)
+                av.visit(name, readConst(readUnsignedShort(v), buf)!!)
                 v += 2
             }
             'B' // pointer to CONSTANT_Byte
             -> {
                 av.visit(
-                    name!!,
+                    name,
                     readInt(items[readUnsignedShort(v)]).toByte()
                 )
                 v += 2
@@ -1801,33 +1804,33 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
             'Z' // pointer to CONSTANT_Boolean
             -> {
                 av.visit(
-                    name!!,
-                    if (readInt(items[readUnsignedShort(v)]) == 0)
-                        false
-                    else
-                        true
+                    name,
+                    readInt(items[readUnsignedShort(v)]) != 0
                 )
                 v += 2
             }
             'S' // pointer to CONSTANT_Short
             -> {
-                av.visit(name!!, readInt(items[readUnsignedShort(v)]).toShort())
+                av.visit(name, readInt(items[readUnsignedShort(v)]).toShort())
                 v += 2
             }
             'C' // pointer to CONSTANT_Char
             -> {
-                av.visit(name!!, readInt(items[readUnsignedShort(v)]).toChar())
+                av.visit(name, readInt(items[readUnsignedShort(v)]).toChar())
                 v += 2
             }
             's' // pointer to CONSTANT_Utf8
             -> {
-                av.visit(name!!, readUTF8(v, buf)!!)
+                av.visit(name, readUTF8(v, buf)!!)
                 v += 2
             }
             'e' // enum_const_value
             -> {
-                av.visitEnum(name!!, readUTF8(v, buf)!!, readUTF8(v + 2, buf)!!)
+
+                val readUTF8 = readUTF8(v, buf)
+                av.visitEnum(name, readUTF8!!, readUTF8(v + 2, buf)!!)
                 v += 4
+
             }
             'c' // class_info
             -> {
@@ -1838,7 +1841,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
             '@' // annotation_value
             -> v = readAnnotationValues(
                 v + 2, buf, true,
-                av.visitAnnotation(name!!, readUTF8(v, buf)!!)
+                av.visitAnnotation(name, readUTF8(v, buf)!!)
             )
             '[' // array_value
             -> {
@@ -1859,7 +1862,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, bv)
+                        av.visit(name, bv)
                         --v
                     }
                     'Z' -> {
@@ -1870,7 +1873,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, zv)
+                        av.visit(name, zv)
                         --v
                     }
                     'S' -> {
@@ -1881,7 +1884,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, sv)
+                        av.visit(name, sv)
                         --v
                     }
                     'C' -> {
@@ -1892,7 +1895,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, cv)
+                        av.visit(name, cv)
                         --v
                     }
                     'I' -> {
@@ -1903,7 +1906,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, iv)
+                        av.visit(name, iv)
                         --v
                     }
                     'J' -> {
@@ -1914,7 +1917,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, lv)
+                        av.visit(name, lv)
                         --v
                     }
                     'F' -> {
@@ -1925,7 +1928,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, fv)
+                        av.visit(name, fv)
                         --v
                     }
                     'D' -> {
@@ -1936,7 +1939,7 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
                             v += 3
                             i++
                         }
-                        av.visit(name!!, dv)
+                        av.visit(name, dv)
                         --v
                     }
                     else -> v = readAnnotationValues(v - 3, buf, false, av.visitArray(name!!))
@@ -2425,7 +2428,8 @@ constructor(val b: ByteArray, off: Int = 0, len: Int = b.size) {
             )
             ClassWriter.STR -> {
 
-                return readUTF8(index, buf)}
+                return readUTF8(index, buf)
+            }
             ClassWriter.MTYPE -> return Type.getMethodType(
                 readUTF8(index, buf)!!
             )

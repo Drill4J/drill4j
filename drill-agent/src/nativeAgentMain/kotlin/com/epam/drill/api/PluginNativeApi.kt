@@ -2,16 +2,13 @@
 
 package com.epam.drill.api
 
+import com.epam.drill.core.messanger.MessageQueue
 import com.epam.drill.core.request.DrillRequest
-import com.epam.drill.core.ws.MessageQueue
+import com.epam.drill.jvmapi.JNI
+import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.api.processing.AgentPluginPart
-import com.epam.drill.plugin.api.processing.NativePluginPart
-//import com.epam.drill.plugin.api.NativePluginPart
-import com.epam.kjni.core.GlobState
-import com.epam.kjni.core.JNI
-import com.epam.kjni.core.JNIEnvPointer
-import drillInternal.config
+import com.epam.drill.plugin.api.processing.AgentPart
+import com.epam.drill.plugin.api.processing.NativePart
 import jvmapi.*
 import kotlinx.cinterop.*
 
@@ -22,12 +19,12 @@ import kotlinx.cinterop.*
 
 @CName("JNIFun")
 fun JNIFun(): JNI {
-    return GlobState.jni
+    return jni
 }
 
 @CName("JNIEn")
-fun JNIEn(): JNIEnvPointer {
-    return GlobState.env
+fun JNIEn(): JNI {
+    return jni
 }
 
 //
@@ -69,8 +66,8 @@ fun JNIEn(): JNIEnvPointer {
 
 
 @CName("sendToSocket")
-fun sendToSocket(message: String) {
-    MessageQueue.sendMessage(message)
+fun sendToSocket(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) {
+    MessageQueue.sendMessage(pluginId.toKString(), message.toKString())
 }
 
 
@@ -82,11 +79,15 @@ fun currentThread() = memScoped {
 }
 
 @CName("drillRequest")
-fun drillRequest(thread: jthread? = currentThread()) = memScoped {
+fun drillRequest() = drillCRequest()?.get()
+
+
+fun drillCRequest(thread: jthread? = currentThread()) = memScoped {
     val drillReq = alloc<COpaquePointerVar>()
     GetThreadLocalStorage(thread, drillReq.ptr)
-    drillReq.value?.asStableRef<DrillRequest>()?.get()
+    drillReq.value?.asStableRef<DrillRequest>()
 }
+
 
 @CName("jvmtix")
 fun jvmti(): CPointer<jvmtiEnvVar>? {
@@ -156,16 +157,13 @@ fun enableJvmtiEventDynamicCodeGenerated(thread: jthread? = null) {
 
 @CName("enableJvmtiEventException")
 fun enableJvmtiEventException(thread: jthread? = null) {
-    println("allo")
     SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, thread)
     gdata?.pointed?.IS_JVMTI_EVENT_EXCEPTION = true
 }
 
 @CName("enableJvmtiEventExceptionCatch")
 fun enableJvmtiEventExceptionCatch(thread: jthread? = null) {
-    println("TAK?? YA ne ponyal bilo zhe vse oK!")
     SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION_CATCH, thread)
-    println("Really?")
     gdata?.pointed?.IS_JVMTI_EVENT_EXCEPTION_CATCH = true
 }
 
@@ -481,34 +479,26 @@ fun disableJvmtiEventVmStart(thread: jthread? = null) {
     gdata?.pointed?.IS_JVMTI_EVENT_VM_START = false
 }
 
-
-@CName("addPluginToRegistry")
-fun addPluginToRegistry(plugin: NativePluginPart) {
-    println("Hi From Register")
-    try {
-        val agentPluginPart: AgentPluginPart? = PluginManager["except-ions"]
-        if (agentPluginPart != null) {
-            agentPluginPart.np = plugin
-
-        }
-        agentPluginPart?.np?.update("Hellow")
-        agentPluginPart?.unload()
-    } catch (ex: Throwable) {
-        ex.printStackTrace()
-    }
+@CName("getPlugin")
+fun getPlugin(id: CPointer<ByteVar>): NativePart<*>? {
+    return PluginManager[id.toKString()]?.np
 }
 
 
-//workaround for mutableMap.get...
-fun MutableMap<String, NativePluginPart>.pluginOf(id: String): NativePluginPart? {
-//    val iterator = pluginsManager.iterator()
-//    while (iterator.hasNext()) {
-//        val next = iterator.next()
-//        val key = next.key
-//
-//        if (key.toUtf8().stringFromUtf8() === id.toUtf8().stringFromUtf8()) {
-//            return next.value
-//        }
-//    }
-    return null
+@Suppress("UNCHECKED_CAST")
+@CName("addPluginToRegistry")
+fun addPluginToRegistry(plugin: NativePart<*>) {
+    println("[TEMP] Try to addNativePluginPart to registry")
+    try {
+        val agentPluginPart: AgentPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any>?
+        if (agentPluginPart != null) {
+            agentPluginPart.np = plugin as NativePart<Any>
+            println("[TEMP] native part added.")
+        } else {
+            println("[WARNING!!!!!!!] CANT FIND THE ${plugin.id.toKString()} plug in manager. ")
+        }
+
+    } catch (ex: Throwable) {
+        ex.printStackTrace()
+    }
 }

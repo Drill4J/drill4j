@@ -2,9 +2,10 @@
 
 package com.epam.drillnative.api
 
-import com.epam.drill.plugin.api.processing.NativePluginPart
+import com.epam.drill.plugin.api.processing.NativePart
 import jvmapi.*
 import kotlinx.cinterop.*
+
 //todo MOVE IT TO API KLIB:)
 
 @SymbolName("currentThread")
@@ -26,9 +27,8 @@ internal external fun enableJvmtiEventExceptionCatch(th: jthread?)
 internal external fun jvmtix(): CPointer<jvmtiEnvVar>?
 
 
-
 @SymbolName("sendToSocket")
-internal external fun sendToSocket(message: String)
+internal external fun sendToSocket(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>)
 
 
 @SymbolName("enableJvmtiEventException")
@@ -37,6 +37,8 @@ internal external fun enableJvmtiEventException(thread: jthread? = null)
 internal external fun disableJvmtiEventException(thread: jthread? = null)
 
 @SymbolName("addPluginToRegistry")
-internal external fun addPluginToRegistry(plugin: NativePluginPart)
+internal external fun addPluginToRegistry(plugin: NativePart<*>)
 
+@SymbolName("getPlugin")
+internal external  fun getPlugin(id: CPointer<ByteVar>): NativePart<*>?
 

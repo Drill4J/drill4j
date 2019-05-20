@@ -1,8 +1,8 @@
 package com.epam.drill.core.callbacks.singlestep
 
-import com.epam.drill.core.util.getDeclaringClassName
-import com.epam.drill.core.util.getName
-import com.epam.drill.core.util.toJLocation
+import com.epam.drill.jvmapi.getDeclaringClassName
+import com.epam.drill.jvmapi.getName
+import com.epam.drill.jvmapi.toJLocation
 import jvmapi.*
 import kotlinx.cinterop.memScoped
 

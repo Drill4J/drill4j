@@ -1,7 +1,31 @@
-version: '2'
+version: '3'
+
 services:
+  #usage
+  #$docker-compose run --rm gradle buildAgent buildCoveragePluginDev
+  gradle:
+    image: gradle:5.4.1-jdk8
+    volumes:
+      - ../:/home/gradle/project
+      - drill_gradle_data:/home/gradle/.gradle
+    user: root
+    working_dir: /home/gradle/project
+    entrypoint: gradle
+    environment:
+      KONAN_DATA_DIR: /home/gradle/.gradle/konan
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
   drillmongodb:
     image: 'mongo'
     restart: always
     ports:
       - 27017:27017
+    networks:
+      - drill4j-dev-network
+
+networks:
+  drill4j-dev-network:
+    external:
+      name: drill4j-dev-network
+
+volumes:
+    drill_gradle_data:

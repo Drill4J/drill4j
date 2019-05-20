@@ -1,12 +1,9 @@
 package com.epam.drill.common
 
-import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
 
 @Serializable
-class PluginBean {
-    lateinit var id: String
-    lateinit var apiVersion: String
-    @Optional
-    open var enabled: Boolean? = true
-}
+data class PluginBean(
+    var id: String, var name: String = "", var description: String = "", var type: String = "",
+    var enabled: Boolean = true, var config: String = ""
+)

@@ -1,36 +1,5 @@
 headers = pthread.h
 ---
-//typedef jint (JNICALL *SCReadMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCread0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCReadMethod SCReadMethodAddress = NULL;
-//static SCReadMethod SCReadMethodInterceptorAddress = &SCread0;
-//
-//typedef jint (JNICALL *SCWriteMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCwrite0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCWriteMethod SCWriteMethodAddress = NULL;
-//static SCWriteMethod SCWriteMethodInterceptorAddress = &SCwrite0;
-//
-//typedef jint (JNICALL *SCWritevMethod) (JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//extern jint SCwritev0(JNIEnv *env, jclass clazz, jobject fdo, jlong address, jint len);
-//static SCWritevMethod SCWritevMethodAddress = NULL;
-//static SCWritevMethod SCWritevMethodInterceptorAddress = &SCwritev0;
-//
-//
-//typedef jint (JNICALL *LLoadMethod)   (JNIEnv *env, jobject this, jstring name, jboolean isBuiltin);
-//static LLoadMethod lloadMethod = NULL;
-
-extern int xx(void *env, void * clazz);
-static void * nrTest= &xx;
-
-struct iovect {
-    long  iov_base;
-    int  iov_len;
-};
-
-struct iovect * convertAddressToBuffers(long address){
-    struct iovect *iovp = (struct iovect *)address;
-    return iovp;
-}
 
 pthread_mutex_t mutex;
 
@@ -60,14 +29,14 @@ MessageQueue *get() {
 
 void addMessage(char *element) {
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (messageQu->used == messageQu->size) {
         messageQu->size *= 2;
         messageQu->array = (char **) realloc(messageQu->array, messageQu->size * sizeof(char *));
     }
     size_t i = messageQu->used++;
     messageQu->array[i] = element;
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
 
 }
 
@@ -87,14 +56,20 @@ int size(){
 }
 
 
+char *first() {
+    if (messageQu->used == 0) {
+        return NULL;
+    }
+   return messageQu->array[0];
+}
+
 char *getMessage() {
-    pthread_mutex_lock(&mutex);
     if (messageQu->used == 0) {
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
+    pthread_mutex_lock(&mutex);
     char *string = messageQu->array[0];
-//    messageQu->size = messageQu->size - 1;
     messageQu->used = messageQu->used - 1;
 
     for (int i = 0; i < messageQu->size; i++) {
@@ -104,18 +79,3 @@ char *getMessage() {
     pthread_mutex_unlock(&mutex);
     return string;
 }
-
-
-typedef struct {
- void* loggers;
- void* loggerConfig;
- char* drillAdminUrl;
- char* agentName;
- char* agentGroupName;
- char* drillInstallationDir;
- void* pstorage;
-} configStruct;
-
-configStruct config;
-
-

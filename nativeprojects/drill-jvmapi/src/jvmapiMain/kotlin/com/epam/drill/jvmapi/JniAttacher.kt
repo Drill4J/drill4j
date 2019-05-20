@@ -4,6 +4,7 @@ import jvmapi.*
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.ThreadLocal
 
+@CName("currentEnvs")
 fun currentEnvs(): JNIEnvPointer {
     return env
 }

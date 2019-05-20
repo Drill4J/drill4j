@@ -1,12 +1,13 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.tasks.bundling.BootJar
 import org.springframework.boot.gradle.tasks.run.BootRun
 
 plugins {
+    kotlin("jvm") version ("1.3.21")
+    kotlin("plugin.spring") version ("1.3.21")
     id("org.zeroturnaround.gradle.jrebel") version ("1.1.8")
     id("org.springframework.boot") version ("2.0.0.RELEASE")
-    id("org.jetbrains.kotlin.jvm") version ("1.3.0")
-    id("org.jetbrains.kotlin.plugin.spring") version ("1.3.0")
     id("io.spring.dependency-management") version ("1.0.4.RELEASE")
     id("idea")
 }
@@ -16,8 +17,6 @@ val jQueryVersion = "2.2.4"
 val jQueryUIVersion = "1.11.4"
 
 version = "2.0.0"
-
-
 
 repositories {
     mavenCentral()
@@ -52,39 +51,45 @@ dependencies {
 }
 
 
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-tasks.named<Test>("test") {
-    jvmArgs("-javaagent:${file("../../distr/drill-core-agent.jar")}")
-}
-
-
-val ex =
-    if (Os.isFamily(Os.FAMILY_UNIX)) {
-        "so"
-    } else "dll"
-
-
-val pref =
-    if (Os.isFamily(Os.FAMILY_UNIX)) {
-        "lib"
-    } else ""
-
-
-tasks.named<BootRun>("bootRun") {
-    doFirst {
-        jvmArgs("-Xmx2g")
-        jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007")
-//        jvmArgs("-agentpath:${file("../../distr/main.dll")}=configsFolder=${file("../../src/nativeCommonMain/resources")},drillInstallationDir=${file("../../distr")}")
-        jvmArgs(
-            "-agentpath:${file("../../distr/${pref}main.$ex")}=configsFolder=${file("../../resources")},drillInstallationDir=${file(
-                "../../distr"
-            )}"
-        )
+tasks {
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
     }
 
+    val agentJvmArgs: JavaExec.() -> Unit = {
+        jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007")
+        val (pref, ex) = when {
+            Os.isFamily(Os.FAMILY_UNIX) -> Pair("lib", "so")
+            else -> Pair("", "dll")
+        }
+        val drillDistrDir = "${file("../../distr")}"
+        val agentPath = "${file("$drillDistrDir/${pref}main.$ex")}"
+        val configDir = "${file("../../resources")}"
+        jvmArgs("-agentpath:$agentPath=configsFolder=$configDir,drillInstallationDir=$drillDistrDir")
+    }
+
+    
+    named<BootRun>("bootRun") {
+        jvmArgs("-Xmx2g")
+        agentJvmArgs()
+    }
+
+    val bootJar by existing(BootJar::class)
+
+    register<JavaExec>("bootJarRun") {
+        group = "application"
+        classpath(bootJar.map { it.archiveFile })
+        main = "org.springframework.boot.loader.JarLauncher"
+        agentJvmArgs()
+    }
+    
+    named<Jar>("jar") {
+        dependsOn(named("generateRebel"))
+    }
+
+    named<Test>("test") {
+        jvmArgs("-javaagent:${file("../../distr/drill-core-agent.jar")}")
+    }
 }
 
 idea {
@@ -94,10 +99,6 @@ idea {
         testOutputDir = file("build/classes/kotlin/test")
     }
 }
-
-val jar by tasks
-val bootRun: BootRun by tasks
-jar.dependsOn("generateRebel")
 
 //if (System.getenv("JREBEL_HOME") != null) {
 //

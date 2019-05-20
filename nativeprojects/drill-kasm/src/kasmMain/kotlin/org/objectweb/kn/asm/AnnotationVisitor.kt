@@ -81,7 +81,7 @@ constructor(
      * [visitArray][.visitArray] and visiting each array element
      * in turn, but is more convenient).
      */
-    open fun visit(name: String, value: Any) {
+    open fun visit(name: String?, value: Any) {
         if (av != null) {
             av!!.visit(name, value)
         }
@@ -97,7 +97,7 @@ constructor(
      * @param value
      * the actual enumeration value.
      */
-    open fun visitEnum(name: String, desc: String, value: String) {
+    open fun visitEnum(name: String?, desc: String, value: String) {
         if (av != null) {
             av!!.visitEnum(name, desc, value)
         }
@@ -116,7 +116,7 @@ constructor(
      * visited before calling other methods on this annotation
      * visitor*.
      */
-    open fun visitAnnotation(name: String, desc: String): AnnotationVisitor? {
+    open fun visitAnnotation(name: String?, desc: String): AnnotationVisitor? {
         return if (av != null) {
             av!!.visitAnnotation(name, desc)
         } else null

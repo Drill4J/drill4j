@@ -2,8 +2,8 @@
 
 package com.epam.drill.core.callbacks.methodexit
 
-import com.epam.drill.core.util.getDeclaringClassName
-import com.epam.drill.core.util.getName
+import com.epam.drill.jvmapi.getDeclaringClassName
+import com.epam.drill.jvmapi.getName
 import com.epam.drill.logger.DLogger
 import jvmapi.*
 import kotlinx.cinterop.memScoped
