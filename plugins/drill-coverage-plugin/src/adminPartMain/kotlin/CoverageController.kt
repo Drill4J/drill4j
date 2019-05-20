@@ -20,7 +20,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val agentState = agentStates.compute(agentInfo.id) { _, state ->
-            when(state?.agentInfo) {
+            when (state?.agentInfo) {
                 agentInfo -> state
                 else -> AgentState(agentInfo, state)
             }
@@ -30,7 +30,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         return processData(agentState, message)
     }
 
-    private suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
+    suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
         val agentInfo = agentState.agentInfo
         when (parse.type) {
             CoverageEventType.INIT -> {
@@ -58,6 +58,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 val classesData = agentState.classesData()
                 classesData.execData.start()
                 println("Session ${parse.data} started.")
+                updateGatheringState(agentInfo, true)
             }
             CoverageEventType.SESSION_CANCELLED -> {
                 val classesData = agentState.classesData()
@@ -67,11 +68,12 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             CoverageEventType.COVERAGE_DATA_PART -> {
                 val classesData = agentState.classesData()
                 val probes = JSON.parse(ExDataTemp.serializer().list, parse.data)
-                probes.forEach { 
+                probes.forEach {
                     classesData.execData.add(it)
                 }
             }
             CoverageEventType.SESSION_FINISHED -> {
+                updateGatheringState(agentInfo, false)
                 // Analyze all existing classes
                 val classesData = agentState.classesData()
                 val initialClassBytes = classesData.classesBytes
@@ -135,7 +137,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                         else -> ArrowType.DECREASE
                     }
                 } else null
-                
+
                 classesData.execData.coverage = totalCoveragePercent
 
 
@@ -208,6 +210,14 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             }
         }
         return ""
+    }
+
+    private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
+        ws.convertAndSend(
+            agentInfo,
+            "/collection-state",
+            JSON.stringify(GatheringState.serializer(), GatheringState(state))
+        )
     }
 
     private fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
