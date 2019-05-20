@@ -1,14 +1,14 @@
-[![Build Status](https://travis-ci.org/Drill4J/Drill4J.svg?branch=develop)](https://travis-ci.org/Drill4J/Drill4J)
+[![Build Status](https://travis-ci.org/Drill4J/Drill4J.svg?branch=master)](https://travis-ci.org/Drill4J/Drill4J)
 
 # Drill4J
 Next-gen web-profiler
 
-#### Compiling (now only for the Windows)
+#### Compiling
 to build agent and runtime:
-    gradlew --refresh-dependencies build
-    gradlew buildPlugin
+    cd docker-compose
+    docker-compose run --rm gradle buildAgent buildCoveragePluginDev
+
 
 to run the demo:
-1) cd ./docker-compose. RUN "docker-compose up". mongodb will be available on 21017 port
-2) To run demo app with drillAgent  RUN - "gradlew runAgent". The demo app will be available on localhost:8082
-3) To run drillAdmin  RUN - "gradlew runDrillAdmin". The admin will be available on localhost:8090
+    docker-compose -p rp up -d
+    gradlew runDrillAdmin
