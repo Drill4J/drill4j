@@ -26,6 +26,20 @@ val nativeMethodBindMapper =
                 staticCFunction(::read0)
             }
         },
+        SocketDispatcher + ::write0.name to { initialMethod: COpaquePointer ->
+            exec {
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::write0] = reinterpret
+                staticCFunction(::write0)
+            }
+        },
+        FileDispatcherImpl + ::write0.name to { initialMethod: COpaquePointer ->
+            exec {
+                val reinterpret = initialMethod.reinterpret<CFunction<*>>()
+                originalMethod.misfeatureToFunctionDictionary[::write0] = reinterpret
+                staticCFunction(::write0)
+            }
+        },
         FileDispatcherImpl + ::read0.name to { initialMethod: COpaquePointer ->
             exec {
                 val reinterpret = initialMethod.reinterpret<CFunction<*>>()
