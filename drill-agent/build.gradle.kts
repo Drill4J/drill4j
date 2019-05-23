@@ -14,8 +14,6 @@ repositories {
     mavenCentral()
     mavenLocal()
     jcenter()
-    maven(url = "https://dl.bintray.com/soywiz/soywiz")
-    maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
     maven(url = "https://kotlin.bintray.com/kotlinx")
     maven(url = "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/")
 }
@@ -72,8 +70,11 @@ kotlin {
             dependencies {
                 if (Os.isFamily(Os.FAMILY_MAC))
                     implementation("com.soywiz:korio-macosx64:$korioVersion")
-                else
-                    implementation("com.soywiz:korio:$korioVersion")
+                else if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+                    implementation("com.soywiz:korio-mingwx64:$korioVersion")
+                }else {
+                    implementation("com.soywiz:korio-linuxx64:$korioVersion")
+                }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
@@ -143,10 +144,10 @@ tasks {
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
         binary.linkerOpts.add("subdep/$staticLibraryName")
-        copy {
-            from(staticLibraryName)
-            into(file("build/bin/nativeAgent/testDebugExecutable"))
-        }
+//        copy {
+//            from(staticLibraryName)
+//            into(file("build/bin/nativeAgent/testDebugExecutable"))
+//        }
     }
 
     "nativeAgentTestProcessResources"(ProcessResources::class) {
