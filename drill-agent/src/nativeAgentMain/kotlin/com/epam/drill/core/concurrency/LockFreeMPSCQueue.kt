@@ -53,6 +53,13 @@ class LockFreeMPSCQueue<E : Any> {
             _cur.compareAndSet(cur, cur.next())
         }
     }
+
+    fun getFirst(): E? {
+        _cur.loop { cur ->
+            val result = cur.getFirst()
+            result
+        }
+    }
 }
 
 
@@ -201,6 +208,8 @@ class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         }
         return next
     }
+
+    fun getFirst() = array[0]
 
     @Suppress("PrivatePropertyName")
     internal companion object {

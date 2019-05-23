@@ -7,13 +7,12 @@ import com.epam.drill.iterateThroughPlugins
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.pluginConfig
-import kotlinx.coroutines.runBlocking
 
 val plLogger
     get() = DLogger("plLogger")
 
 @ExperimentalUnsignedTypes
-fun pluginLoadCommand() = runBlocking {
+suspend fun pluginLoadCommand() {
     //init env...
     jvmapi.currentEnvs()
     iterateThroughPlugins { pluginFile ->
