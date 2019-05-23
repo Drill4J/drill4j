@@ -1,17 +1,8 @@
 package com.epam.drill.core
 
-import drillInternal.addMessage
-import drillInternal.createQueue
-import drillInternal.getMessage
-import drillInternal.messageQu
-import kotlinx.cinterop.Arena
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.toKString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 class StarterTest {
     @Test
@@ -40,24 +31,6 @@ class StarterTest {
     fun `Agent params parser should thrown an @IllegalArgumentException when apply the wrong string args`() {
         assertFailsWith(IllegalArgumentException::class) { "uncontrolledParameter with spaces".asAgentParams() }
     }
-
-    /**all features is provided by drill-agent/src/nativeInterop/cinterop/drillInternal.def file.*/
-    @Test
-    fun `Queue for ws messages should create a Clang dynamyc arrays of strings via KN_cinterop`() {
-        assertNull(messageQu)
-        createQueue()
-        assertNotNull(messageQu)
-    }
-
-    /**all features is provided by drill-agent/src/nativeInterop/cinterop/drillInternal.def file.*/
-    @Test
-    fun `working with ws messages queue`() {
-        createQueue()
-        val messageForQueue = "test message"
-        addMessage(messageForQueue.cstr.getPointer(Arena()))
-        assertEquals(getMessage()?.toKString(), messageForQueue)
-    }
-
 
     companion object {
         const val ARGUMENT_TEST_DATA = "xx=123,sad=jjk"

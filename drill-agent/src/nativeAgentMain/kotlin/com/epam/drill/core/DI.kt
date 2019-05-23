@@ -1,7 +1,6 @@
 package com.epam.drill.core
 
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.core.concurrency.LockFreeMPSCQueue
 import com.epam.drill.core.plugin.loader.IInstrumented
 import com.epam.drill.plugin.api.processing.AgentPart
 import kotlinx.cinterop.CFunction
@@ -20,11 +19,10 @@ import kotlin.reflect.KFunction5
 
 class DI {
     lateinit var drillInstallationDir: String
-    lateinit var agentInfo: AgentInfo
+    lateinit var diAgentInfo: AgentInfo
     var pInstrumentedStorage: MutableMap<String, IInstrumented> = mutableMapOf()
     var pstorage: MutableMap<String, AgentPart<*>> = mutableMapOf()
     val originalMethod = NativeMethodBinder()
-    val queue = LockFreeMPSCQueue<String>()
     val objects = mutableMapOf<KClass<*>, Any>()
 
     fun singleton(obj: Any) {

@@ -18,7 +18,6 @@ import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.UnloadReason
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.DeserializationStrategy
 import kotlin.native.concurrent.ThreadLocal
 
@@ -80,7 +79,7 @@ fun topicRegister() =
             topicLogger.warn { "togglePlugin event: PluginId is $pluginId" }
             val agentPluginPart = PluginManager[pluginId]
             if (agentPluginPart != null)
-                agentPluginPart.enabled = !agentPluginPart.enabled
+                agentPluginPart.setEnabled(!agentPluginPart.isEnabled())
             else
                 topicLogger.warn { "Plugin $pluginId not loaded to agent" }
 
@@ -99,7 +98,7 @@ fun topicRegister() =
         }
     }
 
-fun toggleStandby(agentInfo: AgentInfo) {
+suspend fun toggleStandby(agentInfo: AgentInfo) {
     val toggle: (AgentPart<*>) -> Unit =
         if (agentInfo.isEnable) { plugin -> PluginManager[plugin.id]?.off() } else { x -> PluginManager[x.id]?.on() }
 
@@ -129,7 +128,7 @@ object WsRouter {
 
 
         @Suppress("unused")
-        fun withFileTopic(block: (message: String, file: ByteArray) -> Unit): FileTopic {
+        fun withFileTopic(block: suspend (message: String, file: ByteArray) -> Unit): FileTopic {
             val fileTopic = FileTopic(destination, block)
             mapper[destination] = fileTopic
             return fileTopic
@@ -158,16 +157,13 @@ fun WsRouter.topic(url: String): WsRouter.inners {
 
 fun WsRouter.inners.withPluginFileTopic(bl: suspend (message: String, plugin: DrillPluginFile) -> Unit): FileTopic {
     val fileTopic = PluginTopic(destination) { pluginId, file ->
-        runBlocking {
-            val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
-            if (!pluginsDir.exists()) pluginsDir.mkdir()
-            val vfsFile = pluginsDir[pluginId]
-            if (!vfsFile.exists()) vfsFile.mkdir()
-            val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
-            file.writeToFile(plugin)
-            bl(pluginId, plugin)
-        }
-
+        val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
+        if (!pluginsDir.exists()) pluginsDir.mkdir()
+        val vfsFile = pluginsDir[pluginId]
+        if (!vfsFile.exists()) vfsFile.mkdir()
+        val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
+        file.writeToFile(plugin)
+        bl(pluginId, plugin)
     }
     WsRouter.mapper[destination] = fileTopic
     return fileTopic
@@ -189,10 +185,10 @@ class InfoTopic(override val destination: String, val block: suspend (String) ->
 
 open class FileTopic(
     override val destination: String,
-    open val block: (message: String, file: ByteArray) -> Unit
+    open val block: suspend (message: String, file: ByteArray) -> Unit
 ) : Topic(destination)
 
 class PluginTopic(
     override val destination: String,
-    newBlock: (message: String, plugin: ByteArray) -> Unit
+    newBlock: suspend (message: String, plugin: ByteArray) -> Unit
 ) : FileTopic(destination, newBlock)

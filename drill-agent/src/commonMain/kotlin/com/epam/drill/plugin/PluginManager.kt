@@ -12,5 +12,5 @@ object PluginManager {
 
     operator fun get(id: String) = storage[id]
 
-    fun pluginsState(): HashSet<PluginBean> = storage.values.map { it.actualPluginConfig() }.toHashSet()
+    suspend fun pluginsState(): HashSet<PluginBean> = storage.values.map { it.actualPluginConfig() }.toHashSet()
 }

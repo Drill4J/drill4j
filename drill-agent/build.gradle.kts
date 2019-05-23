@@ -1,4 +1,12 @@
-import com.epam.drill.build.*
+import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.jvmCoroutinesVersion
+import com.epam.drill.build.korioVersion
+import com.epam.drill.build.mainCompilation
+import com.epam.drill.build.preset
+import com.epam.drill.build.serializationNativeVersion
+import com.epam.drill.build.serializationRuntimeVersion
+import com.epam.drill.build.staticLibraryExtension
+import com.epam.drill.build.staticLibraryPrefix
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
@@ -70,9 +78,9 @@ kotlin {
             dependencies {
                 if (Os.isFamily(Os.FAMILY_MAC))
                     implementation("com.soywiz:korio-macosx64:$korioVersion")
-                else if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+                else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                     implementation("com.soywiz:korio-mingwx64:$korioVersion")
-                }else {
+                } else {
                     implementation("com.soywiz:korio-linuxx64:$korioVersion")
                 }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")

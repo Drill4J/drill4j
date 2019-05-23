@@ -142,7 +142,7 @@ suspend fun websocket(adminUrl: String) {
 
 private fun String.toWsMessage() = json.parse(Message.serializer(), this)
 
-private fun register() = memScoped {
+private suspend fun register() = memScoped {
     try {
         agentInfo.rawPluginNames.clear()
         agentInfo.rawPluginNames.addAll(pluginsState())

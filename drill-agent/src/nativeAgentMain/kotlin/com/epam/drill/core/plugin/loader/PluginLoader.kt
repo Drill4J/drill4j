@@ -30,12 +30,16 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
         val pluginConfig = pluginFile.pluginConfig()
         if (pluginConfig.id == "coverage") {
             println("coverage load as plugin")
-            val nativePluginController = Instrumented(pluginFile)
+            val nativePluginController = Instrumented(pluginFile).apply {
+                connect()
+            }
             exec {
                 pInstrumentedStorage["coverage"] = nativePluginController
             }
         } else {
-            PluginManager.addPlugin(NativePluginController(pluginFile))
+            PluginManager.addPlugin(NativePluginController(pluginFile).apply {
+                connect()
+            })
         }
     } catch (ex: Exception) {
         when (ex) {

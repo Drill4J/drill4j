@@ -9,6 +9,6 @@ actual object PluginStorage {
         get() = ConcurrentHashMap()
 }
 
-actual fun AgentPart<*>.actualPluginConfig(): PluginBean {
+actual suspend fun AgentPart<*>.actualPluginConfig(): PluginBean {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 }

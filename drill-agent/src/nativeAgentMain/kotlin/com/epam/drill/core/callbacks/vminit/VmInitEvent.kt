@@ -7,13 +7,11 @@ import com.epam.drill.core.ws.startWs
 import com.epam.drill.logger.DLogger
 import com.epam.drill.logger.Logger
 import com.soywiz.klock.DateTime
-
 import com.soywiz.korio.lang.Thread_sleep
 import jvmapi.JNIEnvVar
 import jvmapi.jthread
 import jvmapi.jvmtiEnvVar
 import kotlinx.cinterop.CPointer
-import kotlinx.coroutines.runBlocking
 
 
 val initLogger: Logger
@@ -22,7 +20,7 @@ val initLogger: Logger
 @ExperimentalUnsignedTypes
 @Suppress("UNUSED_PARAMETER")
 @CName("jvmtiEventVMInitEvent")
-fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVar>?, thread: jthread?) = runBlocking {
+fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVar>?, thread: jthread?) {
     startWs()
     println("WM IS INIT")
     val timeoutSec = 60

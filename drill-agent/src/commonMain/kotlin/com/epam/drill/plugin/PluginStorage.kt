@@ -8,4 +8,4 @@ expect object PluginStorage {
 
 }
 
-expect fun AgentPart<*>.actualPluginConfig(): PluginBean
+expect suspend fun AgentPart<*>.actualPluginConfig(): PluginBean

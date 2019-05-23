@@ -9,4 +9,4 @@ actual object PluginStorage {
         get() = exec { pstorage }
 }
 
-actual fun AgentPart<*>.actualPluginConfig() = pluginConfigById(this.id)
+actual suspend fun AgentPart<*>.actualPluginConfig() = pluginConfigById(this.id)

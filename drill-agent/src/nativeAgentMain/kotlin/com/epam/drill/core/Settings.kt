@@ -3,7 +3,6 @@ package com.epam.drill.core
 
 import com.epam.drill.common.AgentAdditionalInfo
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.core.util.json
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.util.OS
@@ -18,7 +17,7 @@ fun parseConfigs() = runBlocking {
     )
 
     exec {
-        agentInfo = agInfo
+        diAgentInfo = agInfo
         //fixme retrieve a real IP
         agInfo.ipAddress = "127.0.0.3"
         agInfo.additionalInfo = AgentAdditionalInfo(
@@ -34,10 +33,10 @@ fun parseConfigs() = runBlocking {
 }
 
 var agentInfo: AgentInfo
-    get() = exec { agentInfo }
+    get() = exec { diAgentInfo }
     set(value) {
-        exec { agentInfo = value }
-        value.dumpConfigToFileSystem()
+        exec { diAgentInfo = value }
+//        value.dumpConfigToFileSystem()
     }
 
 val drillInstallationDir: String

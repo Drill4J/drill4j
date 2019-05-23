@@ -7,7 +7,9 @@ import kotlinx.serialization.json.Json
 
 actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
 
-    abstract var enabled: Boolean
+    abstract suspend fun isEnabled(): Boolean
+
+    abstract suspend fun setEnabled(value: Boolean)
 
     actual open fun init(nativePluginPartPath: String) {
     }

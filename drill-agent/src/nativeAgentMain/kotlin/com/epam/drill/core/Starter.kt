@@ -6,7 +6,6 @@ import com.epam.drill.api.enableJvmtiEventVmInit
 import com.epam.drill.core.callbacks.classloading.classLoadEvent
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
-import drillInternal.createQueue
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
@@ -55,10 +54,8 @@ private fun runAgent(options: String?) {
         val drillInstallationDir = this.getValue("drillInstallationDir")
         exec { this.drillInstallationDir = drillInstallationDir }
         parseConfigs()
-        createQueue()
-
         setUnhandledExceptionHook({ x: Throwable ->
-            println("AASJdkljaskldjaskljdklasjdklasjkldjal $x")
+            println("unhandled event $x")
         }.freeze())
 
         printAllowedCapabilities()

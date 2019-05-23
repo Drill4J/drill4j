@@ -6,7 +6,6 @@ import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.file.std.localVfs
-import kotlinx.coroutines.runBlocking
 
 val puLogger
     get() = DLogger("PluginUtils")
@@ -21,11 +20,10 @@ suspend fun rawPluginConfigById(pluginId: String): String {
     return configFile(pluginId).readString()
 }
 
-fun pluginConfigById(pluginId: String) = runBlocking {
-    json.parse(PluginBean.serializer(), rawPluginConfigById(pluginId))
-}
+suspend fun pluginConfigById(pluginId: String) = json.parse(PluginBean.serializer(), rawPluginConfigById(pluginId))
 
-fun PluginBean.dumpConfigToFileSystem() = runBlocking {
+
+suspend fun PluginBean.dumpConfigToFileSystem() {
     configFile(this@dumpConfigToFileSystem.id).writeString(
         json.stringify(
             PluginBean.serializer(),

@@ -11,7 +11,6 @@ import com.soywiz.korio.util.OS
 import jvmapi.ExceptionClear
 import jvmapi.FindClass
 import jvmapi.jclass
-import kotlinx.coroutines.runBlocking
 
 
 suspend fun DrillPluginFile.extractPluginFacilitiesTo(destination: VfsFile, filter: (VfsFile) -> Boolean = { true }) {
@@ -44,9 +43,7 @@ fun DrillPluginFile.pluginId(): String {
     return this.parent.baseName
 }
 
-fun DrillPluginFile.hasNativePart() = runBlocking {
-    this@hasNativePart.nativePart().exists()
-}
+suspend fun DrillPluginFile.hasNativePart() = this@hasNativePart.nativePart().exists()
 
 fun DrillPluginFile.nativePart(): VfsFile {
     val ext = if (OS.isWindows) "dll" else if (OS.isLinux) "so" else "dylib"
@@ -54,13 +51,12 @@ fun DrillPluginFile.nativePart(): VfsFile {
     return parent["nativePart"]["${pref}main.$ext"]
 }
 
-fun DrillPluginFile.pluginConfig() = runBlocking {
+suspend fun DrillPluginFile.pluginConfig(): PluginBean {
     val pluginContent = this@pluginConfig.parent["static"]["plugin_config.json"].readString()
-    json.parse(PluginBean.serializer(), pluginContent)
+    return json.parse(PluginBean.serializer(), pluginContent)
 }
 
-fun DrillPluginFile.rawPluginConfig() = runBlocking {
-    this@rawPluginConfig.parent["static"]["plugin_config.json"].readString()
-}
+suspend fun DrillPluginFile.rawPluginConfig() = this@rawPluginConfig.parent["static"]["plugin_config.json"].readString()
+
 
 typealias DrillPluginFile = VfsFile
