@@ -5,7 +5,7 @@ import com.epam.drill.plugin.api.DrillPlugin
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
+actual abstract class AgentPart<T, A> : DrillPlugin(), Switchable, Lifecycle {
 
     abstract suspend fun isEnabled(): Boolean
 
@@ -36,5 +36,7 @@ actual abstract class AgentPart<T> : DrillPlugin(), Switchable, Lifecycle {
             Json().stringify(np!!.confSerializer, np!!.config!!)
         else ""
     }
+
+    actual abstract fun doRawAction(action: String)
 
 }

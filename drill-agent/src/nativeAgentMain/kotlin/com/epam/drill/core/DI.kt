@@ -1,7 +1,7 @@
 package com.epam.drill.core
 
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.core.plugin.loader.IInstrumented
+import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.processing.AgentPart
 import kotlinx.cinterop.CFunction
 import kotlinx.cinterop.CPointer
@@ -18,13 +18,18 @@ import kotlin.reflect.KFunction4
 import kotlin.reflect.KFunction5
 
 class DI {
+    lateinit var agentId: String
+    lateinit var adminAddress: String
+    var needSync: Boolean = true
     lateinit var drillInstallationDir: String
     lateinit var diAgentInfo: AgentInfo
-    var pInstrumentedStorage: MutableMap<String, IInstrumented> = mutableMapOf()
-    var pstorage: MutableMap<String, AgentPart<*>> = mutableMapOf()
+    var pstorage: MutableMap<String, AgentPart<*, *>> = mutableMapOf()
     val originalMethod = NativeMethodBinder()
     val objects = mutableMapOf<KClass<*>, Any>()
 
+    val pl = mutableMapOf<String, PluginBean>()
+
+    @Suppress("unused")
     fun singleton(obj: Any) {
         objects[obj::class] = obj
     }
@@ -78,3 +83,9 @@ val work = Worker.start(true)
 @ThreadLocal
 val dsa = DI()
 
+
+var needSync: Boolean
+    get() = exec { needSync }
+    set(value) {
+        exec { needSync = value }
+    }

@@ -9,8 +9,59 @@ import com.epam.drill.jvmapi.jni
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.NativePart
-import jvmapi.*
-import kotlinx.cinterop.*
+import jvmapi.GetCurrentThread
+import jvmapi.GetThreadLocalStorage
+import jvmapi.JVMTI_DISABLE
+import jvmapi.JVMTI_ENABLE
+import jvmapi.JVMTI_EVENT_BREAKPOINT
+import jvmapi.JVMTI_EVENT_CLASS_FILE_LOAD_HOOK
+import jvmapi.JVMTI_EVENT_CLASS_LOAD
+import jvmapi.JVMTI_EVENT_CLASS_PREPARE
+import jvmapi.JVMTI_EVENT_COMPILED_METHOD_LOAD
+import jvmapi.JVMTI_EVENT_COMPILED_METHOD_UNLOAD
+import jvmapi.JVMTI_EVENT_DATA_DUMP_REQUEST
+import jvmapi.JVMTI_EVENT_DYNAMIC_CODE_GENERATED
+import jvmapi.JVMTI_EVENT_EXCEPTION
+import jvmapi.JVMTI_EVENT_EXCEPTION_CATCH
+import jvmapi.JVMTI_EVENT_FIELD_ACCESS
+import jvmapi.JVMTI_EVENT_FIELD_MODIFICATION
+import jvmapi.JVMTI_EVENT_FRAME_POP
+import jvmapi.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH
+import jvmapi.JVMTI_EVENT_GARBAGE_COLLECTION_START
+import jvmapi.JVMTI_EVENT_METHOD_ENTRY
+import jvmapi.JVMTI_EVENT_METHOD_EXIT
+import jvmapi.JVMTI_EVENT_MONITOR_CONTENDED_ENTER
+import jvmapi.JVMTI_EVENT_MONITOR_CONTENDED_ENTERED
+import jvmapi.JVMTI_EVENT_MONITOR_WAIT
+import jvmapi.JVMTI_EVENT_MONITOR_WAITED
+import jvmapi.JVMTI_EVENT_NATIVE_METHOD_BIND
+import jvmapi.JVMTI_EVENT_OBJECT_FREE
+import jvmapi.JVMTI_EVENT_RESOURCE_EXHAUSTED
+import jvmapi.JVMTI_EVENT_SINGLE_STEP
+import jvmapi.JVMTI_EVENT_THREAD_END
+import jvmapi.JVMTI_EVENT_THREAD_START
+import jvmapi.JVMTI_EVENT_VM_DEATH
+import jvmapi.JVMTI_EVENT_VM_INIT
+import jvmapi.JVMTI_EVENT_VM_OBJECT_ALLOC
+import jvmapi.JVMTI_EVENT_VM_START
+import jvmapi.SetEventCallbacks
+import jvmapi.SetEventNotificationMode
+import jvmapi.gdata
+import jvmapi.gjavaVMGlob
+import jvmapi.jthread
+import jvmapi.jthreadVar
+import jvmapi.jvmtiEnvVar
+import jvmapi.jvmtiEventCallbacks
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.COpaquePointerVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.asStableRef
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
 
 /**
  * we should duplicate all of this methods signature with "external" keyword and "@SymbolName" annotation, without body,
@@ -490,7 +541,7 @@ fun getPlugin(id: CPointer<ByteVar>): NativePart<*>? {
 fun addPluginToRegistry(plugin: NativePart<*>) {
     println("[TEMP] Try to addNativePluginPart to registry")
     try {
-        val agentPluginPart: AgentPart<Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any>?
+        val agentPluginPart: AgentPart<Any, Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any, Any>?
         if (agentPluginPart != null) {
             agentPluginPart.np = plugin as NativePart<Any>
             println("[TEMP] native part added.")

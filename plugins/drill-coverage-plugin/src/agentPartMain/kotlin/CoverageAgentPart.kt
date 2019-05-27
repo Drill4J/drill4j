@@ -1,9 +1,11 @@
 package com.epam.drill.plugins.coverage
 
-import com.epam.drill.plugin.api.processing.InstrumentedPlugin
+import com.epam.drill.plugin.api.processing.AgentPart
+import com.epam.drill.plugin.api.processing.InstrumentationPlugin
 import com.epam.drill.plugin.api.processing.Sender
+import com.epam.drill.plugin.api.processing.UnloadReason
 import com.epam.drill.session.DrillRequest
-import com.google.common.reflect.ClassPath
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 
@@ -13,18 +15,44 @@ val instrContext = object : InstrContext {
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
 
-private val json = Json {
-    prettyPrint = true
-}
+private val json = Json.Companion
 
 
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 
+@UnstableDefault
 @Suppress("unused")
 class CoveragePlugin @JvmOverloads constructor(
     override val id: String,
     private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
-) : InstrumentedPlugin<CoverConfig, Action>() {
+) : AgentPart<CoverConfig, Action>(), InstrumentationPlugin {
+    override fun doRawAction(action: String) {
+        doAction(Json.parse(actionSerializer, action))
+    }
+
+    override fun on() {
+
+    }
+
+    override fun off() {
+
+    }
+
+    override fun destroyPlugin(unloadReason: UnloadReason) {
+
+    }
+
+    override fun retransform() {
+        val map = classNameSet.map {
+            try {
+                ClassLoader.getSystemClassLoader().loadClass(it.replace("/", "."))
+            } catch (ex: Throwable) {
+//                println("))")
+                null
+            }
+        }
+        DrillRequest.RetransformClasses(map.filterNotNull().toTypedArray())
+    }
 
     val instrumenter = instrumenter(instrContext)
 
@@ -32,23 +60,24 @@ class CoveragePlugin @JvmOverloads constructor(
 
     override fun initPlugin() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
-        println(initializingMessage)
-        @Suppress("UnstableApiUsage")
-        val classPath = ClassPath.from(ClassLoader.getSystemClassLoader())
-        val classInfoPairs = classPath.topLevelClasses.mapNotNull { classInfo ->
-            val resourceName = classInfo.resourceName
-                .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                .removeSuffix(".class")
-            if (config.pathPrefixes.any { resourceName.startsWith(it) }) {
-                Pair(resourceName, classInfo)
-            } else null
-        }.distinctBy { it.first }
-        val initInfo = InitInfo(classInfoPairs.count(), initializingMessage)
+        val classPath1 = ClassPath()
+        val scanItPlease = classPath1.scanItPlease(ClassLoader.getSystemClassLoader())
+        val filter = scanItPlease.filter { (k, v) ->
+            config.pathPrefixes.any {
+                k.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                    .removeSuffix(".class").startsWith(it)
+            }
+        }
+
+
+        val initInfo = InitInfo(filter.count(), initializingMessage)
         sendMessage(CoverageEventType.INIT, json.stringify(InitInfo.serializer(), initInfo))
-        classInfoPairs.forEach { (resourceName, classInfo) ->
-            classNameSet.add(resourceName)
-            val bytes = classInfo.asByteSource().read()
-            sendClass(ClassBytes(resourceName, bytes.toList()))
+        filter.forEach { (resourceName, classInfo) ->
+            classNameSet.add(resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                .removeSuffix(".class"))
+            val bytes = classInfo.url(resourceName).readBytes()
+            sendClass(ClassBytes(resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                .removeSuffix(".class"), bytes.toList()))
         }
         val initializedStr = "Plugin $id initialized!"
         sendMessage(CoverageEventType.INITIALIZED, initializedStr)

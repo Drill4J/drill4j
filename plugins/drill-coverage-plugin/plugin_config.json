@@ -3,6 +3,7 @@
   "name": "AwesomeCoveragePlugin",
   "description": "This is the awesome custom plugin",
   "type": "Custom",
+  "family": "INSTRUMENTATION",
   "enabled": true,
   "config": "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
 }

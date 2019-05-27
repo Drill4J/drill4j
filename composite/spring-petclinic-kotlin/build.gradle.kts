@@ -6,7 +6,6 @@ import org.springframework.boot.gradle.tasks.run.BootRun
 plugins {
     kotlin("jvm") version ("1.3.30")
     kotlin("plugin.spring") version ("1.3.30")
-    id("org.zeroturnaround.gradle.jrebel") version ("1.1.8")
     id("org.springframework.boot") version ("2.0.0.RELEASE")
     id("io.spring.dependency-management") version ("1.0.4.RELEASE")
     id("idea")
@@ -64,32 +63,19 @@ tasks {
         }
         val drillDistrDir = "${file("../../distr")}"
         val agentPath = "${file("$drillDistrDir/${pref}main.$ex")}"
-        val configDir = "${file("../../resources")}"
-        jvmArgs("-agentpath:$agentPath=configsFolder=$configDir,drillInstallationDir=$drillDistrDir")
+        jvmArgs(
+            "-agentpath:$agentPath=drillInstallationDir=$drillDistrDir,adminAddress=${project.properties["adminAddress"]
+                ?: "localhost:8090"},agentId=${project.properties["agentId"] ?: "Petclinic"}"
+        )
     }
 
-    
+
     named<BootRun>("bootRun") {
         jvmArgs("-Xmx2g")
         agentJvmArgs()
     }
 
     val bootJar by existing(BootJar::class)
-
-    register<JavaExec>("bootJarRun") {
-        group = "application"
-        classpath(bootJar.map { it.archiveFile })
-        main = "org.springframework.boot.loader.JarLauncher"
-        agentJvmArgs()
-    }
-    
-    named<Jar>("jar") {
-        dependsOn(named("generateRebel"))
-    }
-
-    named<Test>("test") {
-        jvmArgs("-javaagent:${file("../../distr/drill-core-agent.jar")}")
-    }
 }
 
 idea {
@@ -98,37 +84,4 @@ idea {
         outputDir = file("build/classes/kotlin/main")
         testOutputDir = file("build/classes/kotlin/test")
     }
-}
-
-//if (System.getenv("JREBEL_HOME") != null) {
-//
-//    val ext = when {
-//        Os.isFamily(Os.FAMILY_MAC) -> "dylib"
-//        Os.isFamily(Os.FAMILY_UNIX) -> "so"
-//        Os.isFamily(Os.FAMILY_WINDOWS) -> "dll"
-//        else -> {
-//            throw RuntimeException("What is your OS???")
-//        }
-//    }
-//    bootRun.jvmArgs("-agentpath:${System.getenv("JREBEL_HOME")}/lib/${if ("dll" == ext) {
-//        ""
-//    } else {
-//        "lib"
-//    }}jrebel64.$ext")
-//}
-rebel {
-    //    showGenerated = true
-//    rebelXmlDirectory = "build/classes"
-//
-//    classpath {
-//        resource {
-//            directory = "build/classes/kotlin/main"
-//            includes = ["**/*"]
-//        }
-//
-//
-//        resource {
-//            directory = "build/resources/main"
-//        }
-//    }
 }

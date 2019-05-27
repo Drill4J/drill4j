@@ -47,4 +47,7 @@ data class AgentAdditionalInfo(
 )
 
 @Serializable
-data class AgentBuildVersion (val version: String)
+data class AgentBuildVersion(val version: String)
+
+const val AgentIdParam = "agentId"
+const val NeedSyncParam = "needSync"

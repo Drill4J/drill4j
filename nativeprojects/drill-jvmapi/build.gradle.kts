@@ -23,7 +23,7 @@ kotlin {
                 outputKinds(NativeOutputKind.DYNAMIC)
                 val jvmapi by cinterops.creating
                 jvmapi.apply {
-                    includeDirs(jvmPaths, "./src/nativeInterop/cpp")
+                    includeDirs(jvmPaths, "./src/nativeInterop/cpp","./")
                 }
             }
         }

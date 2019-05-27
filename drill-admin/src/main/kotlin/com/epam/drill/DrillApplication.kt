@@ -51,6 +51,7 @@ val storage = Kodein.Module(name = "agentStorage") {
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
+    bind<AgentManager>() with eagerSingleton { AgentManager(kodein) }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {

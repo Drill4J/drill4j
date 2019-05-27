@@ -4,7 +4,6 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.PluginWebSocket
 import com.epam.drill.plugins.toPluginsWebSocket
-import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
 
 @Suppress("unused")
@@ -17,13 +16,9 @@ open class AgentInfoWebSocket(
     val status: Boolean = true,
     var buildVersion: String,
 
-    @Optional
     val adminUrl: String = "",
-    @Optional
     var ipAddress: String = "",
-    @Optional
     val activePluginsCount: Int = 0,
-    @Optional
     val pluginsCount: Int = 0
 )
 

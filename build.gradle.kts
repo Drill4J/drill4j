@@ -8,6 +8,10 @@ tasks {
         dependsOn(gradle.includedBuild("spring-petclinic-kotlin").task(":bootRun"))
         group = "application"
     }
+    val runIntegrationTests by registering {
+        dependsOn(gradle.includedBuild("integration-tests").task(":test"))
+        group = "application"
+    }
 }
 
 allprojects {

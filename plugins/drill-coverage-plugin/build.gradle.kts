@@ -35,7 +35,6 @@ kotlin {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 project.dependencies.add("agentDeps", "org.jacoco:org.jacoco.core:0.8.3")
-                project.dependencies.add("agentDeps", "com.google.guava:guava:27.1-jre")
                 api("org.jacoco:org.jacoco.core:0.8.3")
                 api("org.javers:javers-core:5.3.4")
             }
@@ -99,12 +98,7 @@ tasks {
         from(distJar) {
             into("adminStorage")
         }
-        from(agentPartJar) {
-            into("drill-plugins/coverage")
-        }
-        from(file("plugin_config.json")) {
-            into("drill-plugins/coverage/static")
-        }
+
         destinationDir = file("../../distr")
     }
 }

@@ -4,7 +4,7 @@ import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.DrillPlugin
 import kotlinx.serialization.KSerializer
 
-expect abstract class AgentPart<T>() : DrillPlugin, Switchable, Lifecycle {
+expect abstract class AgentPart<T, A>() : DrillPlugin, Switchable, Lifecycle {
     var np: NativePart<T>?
 
     abstract var confSerializer: KSerializer<T>
@@ -24,6 +24,8 @@ expect abstract class AgentPart<T>() : DrillPlugin, Switchable, Lifecycle {
     abstract override fun off()
 
     fun rawConfig(): String
+
+    abstract fun doRawAction(action: String)
 }
 
 

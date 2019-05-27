@@ -3,19 +3,15 @@ package com.epam.drill.core.ws
 import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
-import com.epam.drill.core.agentInfo
 import com.epam.drill.core.drillInstallationDir
-import com.epam.drill.core.exec
-import com.epam.drill.core.plugin.dumpConfigToFileSystem
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.core.plugin.pluginConfigById
-import com.epam.drill.core.util.dumpConfigToFileSystem
 import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.PluginStorage
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.UnloadReason
+import com.epam.drill.plugin.storage
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import kotlinx.serialization.DeserializationStrategy
@@ -61,7 +57,6 @@ fun topicRegister() =
             if (agentPluginPart != null) {
                 agentPluginPart.updateRawConfig(config)
                 agentPluginPart.np?.updateRawConfig(config)
-                config.dumpConfigToFileSystem()
                 topicLogger.warn { "new settings for ${config.id} was save to file" }
             } else
                 topicLogger.warn { "Plugin ${config.id} not loaded to agent" }
@@ -70,7 +65,7 @@ fun topicRegister() =
         topic("/plugins/action").rawMessage { action ->
             topicLogger.warn { "actionPluign event: message is $action " }
             //fixme thi hardcode
-            val agentPluginPart = exec { pInstrumentedStorage["coverage"] }
+            val agentPluginPart = PluginManager["coverage"]
             agentPluginPart?.doRawAction(action)
 
         }
@@ -86,23 +81,24 @@ fun topicRegister() =
         }
 
         topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
-            topicLogger.warn { "updateAgentConfig event: Info is $info" }
-            agentInfo = info
+            topicLogger.error { "updateAgentConfig event: Info is $info" }
+//            agentInfo = info
         }
 
         topic("agent/toggleStandBy").rawMessage {
             topicLogger.warn { "toggleStandBy event" }
-            toggleStandby(agentInfo)
-            agentInfo.isEnable = !agentInfo.isEnable
-            agentInfo.dumpConfigToFileSystem()
+            //fixme toggle
+//            toggleStandby(agentInfo)
+//            agentInfo.isEnable = !agentInfo.isEnable
+//            agentInfo.dumpConfigToFileSystem()
         }
     }
 
 suspend fun toggleStandby(agentInfo: AgentInfo) {
-    val toggle: (AgentPart<*>) -> Unit =
+    val toggle: (AgentPart<*, *>) -> Unit =
         if (agentInfo.isEnable) { plugin -> PluginManager[plugin.id]?.off() } else { x -> PluginManager[x.id]?.on() }
 
-    PluginStorage.storage.forEach {
+    storage.forEach {
         if (pluginConfigById(it.value.id).enabled)
             toggle(it.value)
     }

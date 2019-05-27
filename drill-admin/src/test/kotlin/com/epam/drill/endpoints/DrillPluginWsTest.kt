@@ -1,3 +1,5 @@
+@file:Suppress("UNUSED_PARAMETER")
+
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
@@ -12,7 +14,11 @@ import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.install
 import io.ktor.config.MapApplicationConfig
-import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason
+import io.ktor.http.cio.websocket.DefaultWebSocketSession
+import io.ktor.http.cio.websocket.Frame
+import io.ktor.http.cio.websocket.readReason
+import io.ktor.http.cio.websocket.readText
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.server.testing.TestApplicationEngine
@@ -31,7 +37,6 @@ import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
 import org.testcontainers.containers.GenericContainer
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail

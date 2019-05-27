@@ -9,6 +9,10 @@ fun currentEnvs(): JNIEnvPointer {
     return env
 }
 
+fun AttachNativeThreadToJvm() {
+    currentEnvs()
+}
+
 @kotlin.native.concurrent.ThreadLocal
 val env: JNIEnvPointer
     get() {

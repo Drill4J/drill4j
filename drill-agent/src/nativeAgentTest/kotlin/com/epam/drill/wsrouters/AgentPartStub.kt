@@ -5,6 +5,10 @@ import com.epam.drill.plugin.api.processing.PluginRepresenter
 
 @Suppress("unused")
 class AgentPartStub(var enabled: Boolean, override val id: String) : PluginRepresenter() {
+    override fun doRawAction(action: String) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override suspend fun isEnabled(): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

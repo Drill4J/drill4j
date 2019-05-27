@@ -133,29 +133,14 @@ tasks {
         dependsOn(javaAgentJar)
         dependsOn(deleteAndCopyAgent)
         group = "application"
-
-        doLast {
-            if (!File("../distr/configs", "drillConfig.json").exists()) {
-                copy {
-                    from(file("../resources/drillConfig.json"))
-                    into(file("../distr/configs"))
-                }
-            }
-            if (!File("../distr/configs", "logger.properties").exists()) {
-                copy {
-                    from(file("../resources/logger.properties"))
-                    into(file("../distr/configs"))
-                }
-            }
-        }
     }
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
         binary.linkerOpts.add("subdep/$staticLibraryName")
-//        copy {
-//            from(staticLibraryName)
-//            into(file("build/bin/nativeAgent/testDebugExecutable"))
-//        }
+        copy {
+            from(staticLibraryName)
+            into(file("build/bin/nativeAgent/testDebugExecutable"))
+        }
     }
 
     "nativeAgentTestProcessResources"(ProcessResources::class) {

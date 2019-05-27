@@ -9,6 +9,7 @@ import com.epam.drill.logger.DLogger
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
+import jvmapi.JNI_GetDefaultJavaVMInitArgs
 import jvmapi.JNI_OK
 import jvmapi.JavaVMVar
 import jvmapi.SetEventCallbacks
@@ -17,9 +18,12 @@ import jvmapi.agentSetup
 import jvmapi.generateDefaultCallbacks
 import jvmapi.gjavaVMGlob
 import jvmapi.jint
+import jvmapi.jmmInterface_1_
+import jvmapi.jmm_interface
 import jvmapi.jvmtiEventCallbacks
 import jvmapi.saveVmToGlobal
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.sizeOf
@@ -51,9 +55,12 @@ private fun initAgentGlobals(vmPointer: CPointer<JavaVMVar>) {
 
 private fun runAgent(options: String?) {
     options.asAgentParams().apply {
+        val adminAddress = this.getValue("adminAddress")
+        val agentId = this.getValue("agentId")
         val drillInstallationDir = this.getValue("drillInstallationDir")
         exec { this.drillInstallationDir = drillInstallationDir }
-        parseConfigs()
+        exec { this.adminAddress = adminAddress }
+        exec { this.agentId = agentId }
         setUnhandledExceptionHook({ x: Throwable ->
             println("unhandled event $x")
         }.freeze())
@@ -64,7 +71,6 @@ private fun runAgent(options: String?) {
         SetNativeMethodPrefix("xxx_")
         callbackRegister()
         val logger = DLogger("StartLogger")
-        logger.info { agentInfo.adminUrl }
         logger.info { "The native agent was loaded" }
         logger.info { "Pid is: " + getpid() }
     }
@@ -94,3 +100,6 @@ private fun callbackRegister() {
     enableJvmtiEventClassFileLoadHook()
     enableJvmtiEventNativeMethodBind()
 }
+
+val drillInstallationDir: String
+    get() = exec { drillInstallationDir }

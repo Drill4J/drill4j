@@ -1,33 +1,20 @@
 package com.epam.drill
 
 import com.epam.drill.common.PluginBean
-import com.epam.drill.core.util.json
+import com.epam.drill.core.exec
 import com.soywiz.korio.file.VfsFile
 import com.soywiz.korio.file.baseName
 import com.soywiz.korio.file.extension
-import com.soywiz.korio.file.std.MemoryVfs
 import com.soywiz.korio.file.std.openAsZip
 import com.soywiz.korio.util.OS
 import jvmapi.ExceptionClear
 import jvmapi.FindClass
 import jvmapi.jclass
 
-
-suspend fun DrillPluginFile.extractPluginFacilitiesTo(destination: VfsFile, filter: (VfsFile) -> Boolean = { true }) {
-    val mem = MemoryVfs()
-    this.openAsZip { pz -> pz.copyToTree(mem) }
-    for (it in mem.list()) {
-        if (filter(it))
-            it.delete()
-    }
-    mem.copyToTree(destination)
-}
-
-
 suspend fun DrillPluginFile.iterateThroughPluginClasses(block: suspend (jclass) -> Unit) {
     this.openAsZip {
         for (jarEntry in it.listRecursive()) {
-            if (jarEntry.extension == "class") {
+            if (jarEntry.extension == "class" && !jarEntry.baseName.contains("module-info")) {
                 val className = jarEntry.absolutePath.replace(".class", "").drop(1)
                 val findClass = FindClass(className)
                 ExceptionClear()
@@ -51,12 +38,12 @@ fun DrillPluginFile.nativePart(): VfsFile {
     return parent["nativePart"]["${pref}main.$ext"]
 }
 
-suspend fun DrillPluginFile.pluginConfig(): PluginBean {
-    val pluginContent = this@pluginConfig.parent["static"]["plugin_config.json"].readString()
-    return json.parse(PluginBean.serializer(), pluginContent)
+fun DrillPluginFile.pluginConfig(): PluginBean {
+    val pluginId = this.pluginId()
+    val exec = exec {
+        pl[pluginId]
+    }
+    return exec!!
 }
-
-suspend fun DrillPluginFile.rawPluginConfig() = this@rawPluginConfig.parent["static"]["plugin_config.json"].readString()
-
 
 typealias DrillPluginFile = VfsFile

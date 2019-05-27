@@ -1,6 +1,5 @@
 package com.epam.drill.core.methodbind
 
-import com.epam.drill.core.agentInfo
 import com.epam.drill.core.exec
 import com.epam.drill.core.request.parseHttpRequest
 import com.epam.drill.core.request.toDrillRequest
@@ -63,8 +62,7 @@ fun write0(env: CPointer<JNIEnvVar>, obj: jobject, fd: jobject, address: DirectB
     val fakeBuffer: DirectBufferAddress
     val prefix = address.rawString(min(4, len))
     if (prefix == "HTTP") {
-        val agentInfo = agentInfo
-        val spyHeaders = "\ndrill-agent-id: ${agentInfo.id}\ndrill-admin-url: ${agentInfo.adminUrl}"
+        val spyHeaders = "\ndrill-agent-id: ${exec { agentId }}\ndrill-admin-url: ${exec { adminAddress }}"
         val contentBodyBytes = address.toPointer().toKStringFromUtf8()
         return if (contentBodyBytes.contains("text/html") || contentBodyBytes.contains("application/json")) {
             val replaceFirst = contentBodyBytes.replaceFirst("\n", "$spyHeaders\n")
