@@ -78,7 +78,7 @@ services:
       - "5008:5008"
     environment:
       - RP_PROFILES=docker
-      - JAVA_OPTS=-Xmx1g -XX:ErrorFile=/data/crashdump.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -agentpath:/data/libmain.so=drillInstallationDir=/data,adminAddress=host.docker.internal:8090,agentId=Petclinic
+      - JAVA_OPTS=-Xmx1g -XX:ErrorFile=/data/crashdump.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -agentpath:/data/libmain.so=drillInstallationDir=/data,adminAddress=${adminAddress},agentId=${agentId}
 #      - RP_MONGO_URI=mongodb://localhost:27017
 #    restart: always
 
