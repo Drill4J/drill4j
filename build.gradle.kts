@@ -9,6 +9,7 @@ tasks {
         group = "application"
     }
     val runIntegrationTests by registering {
+        dependsOn(gradle.includedBuild("integration-tests").task(":clean"))
         dependsOn(gradle.includedBuild("integration-tests").task(":test"))
         group = "application"
     }

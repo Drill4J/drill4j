@@ -3,17 +3,13 @@ package com.epam.drill.core.plugin.loader
 import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.Family
 import com.epam.drill.core.exceptions.PluginLoadException
+import com.epam.drill.core.exec
 import com.epam.drill.jvmapi.AttachNativeThreadToJvm
 import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.PluginManager
 import com.epam.drill.pluginConfig
-import kotlin.native.concurrent.Worker
 
 val plLogger
     get() = DLogger("plLogger")
-
-@SharedImmutable
-val xx  = Worker.start(true);
 
 @ExperimentalUnsignedTypes
 suspend fun loadPlugin(pluginFile: DrillPluginFile) {
@@ -25,14 +21,19 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
             Family.INSTRUMENTATION -> {
                 val nativePluginController = InstrumentationNativePlugin(pluginFile).apply {
                     connect()
-                    PluginManager.addPlugin(this)
+                    exec {
+                        pstorage[this@apply.id] = this@apply
+                    }
+
                 }
                 nativePluginController.retransform()
             }
             Family.GENERIC -> {
                 GenericNativePlugin(pluginFile).apply {
                     connect()
-                    PluginManager.addPlugin(this)
+                    exec {
+                        pstorage[this@apply.id] = this@apply
+                    }
                 }
             }
         }

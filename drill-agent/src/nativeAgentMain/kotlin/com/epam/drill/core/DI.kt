@@ -1,6 +1,5 @@
 package com.epam.drill.core
 
-import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.processing.AgentPart
 import kotlinx.cinterop.CFunction
@@ -22,12 +21,16 @@ class DI {
     lateinit var adminAddress: String
     var needSync: Boolean = true
     lateinit var drillInstallationDir: String
-    lateinit var diAgentInfo: AgentInfo
     var pstorage: MutableMap<String, AgentPart<*, *>> = mutableMapOf()
     val originalMethod = NativeMethodBinder()
     val objects = mutableMapOf<KClass<*>, Any>()
 
     val pl = mutableMapOf<String, PluginBean>()
+
+
+    init {
+
+    }
 
     @Suppress("unused")
     fun singleton(obj: Any) {

@@ -13,14 +13,12 @@ import jvmapi.SetByteArrayRegion
 import jvmapi.jbyteArray
 import jvmapi.jbyteVar
 import jvmapi.jint
-import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.get
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.set
-import kotlinx.cinterop.toKString
 import kotlinx.cinterop.value
 
 @ExperimentalUnsignedTypes
@@ -31,7 +29,7 @@ fun classLoadEvent(
     jniEnv: CPointer<jvmapi.JNIEnvVar>?,
     classBeingRedefined: jvmapi.jclass?,
     loader: jvmapi.jobject?,
-    className: CPointer<ByteVar>?,
+    kClassName: String?,
     protection_domain: jvmapi.jobject?,
     classDataLen: jint,
     classData: CPointer<UByteVar>?,
@@ -40,11 +38,9 @@ fun classLoadEvent(
 
 
 ) {
-    initRuntimeIfNeeded()
     try {
 
-        if (className != null && classData != null) {
-            val kClassName = className.toKString()
+        if (kClassName != null && classData != null) {
             if (loader != null && protection_domain != null && exec { pstorage.isNotEmpty() }) {
                 exec {
                     pstorage.values.first()
@@ -83,7 +79,7 @@ fun classLoadEvent(
 
 
     } catch (ex: Throwable) {
-        println(className?.toKString())
+        println(kClassName)
         ex.printStackTrace()
     }
 }

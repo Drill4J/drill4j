@@ -11,7 +11,7 @@ import jvmapi.jmethodID
 
 
 @ExperimentalUnsignedTypes
-open class InstrumentationNativePlugin(pf: DrillPluginFile) : GenericNativePlugin(pf),
+class InstrumentationNativePlugin(pf: DrillPluginFile) : GenericNativePlugin(pf),
     InstrumentationPlugin {
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

@@ -3,13 +3,11 @@ package com.epam.drill.core
 import com.epam.drill.api.enableJvmtiEventClassFileLoadHook
 import com.epam.drill.api.enableJvmtiEventNativeMethodBind
 import com.epam.drill.api.enableJvmtiEventVmInit
-import com.epam.drill.core.callbacks.classloading.classLoadEvent
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
-import jvmapi.JNI_GetDefaultJavaVMInitArgs
 import jvmapi.JNI_OK
 import jvmapi.JavaVMVar
 import jvmapi.SetEventCallbacks
@@ -18,16 +16,12 @@ import jvmapi.agentSetup
 import jvmapi.generateDefaultCallbacks
 import jvmapi.gjavaVMGlob
 import jvmapi.jint
-import jvmapi.jmmInterface_1_
-import jvmapi.jmm_interface
 import jvmapi.jvmtiEventCallbacks
 import jvmapi.saveVmToGlobal
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
@@ -88,13 +82,11 @@ fun String?.asAgentParams(): Map<String, String> {
     }
 }
 
-@ExperimentalUnsignedTypes
 private fun callbackRegister() {
     generateDefaultCallbacks().useContents {
         SetEventCallbacks(this.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
         null
     }
-    gjavaVMGlob?.pointed?.callbackss?.ClassFileLoadHook = staticCFunction(::classLoadEvent)
     SetEventCallbacks(gjavaVMGlob?.pointed?.callbackss?.ptr, sizeOf<jvmtiEventCallbacks>().toInt())
     enableJvmtiEventVmInit()
     enableJvmtiEventClassFileLoadHook()
