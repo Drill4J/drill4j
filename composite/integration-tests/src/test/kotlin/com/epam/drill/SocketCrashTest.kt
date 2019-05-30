@@ -7,6 +7,7 @@ class SocketCrashTest {
 
     @Test
     fun crashIt() {
+        println("xxxasd")
         repeat(10000) {
             Sender.sendMessage("xx", "x")
         }

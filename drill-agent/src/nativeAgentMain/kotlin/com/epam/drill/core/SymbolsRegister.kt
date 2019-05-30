@@ -6,19 +6,28 @@ import com.epam.drill.api.drillRequest
 import com.epam.drill.api.sendToSocket
 import com.epam.drill.jvmapi.JNIEnvPointer
 import com.epam.drill.jvmapi.toKString
+import jvmapi.FindClass
+import jvmapi.GetLoadedClasses
 import jvmapi.GetObjectArrayElement
 import jvmapi.JNIEnv
+import jvmapi.NewObjectArray
 import jvmapi.NewStringUTF
+import jvmapi.SetObjectArrayElement
 import jvmapi.jclassVar
 import jvmapi.jint
+import jvmapi.jintVar
 import jvmapi.jobject
 import jvmapi.jobjectArray
 import jvmapi.jstring
 import jvmapi.jvmtiError
 import kotlinx.cinterop.Arena
+import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cstr
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 
 @CName("currentEnvs")
@@ -59,4 +68,22 @@ fun RetransformClasses(env: JNIEnv, thiz: jobject, count: jint, classes: jobject
         value = GetObjectArrayElement(classes, index)
     }
     jvmapi.RetransformClasses(count, allocArray)
+}
+
+@Suppress("UNUSED_PARAMETER")
+@CName("Java_com_epam_drill_session_DrillRequest_GetAllLoadedClasses")
+fun GetAllLoadedClasses(env: JNIEnv, thiz: jobject) = memScoped {
+    val cout = alloc<jintVar>()
+    val classes = alloc<CPointerVar<jclassVar>>()
+    GetLoadedClasses(cout.ptr, classes.ptr)
+    println()
+    val reinterpret = classes.value!!
+    val len = cout.value
+    val newByteArray = NewObjectArray(len, FindClass("java/lang/Class"), null)
+
+    for (i in 0 until cout.value) {
+        val cPointer = reinterpret[i]
+        SetObjectArrayElement(newByteArray, i, cPointer)
+    }
+    newByteArray
 }

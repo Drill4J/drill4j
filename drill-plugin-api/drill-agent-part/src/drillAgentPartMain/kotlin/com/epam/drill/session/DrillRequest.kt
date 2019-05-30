@@ -11,5 +11,6 @@ object DrillRequest {
     }
 
     external fun RetransformClasses(count: Int, classes: Array<Class<*>>)
+    external fun GetAllLoadedClasses(): Array<Class<*>>
 
 }

@@ -43,15 +43,13 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     override fun retransform() {
-        val map = classNameSet.map {
-            try {
-                ClassLoader.getSystemClassLoader().loadClass(it.replace("/", "."))
-            } catch (ex: Throwable) {
-//                println("))")
-                null
+        val filter = DrillRequest.GetAllLoadedClasses().filter { it.`package` != null }.filter { cla ->
+            config.pathPrefixes.any {
+                cla.`package`.name //fix from Spring Boot Executable jar
+                    .replace(".", "/").startsWith(it)
             }
         }
-        DrillRequest.RetransformClasses(map.filterNotNull().toTypedArray())
+        DrillRequest.RetransformClasses(filter.toTypedArray())
     }
 
     val instrumenter = instrumenter(instrContext)
@@ -73,11 +71,17 @@ class CoveragePlugin @JvmOverloads constructor(
         val initInfo = InitInfo(filter.count(), initializingMessage)
         sendMessage(CoverageEventType.INIT, json.stringify(InitInfo.serializer(), initInfo))
         filter.forEach { (resourceName, classInfo) ->
-            classNameSet.add(resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                .removeSuffix(".class"))
+            classNameSet.add(
+                resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                    .removeSuffix(".class")
+            )
             val bytes = classInfo.url(resourceName).readBytes()
-            sendClass(ClassBytes(resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                .removeSuffix(".class"), bytes.toList()))
+            sendClass(
+                ClassBytes(
+                    resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                        .removeSuffix(".class"), bytes.toList()
+                )
+            )
         }
         val initializedStr = "Plugin $id initialized!"
         sendMessage(CoverageEventType.INITIALIZED, initializedStr)

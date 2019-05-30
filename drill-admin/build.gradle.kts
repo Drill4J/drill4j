@@ -53,7 +53,9 @@ dependencies {
     implementation("io.ktor:ktor-websockets:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:1.2.1")
-
+    implementation("com.impetus.kundera.client:kundera-cassandra:3.13") {
+        exclude(group = "io.netty")
+    }
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
 }
@@ -70,6 +72,11 @@ jib {
     }
 }
 
+sourceSets {
+    main {
+        output.resourcesDir = file("build/classes/kotlin/main")
+    }
+}
 
 tasks {
     withType<KotlinCompile> {

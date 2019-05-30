@@ -31,6 +31,30 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     )
                 )
             )
+        else  if (agentId == "IntegrationTests"){
+            return AgentInfo(
+                id = agentId,
+                name = "Petclinic App",
+                groupName = "Dev",
+                description = "This agent is configured only for developers",
+                ipAddress = "",
+                buildVersion = "fixed version",
+                isEnable = true,
+                additionalInfo = null,
+                adminUrl = "",
+                rawPluginNames = mutableSetOf(
+                    PluginBean(
+                        "coverage",
+                        "awesomeCoverage",
+                        "ohh the best of the best",
+                        "custom",
+                        Family.INSTRUMENTATION,
+                        true,
+                        "{\"pathPrefixes\": [\"com/\",\"org/\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+                    )
+                )
+            )
+        }
         else return AgentInfo(
             id = agentId,
             name = "???",

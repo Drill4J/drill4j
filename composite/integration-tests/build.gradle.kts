@@ -21,14 +21,21 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+//tasks.getByName("testClasses"). dependsOn("clean")
 tasks{
     named<Test>("test"){
+
+
         val (pref, ex) = when {
             Os.isFamily(Os.FAMILY_UNIX) -> Pair("lib", "so")
             else -> Pair("", "dll")
         }
         val drillDistrDir = "${file("../../distr")}"
         val agentPath = "${file("$drillDistrDir/${pref}main.$ex")}"
-        jvmArgs("-agentpath:$agentPath=drillInstallationDir=$drillDistrDir,adminAddress=host.docker.internal:8090,agentId=Petclinic")
+        val s =
+            "-agentpath:$agentPath=drillInstallationDir=$drillDistrDir,adminAddress=host.docker.internal:8090,agentId=IntegrationTests"
+        println(s)
+        jvmArgs(s)
     }
 }
