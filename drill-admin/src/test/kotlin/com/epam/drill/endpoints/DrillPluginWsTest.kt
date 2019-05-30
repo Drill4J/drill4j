@@ -1,3 +1,4 @@
+/*
 @file:Suppress("UNUSED_PARAMETER")
 
 package com.epam.drill.endpoints
@@ -233,4 +234,4 @@ class DefWebSocketSessionStub : DefaultWebSocketSession {
     override fun terminate() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-}
+}*/

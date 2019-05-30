@@ -3,15 +3,16 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.common.AgentBuildVersion
 import com.epam.drill.common.AgentIdParam
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.NeedSyncParam
 import com.epam.drill.common.PluginMessage
+import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.storage.CassandraConnector
 import com.epam.drill.storage.MongoClient
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
@@ -20,7 +21,6 @@ import io.ktor.routing.routing
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 
 class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
-    private val mc: MongoClient by instance()
+    private val cc: CassandraConnector by instance()
     private val agentStorage: AgentStorage by instance()
     private val pd: PluginDispatcher by kodein.instance()
     private val plugins: Plugins by kodein.instance()
@@ -44,16 +44,11 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 val agentInfo = agentManager.agentConfiguration(agentId)
                 agentInfo.ipAddress = call.request.local.remoteHost
                 agentStorage.put(agentInfo, this)
-                val collection =
-                    mc.client!!
-                        .getDatabase(agentInfo.id)
-                        .getCollection<AgentBuildVersion>("agent-build-versions")
-                val buildVersion = AgentBuildVersion(agentInfo.buildVersion)
-                val buildVersions = collection.find()
-                if (!buildVersions.any { it == buildVersion })
-                    collection.insertOne(buildVersion)
 
-                println("Build version's count: ${collection.find().count()}")
+                val cm = cc.addEntityManager(agentInfo.id)
+                val buildVersion = AgentBuildVersion(agentInfo.buildVersion, agentInfo.name)
+                cm.persist(buildVersion)
+
                 println("Agent registered")
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
 

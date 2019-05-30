@@ -7,7 +7,9 @@ import com.epam.drill.agentmanager.self
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.storage.CassandraConnector
 import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.Application
@@ -34,6 +36,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val logger = LoggerFactory.getLogger(DrillPluginWs::class.java)
     private val app: Application by instance()
     private val mc: MongoClient by instance()
+    private val cc: CassandraConnector by instance()
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
     private val agentStorage: AgentStorage by instance()
 
@@ -42,27 +45,26 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     }
 
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
-        val messageForSend = Message(MessageType.MESSAGE, destination, message)
+        val messageForSend = Gson().toJson(Message(MessageType.MESSAGE, destination, message))
 
-        val collection = mc.storage<Message>(
-            agentInfo.id,
-            destination + ":" + agentInfo.buildVersion
-        )
-        collection.deleteMany()
-        try {
-            collection.insertOne(messageForSend)
-        } catch (e: BsonMaximumSizeExceededException) {
-            println("payload is too long")
-        }
+        val cm = cc.addEntityManager(agentInfo.id)
+        val message = JsonMessage(destination + ":" + agentInfo.buildVersion, messageForSend)
+        cm.persist(message)
+
         sessionStorage[destination]?.let { sessionSet ->
             for (session in sessionSet) {
                 try {
-                    session.send(Frame.Text(Gson().toJson(messageForSend)))
+                    session.send(Frame.Text(messageForSend))
                 } catch (ex: Exception) {
                     sessionSet.remove(session)
                 }
             }
         }
+    }
+
+    fun storeData(agentId: String, obj: Any){
+        val cm = cc.addEntityManager(agentId)
+        cm.persist(obj)
     }
 
     init {
@@ -81,18 +83,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     )
                                     saveSession(event)
                                     val buildVersion = subscribeInfo.buildVersion
-                                    val objects = mc.storage<Message>(
-                                        subscribeInfo.agentId,
+
+                                    val cm = cc.addEntityManager(subscribeInfo.agentId)
+                                    val message = cm.find(JsonMessage::class.java,
                                         event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
                                             (agentStorage.self(subscribeInfo.agentId))?.buildVersion
-                                        } else buildVersion)
-                                    )
-                                        .find()
-                                        .iterator()
-                                    if (objects.hasNext())
-                                        for (ogs in objects)
-                                            this.send(ogs.textFrame())
-                                    else {
+                                        } else buildVersion)).message
+
+                                    if(message.isNullOrEmpty()){
                                         this.send(
                                             Message(
                                                 MessageType.MESSAGE,
@@ -101,6 +99,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                             ).textFrame()
                                         )
                                     }
+                                    else this.send(Frame.Text(message))
 
                                 }
                                 MessageType.UNSUBSCRIBE -> {

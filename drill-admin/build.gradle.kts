@@ -55,6 +55,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.1")
     implementation("com.impetus.kundera.client:kundera-cassandra:3.13") {
         exclude(group = "io.netty")
+        exclude(group = "cglib")
     }
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
