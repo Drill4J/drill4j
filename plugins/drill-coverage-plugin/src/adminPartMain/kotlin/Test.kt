@@ -1,10 +1,12 @@
+package com.epam.drill.plugins.coverage
+
 import javax.persistence.*
 
 @Entity
 @Table(name = "TEST")
 data class Test(
     @Id @Column(name = "TEST_ID")
-    val id: Long? = null,
+    val id: String? = null,
     @Column(name = "NAME")
     val testName: String? = null,
     @Column(name = "TYPE")

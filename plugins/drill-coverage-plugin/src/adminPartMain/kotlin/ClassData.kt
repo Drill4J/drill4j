@@ -1,3 +1,5 @@
+package com.epam.drill.plugins.coverage
+
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id

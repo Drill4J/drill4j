@@ -5,6 +5,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
+import com.epam.drill.plugins.coverage.dataclasses.TestType
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
@@ -89,6 +90,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
                 val probes = classesData.execData.stop()
+                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion,"testScope", probes))
                 val assocTestsMap = probes.flatMap { exData ->
                     val probeArray = exData.probes.toBooleanArray()
                     val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
@@ -214,6 +216,35 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             }
         }
         return ""
+    }
+
+    private fun getScope(buildVersion: String, scopeName: String, probes: Collection<ExDataTemp>): Scope {
+        var testsData = hashMapOf<String, MutableList<ClassData>>()
+        probes.forEach { execData ->
+            val classData = ClassData(
+                execData.id,
+                execData.className,
+                execData.probes
+            )
+            val dataList = testsData[execData.testName]
+            if(dataList.isNullOrEmpty()){
+                testsData[execData.testName!!] = mutableListOf(classData)
+            }
+            else dataList.add(classData)
+        }
+        val tests = testsData.map{(testName, classData) ->
+            Test(
+                "$buildVersion:$scopeName:$testName",
+                testName,
+                TestType.MANUAL.type,
+                classData)
+        }
+        return Scope(
+            "$buildVersion:$scopeName",
+            scopeName,
+            buildVersion,
+            tests
+        )
     }
 
     private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
