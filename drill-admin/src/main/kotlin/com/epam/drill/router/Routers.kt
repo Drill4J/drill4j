@@ -32,6 +32,12 @@ object Routes {
             data class TogglePlugin(val agentId: String, val pluginId: String)
         }
 
+
+
+        @Location("/agent/{agentId}")
+        data class UpdateAgentConfig(val agentId: String)
+
+
         @Location("/plugin-content/{pluginId}")
         data class PluginContent(val pluginId: String)
 

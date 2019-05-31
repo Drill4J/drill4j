@@ -1,13 +1,12 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.agentmanager.*
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.serverInstance
-import com.epam.drill.router.DevRoutes
 import com.epam.drill.router.Routes
 import com.google.gson.Gson
 import io.ktor.application.Application
@@ -39,7 +38,7 @@ import java.nio.channels.FileChannel
 @KtorExperimentalLocationsAPI
 class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
-    private val agentStorage: AgentStorage by instance()
+    private val agentManager: AgentManager by instance()
     private val plugins: Plugins by kodein.instance()
 
     @Serializable
@@ -58,7 +57,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerAgent() {
         authenticate {
             patch<Routes.Api.Agent.Agent> { config ->
-                agentStorage[config.agentId]?.send(
+                agentManager[config.agentId]?.send(
                     Frame.Text(
                         Gson().toJson(
                             Message(
@@ -69,14 +68,14 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                         )
                     )
                 )
-                call.respond { if (agentStorage.byId(config.agentId) != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
+                call.respond { if (agentManager.byId(config.agentId) != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
             }
         }
 
         authenticate {
             post<Routes.Api.Agent.UnloadPlugin> { up ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent = agentStorage[up.agentId]
+                val drillAgent = agentManager[up.agentId]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${up.agentId}'")
                     return@post
@@ -96,7 +95,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         authenticate {
             post<Routes.Api.Agent.LoadPlugin> { lp ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent = agentStorage[lp.agentId]
+                val drillAgent = agentManager[lp.agentId]
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${lp.agentId}'")
                     return@post
@@ -140,13 +139,13 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
         authenticate {
             get<Routes.Api.Agent.Agent> { up ->
-                call.respond(agentStorage.byId(up.agentId) ?: "can't find")
+                call.respond(agentManager.byId(up.agentId) ?: "can't find")
             }
         }
 
         authenticate {
             post<Routes.Api.Agent.AgentToggleStandby> { agent ->
-                agentStorage[agent.agentId]
+                agentManager[agent.agentId]
                     ?.send(
                         agentWsMessage("agent/toggleStandBy", agent.agentId)
                     )
@@ -162,21 +161,6 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         authenticate {
             get<Routes.Api.AllPlugins> {
                 call.respond(plugins.plugins.values.map { dp -> dp.serverInstance.id })
-            }
-        }
-    }
-
-    /**
-     * drill-admin-dev
-     */
-    private fun Routing.registerDevDrillAdmin() {
-        authenticate {
-            get<DevRoutes.Api.Agent.Agents> {
-                call.respond(agentStorage.keys.toAgentInfosWebSocket())
-            }
-
-            get<DevRoutes.Api.Agent.AgentInfo> {agent ->
-                call.respond(agentStorage.byId(agent.agentId)?.toAgentInfoWebSocket() ?: HttpStatusCode.NotFound)
             }
         }
     }

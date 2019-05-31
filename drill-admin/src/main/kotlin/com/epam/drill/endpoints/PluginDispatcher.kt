@@ -1,9 +1,6 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.agentmanager.byId
-import com.epam.drill.agentmanager.get
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.Plugins
@@ -20,6 +17,7 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -30,7 +28,7 @@ import java.util.*
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val plugins: Plugins by instance()
-    private val agentStorage: AgentStorage by instance()
+    private val agentManager: AgentManager by instance()
 
     suspend fun processPluginData(pluginData: String, agentInfo: AgentInfo) {
         val message: SeqMessage = parseRequest(pluginData)
@@ -49,11 +47,11 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
                     val message = call.receive<String>()
                     val pluginId = Gson().fromJson<PluginBean>(message, PluginBean::class.java).id
-                    agentStorage[ll.agentId]
+                    agentManager[ll.agentId]
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
-                    val pluginBean = agentStorage.byId(ll.agentId)?.rawPluginNames?.first { it.id == pluginId }
+                    val pluginBean = agentManager.byId(ll.agentId)?.rawPluginNames?.first { it.id == pluginId }
                     call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
                 }
             }
@@ -61,7 +59,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 post<Routes.Api.Agent.PluginAction> { ll ->
                     val message = call.receive<String>()
 
-                    agentStorage[ll.agentId]
+                    agentManager[ll.agentId]
                         ?.send(
                             agentWsMessage("/plugins/action", message)
                         )
@@ -69,9 +67,24 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 }
             }
 
+
+            //todo move it to another place
+            authenticate {
+                post<Routes.Api.UpdateAgentConfig> { ll ->
+                    val agentId = ll.agentId
+                    if (agentManager[agentId] != null) {
+                        val au = Json.parse(AgentUpdate.serializer(), call.receive())
+                        agentManager.updateAgent(agentId, au)
+                        call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
+                    }
+                }
+            }
+
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentStorage[ll.agentId]
+                    agentManager[ll.agentId]
                         ?.send(
                             agentWsMessage("/plugins/togglePlugin", ll.pluginId)
                         )

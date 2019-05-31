@@ -5,16 +5,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AgentInfo(
     val id: String,
-    val name: String,
-    val groupName: String,
-    val description: String,
+    var name: String,
+    var groupName: String,
+    var description: String,
     var isEnable: Boolean,
-    val buildVersion: String,
+    var buildVersion: String,
 
     val adminUrl: String = "",
     var ipAddress: String = "",
-    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
-    var additionalInfo: AgentAdditionalInfo? = null
+    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
 
 ) {
     override fun equals(other: Any?): Boolean {

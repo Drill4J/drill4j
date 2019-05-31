@@ -34,6 +34,6 @@ private fun calculateInstalledAgentsCount(id: String, agents: Set<AgentInfo>?) :
     if (agents == null || agents.isEmpty()) {
         return 0
     } else {
-        return agents.count {plugins -> plugins.rawPluginNames.count{plugin -> plugin.id == id} > 0}
+        return agents.count {plugins -> plugins.rawPluginNames!!.count{plugin -> plugin.id == id} > 0}
     }
 }

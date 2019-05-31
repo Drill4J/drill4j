@@ -2,8 +2,6 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.agentmanager.self
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
@@ -21,11 +19,9 @@ import io.ktor.routing.routing
 import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
-import org.bson.BsonMaximumSizeExceededException
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import org.litote.kmongo.deleteMany
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -38,7 +34,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val mc: MongoClient by instance()
     private val cc: CassandraConnector by instance()
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
-    private val agentStorage: AgentStorage by instance()
+    private val agentManager: AgentManager by instance()
 
     override fun getPlWsSession(): Set<String> {
         return sessionStorage.keys
@@ -62,7 +58,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         }
     }
 
-    fun storeData(agentId: String, obj: Any){
+    override fun storeData(agentId: String, obj: Any) {
         val cm = cc.addEntityManager(agentId)
         cm.persist(obj)
     }
@@ -85,12 +81,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     val buildVersion = subscribeInfo.buildVersion
 
                                     val cm = cc.addEntityManager(subscribeInfo.agentId)
-                                    val message = cm.find(JsonMessage::class.java,
+                                    val message = cm.find(
+                                        JsonMessage::class.java,
                                         event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                            (agentStorage.self(subscribeInfo.agentId))?.buildVersion
-                                        } else buildVersion)).message
+                                            (agentManager.self(subscribeInfo.agentId))?.buildVersion
+                                        } else buildVersion)
+                                    ).message
 
-                                    if(message.isNullOrEmpty()){
+                                    if (message.isNullOrEmpty()) {
                                         this.send(
                                             Message(
                                                 MessageType.MESSAGE,
@@ -98,8 +96,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                                 ""
                                             ).textFrame()
                                         )
-                                    }
-                                    else this.send(Frame.Text(message))
+                                    } else this.send(Frame.Text(message))
 
                                 }
                                 MessageType.UNSUBSCRIBE -> {

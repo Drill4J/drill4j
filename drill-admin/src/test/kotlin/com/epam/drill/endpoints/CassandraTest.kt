@@ -1,17 +1,17 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.dataclasses.AgentBuildVersion
-import com.epam.drill.plugins.coverage.dataclasses.RawClassData
-import com.epam.drill.plugins.coverage.dataclasses.RawScope
-import com.epam.drill.plugins.coverage.dataclasses.RawTest
-import com.epam.drill.plugins.coverage.dataclasses.TestType
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.Family
+import com.epam.drill.common.PluginBeanDb
 import com.impetus.client.cassandra.common.CassandraConstants
-import org.junit.*
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.Test
 import java.util.*
 import javax.persistence.EntityManager
 import javax.persistence.EntityManagerFactory
 import javax.persistence.Persistence
-import javax.persistence.criteria.CriteriaQuery
 
 class CassandraTest {
     companion object {
@@ -50,6 +50,32 @@ class CassandraTest {
 
     @Test
     fun cassandraCRUD() {
+        val agentInfo = AgentInfoDb(
+            id = "xx",
+            name = "???",
+            groupName = "???",
+            description = "???",
+            ipAddress = "???",
+            buildVersion = "???",
+            isEnable = true,
+            adminUrl = "",
+            rawPluginNames = mutableSetOf(
+                PluginBeanDb(
+                    id = "x",
+                    name = "",
+                    description = "",
+                    type = "",
+                    family = Family.INSTRUMENTATION,
+                    enabled = true,
+                    config = ""
+                )
+            )
+        )
+        em!!.persist(agentInfo)
+        println()
+        val find = em!!.find(AgentInfoDb::class.java, "xx")
+        println(find)
+
         /*val elements = Scope(
             id = 666,
             name = "scopeName"
@@ -60,7 +86,6 @@ class CassandraTest {
             scopes = arrayListOf(elements)
         )
 
-        em!!.persist(build)
 
 
 
@@ -72,30 +97,30 @@ class CassandraTest {
 //        Assert.assertEquals("dev", person.personName)
     }
 
-   /* @Test
-    fun cassandraCast() {
-        val buildVersion = AgentBuildVersion("bbb", "aaa")
-        em!!.persist(buildVersion)
-        val q = em!!.createQuery("Select a from AgentBuildVersion a")
-        val results = q.getResultList()
-        val versions = results as List<AgentBuildVersion>
-        println(versions.stringify())
-        Assert.assertEquals(listOf(buildVersion), versions)
-    }
+    /* @Test
+     fun cassandraCast() {
+         val buildVersion = AgentBuildVersion("bbb", "aaa")
+         em!!.persist(buildVersion)
+         val q = em!!.createQuery("Select a from AgentBuildVersion a")
+         val results = q.getResultList()
+         val versions = results as List<AgentBuildVersion>
+         println(versions.stringify())
+         Assert.assertEquals(listOf(buildVersion), versions)
+     }
 
-    @Test
-    fun anyListConversion(){
-        //create raw object
-        val rawData = RawClassData(3452345, "awesomeClass", listOf(true, false))
-        val rawTest = RawTest(3425,"awesomeTest", TestType.AUTO.type, listOf(rawData))
-        val rawScope = RawScope(3453,"awesomeScope", "3.2.1", listOf(rawTest))
-        val scope: Scope = convert(rawScope)
-        em!!.persist(scope)
+     @Test
+     fun anyListConversion(){
+         //create raw object
+         val rawData = RawClassData(3452345, "awesomeClass", listOf(true, false))
+         val rawTest = RawTest(3425,"awesomeTest", TestType.AUTO.type, listOf(rawData))
+         val rawScope = RawScope(3453,"awesomeScope", "3.2.1", listOf(rawTest))
+         val scope: Scope = convert(rawScope)
+         em!!.persist(scope)
 
 
-        val results = em!!.createQuery("Select s from Scope s").resultList
-        val scopes = results as List<Scope>
-        println(scopes.stringify())
-    }*/
+         val results = em!!.createQuery("Select s from Scope s").resultList
+         val scopes = results as List<Scope>
+         println(scopes.stringify())
+     }*/
 }
 

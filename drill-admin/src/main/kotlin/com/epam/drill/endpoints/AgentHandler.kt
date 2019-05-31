@@ -2,7 +2,6 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.common.AgentIdParam
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
@@ -13,7 +12,6 @@ import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.storage.CassandraConnector
-import com.epam.drill.storage.MongoClient
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -24,16 +22,14 @@ import kotlinx.serialization.cbor.Cbor
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import org.litote.kmongo.getCollection
 import org.slf4j.LoggerFactory
 
 class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val cc: CassandraConnector by instance()
-    private val agentStorage: AgentStorage by instance()
+    private val agentManager: AgentManager by instance()
     private val pd: PluginDispatcher by kodein.instance()
     private val plugins: Plugins by kodein.instance()
-    private val agentManager: AgentManager by kodein.instance()
 
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
@@ -41,9 +37,10 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
         app.routing {
             webSocket("/agent/attach") {
                 val agentId = call.request.headers[AgentIdParam]!!
+
                 val agentInfo = agentManager.agentConfiguration(agentId)
                 agentInfo.ipAddress = call.request.local.remoteHost
-                agentStorage.put(agentInfo, this)
+                agentManager.put(agentInfo, this)
 
                 val cm = cc.addEntityManager(agentInfo.id)
                 val buildVersion = AgentBuildVersion(agentInfo.buildVersion, agentInfo.name)
@@ -92,7 +89,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     agLog.debug(message.message)
                                     pd.processPluginData(message.message, agentInfo)
                                 }
-                                MessageType.DEBUG->{
+                                MessageType.DEBUG -> {
 //                                    send(frame)
                                 }
                                 else -> {
@@ -107,7 +104,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                     ex.printStackTrace()
                 } finally {
                     agLog.error("agentDisconnected!")
-                    agentStorage.remove(agentInfo)
+                    agentManager.remove(agentInfo)
                 }
 
             }

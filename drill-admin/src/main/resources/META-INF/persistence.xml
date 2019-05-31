@@ -6,11 +6,13 @@
 
     <persistence-unit name="cassandra_pu">
         <provider>com.impetus.kundera.KunderaPersistence</provider>
+<!--        <jar-file></jar-file>-->
+        <class>com.epam.drill.common.AgentInfo</class>
         <properties>
             <property name="kundera.nodes" value="localhost"/>
             <property name="kundera.port" value="9160"/>
             <property name="kundera.dialect" value="cassandra"/>
-            <property name="kundera.ddl.auto.prepare" value="create"/>
+<!--            <property name="kundera.ddl.auto.prepare" value="create"/>-->
             <property name="kundera.client.lookup.class"
                       value="com.impetus.client.cassandra.thrift.ThriftClientFactory"/>
         </properties>

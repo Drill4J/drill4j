@@ -1,17 +1,13 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.DrillPluginFile
-import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.core.plugin.pluginConfigById
 import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
-import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.UnloadReason
-import com.epam.drill.plugin.storage
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import kotlinx.serialization.DeserializationStrategy
@@ -80,10 +76,10 @@ fun topicRegister() =
 
         }
 
-        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
-            topicLogger.error { "updateAgentConfig event: Info is $info" }
+//        topic("/agent/updateAgentConfig").withGenericTopic(AgentInfo.serializer()) { info ->
+//            topicLogger.error { "updateAgentConfig event: Info is $info" }
 //            agentInfo = info
-        }
+//        }
 
         topic("agent/toggleStandBy").rawMessage {
             topicLogger.warn { "toggleStandBy event" }
@@ -94,15 +90,15 @@ fun topicRegister() =
         }
     }
 
-suspend fun toggleStandby(agentInfo: AgentInfo) {
-    val toggle: (AgentPart<*, *>) -> Unit =
-        if (agentInfo.isEnable) { plugin -> PluginManager[plugin.id]?.off() } else { x -> PluginManager[x.id]?.on() }
-
-    storage.forEach {
-        if (pluginConfigById(it.value.id).enabled)
-            toggle(it.value)
-    }
-}
+//suspend fun toggleStandby(agentInfo: AgentInfo) {
+//    val toggle: (AgentPart<*, *>) -> Unit =
+//        if (agentInfo.isEnable) { plugin -> PluginManager[plugin.id]?.off() } else { x -> PluginManager[x.id]?.on() }
+//
+//    storage.forEach {
+//        if (pluginConfigById(it.value.id).enabled)
+//            toggle(it.value)
+//    }
+//}
 
 
 @ThreadLocal

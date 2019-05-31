@@ -50,17 +50,17 @@ class AgentInfoWebSocketSingle(
 )
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
-    id = id,
-    name = name,
-    description = description,
-    group = groupName,
-    status = isEnable,
-    buildVersion = buildVersion,
-    adminUrl = adminUrl,
-    ipAddress = ipAddress,
-    activePluginsCount = rawPluginNames.activePluginsCount(),
-    pluginsCount = rawPluginNames.size,
-    rawPluginsName = rawPluginNames.toPluginsWebSocket()
+    id = id!!,
+    name = name!!,
+    description = description!!,
+    group = groupName!!,
+    status = isEnable!!,
+    buildVersion = buildVersion!!,
+    adminUrl = adminUrl!!,
+    ipAddress = ipAddress!!,
+    activePluginsCount = rawPluginNames!!.activePluginsCount(),
+    pluginsCount = rawPluginNames!!.size,
+    rawPluginsName = rawPluginNames!!.toPluginsWebSocket()
 )
 
 fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
@@ -68,16 +68,16 @@ fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }
 fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
     it.run {
         AgentInfoWebSocket(
-            id = id.take(20),
-            name = name,
-            description = description.take(200),
-            group = groupName,
-            status = isEnable,
-            buildVersion = buildVersion,
-            adminUrl = adminUrl,
-            ipAddress = ipAddress,
-            activePluginsCount = rawPluginNames.activePluginsCount(),
-            pluginsCount = rawPluginNames.size
+            id = id!!.take(20),
+            name = name!!,
+            description = description!!.take(200),
+            group = groupName!!,
+            status = isEnable!!,
+            buildVersion = buildVersion!!,
+            adminUrl = adminUrl!!,
+            ipAddress = ipAddress!!,
+            activePluginsCount = rawPluginNames!!.activePluginsCount(),
+            pluginsCount = rawPluginNames!!.size
         )
     }
 }
