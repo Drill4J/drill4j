@@ -3,11 +3,13 @@ package com.epam.drill.endpoints
 import com.epam.drill.common.AgentInfoDb
 import com.epam.drill.common.Family
 import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.endpoints.ClassData
+import com.epam.drill.endpoints.Scope
+import com.epam.drill.endpoints.Test
 import com.impetus.client.cassandra.common.CassandraConstants
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
-import org.junit.Test
 import java.util.*
 import javax.persistence.EntityManager
 import javax.persistence.EntityManagerFactory
@@ -25,7 +27,7 @@ class CassandraTest {
         @Throws(Exception::class)
         fun SetUpBeforeClass() {
             val props = HashMap<String, String>()
-            props["kundera.keyspace"] = "Agent1"
+            props["kundera.keyspace"] = "ss"
             props[CassandraConstants.CQL_VERSION] = CassandraConstants.CQL_VERSION_3_0
             emf = Persistence.createEntityManagerFactory(PU, props)
         }
@@ -48,7 +50,7 @@ class CassandraTest {
         em = emf!!.createEntityManager()
     }
 
-    @Test
+    @org.junit.Test
     fun cassandraCRUD() {
         val agentInfo = AgentInfoDb(
             id = "xx",
@@ -97,6 +99,94 @@ class CassandraTest {
 //        Assert.assertEquals("dev", person.personName)
     }
 
+    @org.junit.Test
+    fun gfdg(){
+        val scope1 = Scope(
+            "dsgsdg",
+        "sdgsdg",
+            "sdgdsgds",
+            mutableListOf(
+                Test(
+                "dgerg",
+                "dgsdg",
+                    1,
+                    mutableListOf(ClassData(
+                        4576457457,
+                        "gsergwe",
+                        mutableListOf(true,false,true)
+
+                    ))
+
+            )
+            )
+        )
+
+        val scope2 = Scope(
+            "dsgsdg",
+            "sdgsdg",
+            "sdgdsgds",
+            mutableListOf(
+                Test(
+                    "dg77erg",
+                    "dg3456sdg",
+                    1,
+                    mutableListOf(ClassData(
+                        45764534567457,
+                        "gserg356we",
+                        mutableListOf(true,false,true)
+
+                    ))
+
+                )
+            )
+        )
+
+        val scope3 = Scope(
+            "dsgsdg",
+            "sdgsdg",
+            "sdgdsgds",
+            mutableListOf(
+                Test(
+                    "dge546rg",
+                    "dgs3456dg",
+                    1,
+                    mutableListOf(ClassData(
+                        4576457457,
+                        "gsergwe",
+                        mutableListOf(true,false,true)
+
+                    ))
+
+                )
+            )
+        )
+
+        val scope4 = Scope(
+            "dsgsdg",
+            "sdgsdg",
+            "sdgdsgds",
+            mutableListOf(
+                Test(
+                    "dger5g",
+                    "dgs456dg",
+                    1,
+                    mutableListOf(ClassData(
+                        4576457457,
+                        "gsergwe",
+                        mutableListOf(true,false,true)
+
+                    ))
+
+                )
+            )
+        )
+
+        em!!.persist(scope1)
+        em!!.persist(scope2)
+        em!!.persist(scope3)
+        em!!.persist(scope4)
+    }
+
     /* @Test
      fun cassandraCast() {
          val buildVersion = AgentBuildVersion("bbb", "aaa")
@@ -105,15 +195,15 @@ class CassandraTest {
          val results = q.getResultList()
          val versions = results as List<AgentBuildVersion>
          println(versions.stringify())
-         Assert.assertEquals(listOf(buildVersion), versions)
+         Assert.assertEquals(mutableListOf(buildVersion), versions)
      }
 
      @Test
      fun anyListConversion(){
          //create raw object
-         val rawData = RawClassData(3452345, "awesomeClass", listOf(true, false))
-         val rawTest = RawTest(3425,"awesomeTest", TestType.AUTO.type, listOf(rawData))
-         val rawScope = RawScope(3453,"awesomeScope", "3.2.1", listOf(rawTest))
+         val rawData = RawClassData(3452345, "awesomeClass", mutableListOf(true, false))
+         val rawTest = RawTest(3425,"awesomeTest", TestType.AUTO.type, mutableListOf(rawData))
+         val rawScope = RawScope(3453,"awesomeScope", "3.2.1", mutableListOf(rawTest))
          val scope: Scope = convert(rawScope)
          em!!.persist(scope)
 

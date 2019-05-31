@@ -9,6 +9,9 @@
 <!--        <jar-file></jar-file>-->
         <class>com.epam.drill.common.AgentInfoDb</class>
         <class>com.epam.drill.common.PluginBeanDb</class>
+        <class>com.epam.drill.endpoints.Scope</class>
+        <class>com.epam.drill.endpoints.Test</class>
+        <class>com.epam.drill.endpoints.ClassData</class>
         <class>com.epam.drill.plugins.coverage.Scope</class>
         <class>com.epam.drill.plugins.coverage.Test</class>
         <class>com.epam.drill.plugins.coverage.ClassData</class>

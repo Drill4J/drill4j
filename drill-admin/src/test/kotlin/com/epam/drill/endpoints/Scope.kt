@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.coverage
+package com.epam.drill.endpoints
 
 import javax.persistence.*
 
