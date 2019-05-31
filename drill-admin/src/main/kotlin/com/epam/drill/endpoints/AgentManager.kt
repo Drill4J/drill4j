@@ -1,10 +1,8 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.merge
-import com.epam.drill.common.toAgentInfo
+import com.epam.drill.agentmanager.self
+import com.epam.drill.common.*
 import com.epam.drill.storage.CassandraConnector
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.serialization.Serializable
@@ -30,7 +28,15 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 buildVersion = "???",
                 isEnable = true,
                 adminUrl = "",
-                rawPluginNames = mutableSetOf()
+                rawPluginNames = mutableSetOf(PluginBeanDb(
+                    id = "coverage",
+                    name = "AwesomeCoveragePlugin",
+                    description = "This is the awesome custom plugin",
+                    type = "Custom",
+                    family = Family.INSTRUMENTATION,
+                    enabled = true,
+                    config = "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+            ))
             ).apply {
                 cc.getEntityManagerByKeyspace(agentId).persist(this)
             }.toAgentInfo()
@@ -64,7 +70,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     operator fun get(k: String) = agentStorage.targetMap[k]?.second
 
-    fun self(k: String) = agentStorage.targetMap[k]?.first
+    fun self(k: String) = agentStorage.self(k)
 
     fun byId(agentId: String) = agentStorage.targetMap[agentId]?.first
 

@@ -12,7 +12,6 @@ import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
 import com.epam.drill.storage.CassandraConnector
-import com.epam.drill.storage.MongoClient
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -48,7 +47,6 @@ import java.time.Duration
 
 val storage = Kodein.Module(name = "agentStorage") {
     bind<ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>() }
-    bind<MongoClient>() with singleton { MongoClient(kodein) }
     bind<CassandraConnector>() with singleton { CassandraConnector(kodein) }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }

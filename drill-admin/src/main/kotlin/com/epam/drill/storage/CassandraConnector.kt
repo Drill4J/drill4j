@@ -1,5 +1,6 @@
 package com.epam.drill.storage
 
+import com.impetus.client.cassandra.common.CassandraConstants
 import io.ktor.application.Application
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -17,6 +18,7 @@ class CassandraConnector(override val kodein: Kodein) : KodeinAware {
         if (res == null) {
             val params = HashMap<String, String>()
             params["kundera.keyspace"] = keyspace
+            params[CassandraConstants.CQL_VERSION] = CassandraConstants.CQL_VERSION_3_0
             println(keyspace)
 
             val em = Persistence.createEntityManagerFactory("cassandra_pu", params).createEntityManager()

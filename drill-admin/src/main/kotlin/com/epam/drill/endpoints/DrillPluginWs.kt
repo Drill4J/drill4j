@@ -8,7 +8,6 @@ import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.storage.CassandraConnector
-import com.epam.drill.storage.MongoClient
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.CloseReason
@@ -31,7 +30,6 @@ import java.util.concurrent.ConcurrentMap
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val logger = LoggerFactory.getLogger(DrillPluginWs::class.java)
     private val app: Application by instance()
-    private val mc: MongoClient by instance()
     private val cc: CassandraConnector by instance()
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
     private val agentManager: AgentManager by instance()
@@ -47,6 +45,8 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         val message = JsonMessage(destination + ":" + agentInfo.buildVersion, messageForSend)
         cm.persist(message)
 
+        println("PLUGIN MEASSAGE: $messageForSend")
+
         sessionStorage[destination]?.let { sessionSet ->
             for (session in sessionSet) {
                 try {
@@ -61,6 +61,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     override fun storeData(agentId: String, obj: Any) {
         val cm = cc.addEntityManager(agentId)
         cm.persist(obj)
+    }
+
+    override fun getEntityBy(agentId: String, clazz: Class<Any>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     init {
@@ -84,7 +89,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     val message = cm.find(
                                         JsonMessage::class.java,
                                         event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                            (agentManager.self(subscribeInfo.agentId))?.buildVersion
+                                            (agentManager.self(subscribeInfo.agentId))//?.buildVersion
                                         } else buildVersion)
                                     ).message
 

@@ -12,6 +12,7 @@ import kotlinx.serialization.list
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
+import java.lang.Exception
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
@@ -90,7 +91,6 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
                 val probes = classesData.execData.stop()
-                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion,"testScope", probes))
                 val assocTestsMap = probes.flatMap { exData ->
                     val probeArray = exData.probes.toBooleanArray()
                     val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
@@ -213,6 +213,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     "/tests-usages",
                     Json.stringify(TestUsagesInfo.serializer().list, testUsages)
                 )
+                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion,"testScope", probes))
             }
         }
         return ""

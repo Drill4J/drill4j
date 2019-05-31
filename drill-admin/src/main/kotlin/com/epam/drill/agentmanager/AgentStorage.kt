@@ -16,7 +16,10 @@ operator fun AgentStorage.get(k: String): DefaultWebSocketSession? {
     return defaultWebSocketSession?.second
 }
 
-//fun AgentStorage.self(k: String) = this.keys.find { it.id == k }
+fun AgentStorage.self(k: String): String? {
+    val find = this.keys.find { it == k }
+    return find
+}
 
 fun AgentStorage.byId(agentId: String) = this.targetMap[agentId]?.first
 
