@@ -4,6 +4,7 @@ import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginBeans
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.dataclasses.JsonMessages
+import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -17,7 +18,8 @@ import org.junit.Test
 class ExposeTest {
     @Test
     fun test() {
-        val connect = Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
+        val connect = Database.connect("jdbc:postgresql://localhost:5432/drill_base", driver = "org.postgresql.Driver",
+            user = "postgres", password = "password")
         transaction(connect) {
             addLogger(StdOutSqlLogger)
             SchemaUtils.create(PluginBeans, AgentInfos, JsonMessages)

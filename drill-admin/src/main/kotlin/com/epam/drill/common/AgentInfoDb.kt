@@ -5,16 +5,13 @@ import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IdTable
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.UUIDTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 import java.util.*
 
 object AgentInfos : IdTable<String>() {
-    override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId()
+    override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
     val name = varchar("name", length = 50)
     val groupName = varchar("group_name", length = 50)
     val description = varchar("description", length = 50)
@@ -46,8 +43,11 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
 }
 
 
-object PluginBeans : UUIDTable() {
-    var pluginId = varchar("plugin_id", length = 50).primaryKey()
+object PluginBeans : IdTable<String>() {
+    override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().clientDefault {
+        UUID.randomUUID().toString()
+    }.entityId().uniqueIndex()
+    var pluginId = varchar("plugin_id", length = 50)
     var name = varchar("name", length = 50)
     var description = varchar("description", length = 50)
     var type = varchar("type", length = 15)
@@ -56,8 +56,8 @@ object PluginBeans : UUIDTable() {
     var config = varchar("config", length = 2000)
 }
 
-class PluginBeanDb(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<PluginBeanDb>(PluginBeans)
+class PluginBeanDb(id: EntityID<String>) : Entity<String>(id) {
+    companion object : EntityClass<String, PluginBeanDb>(PluginBeans)
 
     var pluginId by PluginBeans.pluginId
     var name by PluginBeans.name

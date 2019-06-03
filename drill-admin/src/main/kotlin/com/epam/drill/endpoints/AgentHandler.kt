@@ -2,15 +2,7 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.AgentIdParam
-import com.epam.drill.common.AgentInfos
-import com.epam.drill.common.ConnectedTable
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NeedSyncParam
-import com.epam.drill.common.PluginBeans
-import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.dataclasses.AgentBuildVersions
 import com.epam.drill.dataclasses.JsonMessages
@@ -42,7 +34,10 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
     init {
-        Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
+        Database.connect(
+            "jdbc:postgresql://localhost:5432/drill_base", driver = "org.postgresql.Driver",
+            user = "postgres", password = "password"
+        )
         transaction {
             addLogger(StdOutSqlLogger)
             SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)
@@ -58,7 +53,9 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
 
                 transaction {
                     addLogger(StdOutSqlLogger)
-                    AgentBuildVersion.new(agentInfo.buildVersion) {
+                    AgentBuildVersion.findById(agentInfo.buildVersion)?.apply {
+                        name = agentInfo.name
+                    } ?: AgentBuildVersion.new(agentInfo.buildVersion) {
                         name = agentInfo.name
                     }
                 }
