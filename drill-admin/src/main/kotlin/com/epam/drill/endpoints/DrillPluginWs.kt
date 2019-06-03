@@ -44,11 +44,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         val messageForSend = Gson().toJson(Message(MessageType.MESSAGE, destination, message))
 
+        val id = destination + ":" + agentInfo.buildVersion
         transaction {
             addLogger(StdOutSqlLogger)
-            JsonMessage.new(destination + ":" + agentInfo.buildVersion) {
-                this.message = messageForSend
-            }
+            JsonMessage.findById(id)
+                ?.apply { this.message = messageForSend }
+                ?: JsonMessage.new(id) {
+                    this.message = messageForSend
+                }
 
         }
         println("PLUGIN MEASSAGE: $messageForSend")

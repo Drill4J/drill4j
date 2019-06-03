@@ -53,14 +53,11 @@ dependencies {
     implementation("io.ktor:ktor-websockets:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:1.2.1")
-    implementation("com.impetus.kundera.client:kundera-cassandra:3.13") {
-        exclude(group = "io.netty")
-        exclude(group = "cglib")
-    }
     implementation("org.jetbrains.exposed:exposed:0.13.7")
     implementation("org.postgresql:postgresql:42.2.2")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
+    testImplementation("com.zaxxer:HikariCP:2.7.8")
 }
 
 jib {
