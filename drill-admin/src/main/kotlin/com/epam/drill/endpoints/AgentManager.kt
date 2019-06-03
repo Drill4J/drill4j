@@ -47,7 +47,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     }
                     rawPluginNames = SizedCollection(elements)
                 }
-            }.toAgentInfo()
+                    .toAgentInfo()
+            }
 
         }
 

@@ -6,6 +6,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
+import com.epam.drill.dataclasses.JsonMessages
 import com.epam.drill.plugin.api.end.WsService
 import com.google.gson.Gson
 import io.ktor.application.Application
@@ -19,6 +20,7 @@ import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -90,12 +92,15 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
 
                                     val message = transaction {
-                                        JsonMessage.findById(
-                                            event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                                (agentManager.self(subscribeInfo.agentId))//?.buildVersion
-                                            } else buildVersion)
-                                        )
-                                    }?.message
+                                        val map = JsonMessages.select {
+                                            JsonMessages.id.eq(
+                                                event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
+                                                    (agentManager.self(subscribeInfo.agentId))//?.buildVersion
+                                                } else buildVersion)
+                                            )
+                                        }.map { it[JsonMessages.message] }.firstOrNull()
+                                        map
+                                    }
 
                                     if (message.isNullOrEmpty()) {
                                         this.send(
