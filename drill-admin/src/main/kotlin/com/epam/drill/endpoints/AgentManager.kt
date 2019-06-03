@@ -2,54 +2,65 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.self
-import com.epam.drill.common.*
-import com.epam.drill.storage.CassandraConnector
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.Family
+import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.common.merge
+import com.epam.drill.common.toAgentInfo
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.SizedCollection
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
 
 class AgentManager(override val kodein: Kodein) : KodeinAware {
-    private val cc: CassandraConnector by instance()
     val agentStorage: AgentStorage by instance()
 
     fun agentConfiguration(agentId: String): AgentInfo {
-        val agentInfo = cc.addEntityManager(agentId).find(AgentInfoDb::class.java, agentId)
+        val agentInfo = transaction { AgentInfoDb.findById(agentId) }
         if (agentInfo != null)
-            return agentInfo.toAgentInfo()
+            return transaction { agentInfo.toAgentInfo() }
         else {
-            return AgentInfoDb(
-                id = agentId,
-                name = "???",
-                groupName = "???",
-                description = "???",
-                ipAddress = "???",
-                buildVersion = "???",
-                isEnable = true,
-                adminUrl = "",
-                rawPluginNames = mutableSetOf(PluginBeanDb(
-                    id = "coverage",
-                    name = "AwesomeCoveragePlugin",
-                    description = "This is the awesome custom plugin",
-                    type = "Custom",
-                    family = Family.INSTRUMENTATION,
-                    enabled = true,
-                    config = "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
-            ))
-            ).apply {
-                cc.getEntityManagerByKeyspace(agentId).persist(this)
+            return transaction {
+                addLogger(StdOutSqlLogger)
+                AgentInfoDb.new(agentId) {
+                    name = "???"
+                    groupName = "???"
+                    description = "???"
+                    buildVersion = "???"
+                    isEnable = true
+                    adminUrl = ""
+                    val elements = PluginBeanDb.new {
+                        pluginId = "coverage"
+                        name = "AwesomeCoveragePlugin"
+                        description = "This is the awesome custom plugin"
+                        type = "Custom"
+                        family = Family.INSTRUMENTATION
+                        enabled = true
+                        config =
+                            "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+                    }
+                    rawPluginNames = SizedCollection(elements)
+                }
             }.toAgentInfo()
+
         }
 
     }
 
 
     suspend fun updateAgent(agentId: String, au: AgentUpdate) {
-        val manager = cc.addEntityManager(agentId)
-        val agentInfoDb = manager.find(AgentInfoDb::class.java, agentId)
-        agentInfoDb.merge(au)
-        manager.persist(agentInfoDb)
+        val agentInfoDb = transaction { AgentInfoDb.findById(agentId) }
+
+        transaction {
+            addLogger(StdOutSqlLogger)
+            agentInfoDb?.merge(au)
+        }
         val byId = byId(agentId)
         byId?.apply {
             name = au.name

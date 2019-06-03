@@ -57,6 +57,8 @@ dependencies {
         exclude(group = "io.netty")
         exclude(group = "cglib")
     }
+    implementation("org.jetbrains.exposed:exposed:0.13.7")
+    implementation("org.postgresql:postgresql:42.2.2")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
 }
@@ -83,7 +85,7 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
-    
+
     //TODO Only for backward compatibility, remove after CI/CD has been configured
     register("runDrillAdmin") {
         group = "application"

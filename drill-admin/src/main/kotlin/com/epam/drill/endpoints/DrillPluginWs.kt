@@ -7,7 +7,6 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.storage.CassandraConnector
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.CloseReason
@@ -18,6 +17,9 @@ import io.ktor.routing.routing
 import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -30,7 +32,6 @@ import java.util.concurrent.ConcurrentMap
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     private val logger = LoggerFactory.getLogger(DrillPluginWs::class.java)
     private val app: Application by instance()
-    private val cc: CassandraConnector by instance()
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
     private val agentManager: AgentManager by instance()
 
@@ -41,10 +42,13 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         val messageForSend = Gson().toJson(Message(MessageType.MESSAGE, destination, message))
 
-        val cm = cc.addEntityManager(agentInfo.id)
-        val message = JsonMessage(destination + ":" + agentInfo.buildVersion, messageForSend)
-        cm.persist(message)
+        transaction {
+            addLogger(StdOutSqlLogger)
+            JsonMessage.new(destination + ":" + agentInfo.buildVersion) {
+                this.message = messageForSend
+            }
 
+        }
         println("PLUGIN MEASSAGE: $messageForSend")
 
         sessionStorage[destination]?.let { sessionSet ->
@@ -59,8 +63,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     }
 
     override fun storeData(agentId: String, obj: Any) {
-        val cm = cc.addEntityManager(agentId)
-        cm.persist(obj)
+        //do nothing.
     }
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {
@@ -85,13 +88,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     saveSession(event)
                                     val buildVersion = subscribeInfo.buildVersion
 
-                                    val cm = cc.addEntityManager(subscribeInfo.agentId)
-                                    val message = cm.find(
-                                        JsonMessage::class.java,
-                                        event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                            (agentManager.self(subscribeInfo.agentId))//?.buildVersion
-                                        } else buildVersion)
-                                    ).message
+
+                                    val message = transaction {
+                                        JsonMessage.findById(
+                                            event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
+                                                (agentManager.self(subscribeInfo.agentId))//?.buildVersion
+                                            } else buildVersion)
+                                        )
+                                    }?.message
 
                                     if (message.isNullOrEmpty()) {
                                         this.send(

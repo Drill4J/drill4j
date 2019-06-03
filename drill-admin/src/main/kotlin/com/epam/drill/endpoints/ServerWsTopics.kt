@@ -8,10 +8,10 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.AgentBuildVersion
+import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
-import com.epam.drill.storage.CassandraConnector
 import io.ktor.application.Application
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.Kodein
@@ -24,7 +24,6 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
     private val agentManager: AgentManager by instance()
     private val plugins: Plugins by instance()
     private val app: Application by instance()
-    private val cc: CassandraConnector by instance()
     private val sessionStorage: MutableSet<DrillWsSession> by instance()
 
     init {
@@ -64,13 +63,12 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
                     agentManager.agentStorage.byId(agent.agentId)?.let { agInfo ->
-                        val cm = cc.addEntityManager(agInfo.id)
-                        val q = cm.createQuery("Select a from AgentBuildVersion a")
-                        val results = q.getResultList()
-                        val versions = results as List<AgentBuildVersion>
-                        println(versions.stringify())
-                        if (versions.isEmpty()) null
-                        else versions
+                        org.jetbrains.exposed.sql.transactions.transaction {
+                            val versions = AgentBuildVersion.all()
+                            println(versions.stringify())
+                            if (!versions.iterator().hasNext()) null
+                            else versions.map { it.toAgentBuildVersionJson() }.toList()
+                        }
                     }
                 }
 

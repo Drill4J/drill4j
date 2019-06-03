@@ -3,15 +3,19 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.common.AgentIdParam
+import com.epam.drill.common.AgentInfos
+import com.epam.drill.common.ConnectedTable
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.NeedSyncParam
+import com.epam.drill.common.PluginBeans
 import com.epam.drill.common.PluginMessage
 import com.epam.drill.dataclasses.AgentBuildVersion
+import com.epam.drill.dataclasses.AgentBuildVersions
+import com.epam.drill.dataclasses.JsonMessages
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.storage.CassandraConnector
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -19,6 +23,11 @@ import io.ktor.routing.routing
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -26,7 +35,6 @@ import org.slf4j.LoggerFactory
 
 class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
-    private val cc: CassandraConnector by instance()
     private val agentManager: AgentManager by instance()
     private val pd: PluginDispatcher by kodein.instance()
     private val plugins: Plugins by kodein.instance()
@@ -34,6 +42,12 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
     init {
+        Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
+        transaction {
+            addLogger(StdOutSqlLogger)
+            SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)
+        }
+
         app.routing {
             webSocket("/agent/attach") {
                 val agentId = call.request.headers[AgentIdParam]!!
@@ -42,9 +56,12 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 agentInfo.ipAddress = call.request.local.remoteHost
                 agentManager.put(agentInfo, this)
 
-                val cm = cc.addEntityManager(agentInfo.id)
-                val buildVersion = AgentBuildVersion(agentInfo.buildVersion, agentInfo.name)
-                cm.persist(buildVersion)
+                transaction {
+                    addLogger(StdOutSqlLogger)
+                    AgentBuildVersion.new(agentInfo.buildVersion) {
+                        name = agentInfo.name
+                    }
+                }
 
                 println("Agent registered")
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
