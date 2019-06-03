@@ -2,12 +2,16 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.*
+import com.epam.drill.common.AgentIdParam
+import com.epam.drill.common.DrillEvent
+import com.epam.drill.common.Message
+import com.epam.drill.common.MessageType
+import com.epam.drill.common.NeedSyncParam
+import com.epam.drill.common.PluginMessage
 import com.epam.drill.dataclasses.AgentBuildVersion
-import com.epam.drill.dataclasses.AgentBuildVersions
-import com.epam.drill.dataclasses.JsonMessages
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.service.asyncTransaction
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -15,11 +19,8 @@ import io.ktor.routing.routing
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -34,15 +35,6 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
     init {
-        Database.connect(
-            "jdbc:postgresql://localhost:5432/drill_base", driver = "org.postgresql.Driver",
-            user = "postgres", password = "password"
-        )
-        transaction {
-            addLogger(StdOutSqlLogger)
-            SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)
-        }
-
         app.routing {
             webSocket("/agent/attach") {
                 val agentId = call.request.headers[AgentIdParam]!!
@@ -51,7 +43,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 agentInfo.ipAddress = call.request.local.remoteHost
                 agentManager.put(agentInfo, this)
 
-                transaction {
+                asyncTransaction {
                     addLogger(StdOutSqlLogger)
                     AgentBuildVersion.findById(agentInfo.buildVersion)?.apply {
                         name = agentInfo.name

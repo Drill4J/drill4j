@@ -55,9 +55,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.1")
     implementation("org.jetbrains.exposed:exposed:0.13.7")
     implementation("org.postgresql:postgresql:9.4-1200-jdbc41")
+    implementation("com.zaxxer:HikariCP:2.7.8")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
-    testImplementation("com.zaxxer:HikariCP:2.7.8")
+
 }
 
 jib {

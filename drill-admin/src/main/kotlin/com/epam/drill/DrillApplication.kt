@@ -20,6 +20,7 @@ import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
+import com.epam.drill.service.DataSourceRegistry
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -54,6 +55,7 @@ import org.kodein.di.generic.singleton
 import java.time.Duration
 
 val storage = Kodein.Module(name = "agentStorage") {
+    bind<DataSourceRegistry>() with eagerSingleton { DataSourceRegistry() }
     bind<ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }

@@ -14,6 +14,7 @@ import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
 import io.ktor.application.Application
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -64,7 +65,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
                     agentManager.agentStorage.byId(agent.agentId)?.let { agInfo ->
-                        org.jetbrains.exposed.sql.transactions.transaction {
+                        transaction {
                             val versions = AgentBuildVersion.all()
                             println(versions.stringify())
                             if (!versions.iterator().hasNext()) null

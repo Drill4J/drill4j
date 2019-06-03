@@ -1,17 +1,20 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentInfoWebSocket
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.self
-import com.epam.drill.common.*
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.Family
+import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.common.merge
+import com.epam.drill.common.toAgentInfo
+import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -19,12 +22,15 @@ import org.kodein.di.generic.instance
 class AgentManager(override val kodein: Kodein) : KodeinAware {
     val agentStorage: AgentStorage by instance()
 
-    fun agentConfiguration(agentId: String): AgentInfo {
-        val agentInfo = transaction { AgentInfoDb.findById(agentId) }
+    suspend fun agentConfiguration(agentId: String): AgentInfo {
+        val agentInfo = asyncTransaction { AgentInfoDb.findById(agentId) }
         if (agentInfo != null)
-            return transaction { agentInfo.toAgentInfo() }
+            return asyncTransaction {
+                val toAgentInfo = agentInfo.toAgentInfo()
+                toAgentInfo
+            }
         else {
-            return transaction {
+            return asyncTransaction {
                 addLogger(StdOutSqlLogger)
                 AgentInfoDb.new(agentId) {
                     name = "???"
@@ -41,7 +47,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                         family = Family.INSTRUMENTATION
                         enabled = true
                         config =
-                                "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+                            "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
                     }
                     rawPluginNames = SizedCollection(elements)
                 }
@@ -54,9 +60,9 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
 
     suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
-        val agentInfoDb = transaction { AgentInfoDb.findById(agentId) }
+        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
 
-        transaction {
+        asyncTransaction {
             addLogger(StdOutSqlLogger)
             agentInfoDb?.merge(au)
         }

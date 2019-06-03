@@ -1,7 +1,6 @@
 version: '3'
 
 services:
-  # requires mongodb container named "drillmongodb" with network "drill4j-dev-network"
   drill-admin:
     build:
       context: ..
@@ -15,6 +14,8 @@ services:
       - isDocker=true
       - DRILL_HOME=/drill
     restart: always
+    depends_on:
+      - postgresdb
 
   postgresdb:
     image:

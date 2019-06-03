@@ -8,6 +8,7 @@ import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.dataclasses.JsonMessages
 import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.service.asyncTransaction
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.CloseReason
@@ -21,7 +22,6 @@ import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -45,7 +45,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         val messageForSend = Gson().toJson(Message(MessageType.MESSAGE, destination, message))
 
         val id = destination + ":" + agentInfo.buildVersion
-        transaction {
+        asyncTransaction {
             addLogger(StdOutSqlLogger)
             JsonMessage.findById(id)
                 ?.apply { this.message = messageForSend }
@@ -94,7 +94,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     val buildVersion = subscribeInfo.buildVersion
 
 
-                                    val message = transaction {
+                                    val message = asyncTransaction {
                                         val map = JsonMessages.select {
                                             JsonMessages.id.eq(
                                                 event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
