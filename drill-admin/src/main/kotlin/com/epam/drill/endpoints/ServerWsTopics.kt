@@ -36,6 +36,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                         destination
                     )
                 )
+
             }
             agentManager.agentStorage.onAdd += add(mutableSetOf()) { k, v ->
                 val destination = app.toLocation(WsRoutes.GetAgent(k))

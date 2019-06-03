@@ -68,6 +68,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             buildVersion = au.buildVersion
         }
         agentStorage.update()
+        agentStorage.singleUpdate(agentId)
+
     }
 
     suspend fun put(agentInfo: AgentInfo, session: DefaultWebSocketSession) {
