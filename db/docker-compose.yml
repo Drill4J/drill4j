@@ -1,0 +1,17 @@
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: drill_base
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    shm_size: '1gb'
+
+volumes:
+  postgres:

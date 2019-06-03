@@ -1,6 +1,8 @@
 package com.epam.drill.endpoints
 
 
+import com.epam.drill.agentmanager.AgentInfoWebSocket
+import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.Plugins
@@ -73,7 +75,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 post<Routes.Api.UpdateAgentConfig> { ll ->
                     val agentId = ll.agentId
                     if (agentManager[agentId] != null) {
-                        val au = Json.parse(AgentUpdate.serializer(), call.receive())
+                        val au = Json.parse(AgentInfoWebSocketSingle.serializer(), call.receive())
                         agentManager.updateAgent(agentId, au)
                         call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
                     } else {

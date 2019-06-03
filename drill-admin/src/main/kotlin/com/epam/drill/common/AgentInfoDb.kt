@@ -1,6 +1,9 @@
 package com.epam.drill.common
 
+import com.epam.drill.agentmanager.AgentInfoWebSocket
+import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.endpoints.AgentUpdate
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
@@ -84,9 +87,9 @@ fun AgentInfoDb.toAgentInfo() =
         rawPluginNames = this@toAgentInfo.rawPluginNames.map { it.toPluginBean() }.toMutableSet()
     )
 
-fun AgentInfoDb.merge(au: AgentUpdate) {
+fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
     this.name = au.name
-    this.groupName = au.groupName
+    this.groupName = au.group
     this.description = au.description
     this.buildVersion = au.buildVersion
 }

@@ -89,6 +89,17 @@ class ObservableMapStorage<K, V, R>(val targetMap: MutableMap<K, V> = HashMap())
 
     }
 
+    suspend fun singleUpdate(key: K) {
+        onAdd.forEach {
+            val first = it.first
+            val second = it.second
+            first {
+                second(key, targetMap[key]!!)
+            }
+        }
+
+    }
+
 }
 
 class ObservableContext<R> {
