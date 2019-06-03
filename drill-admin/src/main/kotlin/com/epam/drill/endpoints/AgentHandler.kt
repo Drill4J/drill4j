@@ -34,7 +34,10 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
     init {
-        Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
+        Database.connect(
+            "jdbc:postgresql://localhost:5432/drill_base", driver = "org.postgresql.Driver",
+            user = "postgres", password = "password"
+        )
         transaction {
             addLogger(StdOutSqlLogger)
             SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)

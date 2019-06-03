@@ -1,5 +1,7 @@
 package com.epam.drill.endpoints
 
+import com.epam.drill.agentmanager.AgentInfoWebSocket
+import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.self
 import com.epam.drill.common.*
@@ -51,7 +53,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    suspend fun updateAgent(agentId: String, au: AgentUpdate) {
+    suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
         val agentInfoDb = transaction { AgentInfoDb.findById(agentId) }
 
         transaction {
@@ -61,7 +63,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         val byId = byId(agentId)
         byId?.apply {
             name = au.name
-            groupName = au.groupName
+            groupName = au.group
             description = au.description
             buildVersion = au.buildVersion
         }
