@@ -1,5 +1,6 @@
 package com.epam.drill.agentmanager
 
+import com.epam.drill.common.AgentBuildVersionJson
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.PluginWebSocket
@@ -12,7 +13,7 @@ open class AgentInfoWebSocket(
     val id: String,
     val name: String,
     val description: String,
-    val group: String,
+    val group: String? = "",
     val status: Boolean = true,
     var buildVersion: String,
 
@@ -28,14 +29,15 @@ class AgentInfoWebSocketSingle(
     val id: String,
     val name: String,
     val description: String,
-    val group: String,
+    val group: String? = "",
     val status: Boolean = true,
     val buildVersion: String,
     val adminUrl: String = "",
     val ipAddress: String = "",
     val activePluginsCount: Int = 0,
     val pluginsCount: Int = 0,
-    val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf()
+    val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf(),
+    val buildVersions: MutableSet<AgentBuildVersionJson>
 )
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
@@ -49,7 +51,8 @@ fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     ipAddress = ipAddress,
     activePluginsCount = rawPluginNames.activePluginsCount(),
     pluginsCount = rawPluginNames.size,
-    rawPluginsName = rawPluginNames.toPluginsWebSocket()
+    rawPluginsName = rawPluginNames.toPluginsWebSocket(),
+    buildVersions = this.buildVersions
 )
 
 fun MutableSet<PluginBean>.activePluginsCount() = this.count { it.enabled }

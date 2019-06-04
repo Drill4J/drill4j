@@ -1,6 +1,5 @@
 package com.epam.drill.dataclasses
 
-import com.epam.drill.common.ConnectedTable.uniqueIndex
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IdTable

@@ -5,9 +5,9 @@ import com.epam.drill.agentmanager.byId
 import com.epam.drill.agentmanager.toAgentInfoWebSocket
 import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.toAllPluginsWebSocket
@@ -66,10 +66,9 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
                     agentManager.agentStorage.byId(agent.agentId)?.let { agInfo ->
                         transaction {
-                            val versions = AgentBuildVersion.all()
-                            println(versions.stringify())
-                            if (!versions.iterator().hasNext()) null
-                            else versions.map { it.toAgentBuildVersionJson() }.toList()
+                            AgentInfoDb.findById(agent.agentId)?.buildVersions?.map {
+                                it.toAgentBuildVersionJson()
+                            }?.toList()
                         }
                     }
                 }

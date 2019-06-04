@@ -9,6 +9,7 @@ import com.epam.drill.common.Family
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.merge
 import com.epam.drill.common.toAgentInfo
+import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.serialization.Serializable
@@ -22,37 +23,47 @@ import org.kodein.di.generic.instance
 class AgentManager(override val kodein: Kodein) : KodeinAware {
     val agentStorage: AgentStorage by instance()
 
-    suspend fun agentConfiguration(agentId: String): AgentInfo {
-        val agentInfo = asyncTransaction { AgentInfoDb.findById(agentId) }
-        if (agentInfo != null)
-            return asyncTransaction {
-                val toAgentInfo = agentInfo.toAgentInfo()
-                toAgentInfo
+    suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
+        addLogger(StdOutSqlLogger)
+        val agentInfoDb = AgentInfoDb.findById(agentId)
+        if (agentInfoDb != null) {
+            agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
+                agentInfoDb.buildVersions =
+                    SizedCollection(AgentBuildVersion.new {
+                        this.buildVersion = pBuildVersion
+                        this.name = ""
+                    })
             }
-        else {
-            return asyncTransaction {
-                addLogger(StdOutSqlLogger)
-                AgentInfoDb.new(agentId) {
-                    name = "???"
-                    groupName = "???"
-                    description = "???"
-                    buildVersion = "???"
-                    isEnable = true
-                    adminUrl = ""
-                    val elements = PluginBeanDb.new {
-                        pluginId = "coverage"
-                        name = "AwesomeCoveragePlugin"
-                        description = "This is the awesome custom plugin"
-                        type = "Custom"
-                        family = Family.INSTRUMENTATION
-                        enabled = true
-                        config =
-                            "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
-                    }
-                    rawPluginNames = SizedCollection(elements)
+
+            agentInfoDb.toAgentInfo()
+        } else {
+            AgentInfoDb.new(agentId) {
+                name = "???"
+                groupName = "???"
+                description = "???"
+                this.buildVersion = pBuildVersion
+                isEnable = true
+                adminUrl = ""
+                val elements = PluginBeanDb.new {
+                    pluginId = "coverage"
+                    name = "AwesomeCoveragePlugin"
+                    description = "This is the awesome custom plugin"
+                    type = "Custom"
+                    family = Family.INSTRUMENTATION
+                    enabled = true
+                    config =
+                        "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
                 }
-                    .toAgentInfo()
-            }
+                rawPluginNames = SizedCollection(elements)
+
+            }.apply {
+                this.buildVersions =
+                    SizedCollection(AgentBuildVersion.new {
+                        this.buildVersion = pBuildVersion
+                        this.name = ""
+                    })
+            }.toAgentInfo()
+
 
         }
 
@@ -60,9 +71,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
 
     suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
-        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
-
         asyncTransaction {
+            val agentInfoDb = AgentInfoDb.findById(agentId)
             addLogger(StdOutSqlLogger)
             agentInfoDb?.merge(au)
         }

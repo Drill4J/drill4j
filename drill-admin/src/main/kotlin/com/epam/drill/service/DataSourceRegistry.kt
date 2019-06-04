@@ -1,7 +1,8 @@
 package com.epam.drill.service
 
+import com.epam.drill.common.ABVsConnectedTable
 import com.epam.drill.common.AgentInfos
-import com.epam.drill.common.ConnectedTable
+import com.epam.drill.common.APConnectedTable
 import com.epam.drill.common.PluginBeans
 import com.epam.drill.dataclasses.AgentBuildVersions
 import com.epam.drill.dataclasses.JsonMessages
@@ -20,7 +21,7 @@ class DataSourceRegistry {
         Database.connect(hikari())
         org.jetbrains.exposed.sql.transactions.transaction {
             addLogger(StdOutSqlLogger)
-            SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)
+            SchemaUtils.create(PluginBeans, AgentInfos, APConnectedTable,ABVsConnectedTable, AgentBuildVersions, JsonMessages)
         }
     }
 
