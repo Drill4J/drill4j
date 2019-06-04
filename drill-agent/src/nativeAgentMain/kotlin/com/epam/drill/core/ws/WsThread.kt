@@ -136,11 +136,11 @@ suspend fun websocket(adminUrl: String) {
     }
     wsClient.onError.add {
         wsLogger.error { "WS error: ${it.message}" }
-        throw WsClosedException("")
     }
     wsClient.onClose.add {
         wsLogger.info { "Websocket closed" }
         wsClient.close()
+        throw WsClosedException("")
     }
 
     coroutineScope {

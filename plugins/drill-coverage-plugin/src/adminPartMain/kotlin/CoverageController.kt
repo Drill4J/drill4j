@@ -5,12 +5,14 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
+import com.epam.drill.plugins.coverage.dataclasses.TestType
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
+import java.lang.Exception
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
@@ -211,9 +213,39 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     "/tests-usages",
                     Json.stringify(TestUsagesInfo.serializer().list, testUsages)
                 )
+                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion,"testScope", probes))
             }
         }
         return ""
+    }
+
+    private fun getScope(buildVersion: String, scopeName: String, probes: Collection<ExDataTemp>): Scope {
+        var testsData = hashMapOf<String, MutableList<ClassData>>()
+        probes.forEach { execData ->
+            val classData = ClassData(
+                execData.id,
+                execData.className,
+                execData.probes
+            )
+            val dataList = testsData[execData.testName]
+            if(dataList.isNullOrEmpty()){
+                testsData[execData.testName!!] = mutableListOf(classData)
+            }
+            else dataList.add(classData)
+        }
+        val tests = testsData.map{(testName, classData) ->
+            Test(
+                "$buildVersion:$scopeName:$testName",
+                testName,
+                TestType.MANUAL.type,
+                classData)
+        }
+        return Scope(
+            "$buildVersion:$scopeName",
+            scopeName,
+            buildVersion,
+            tests
+        )
     }
 
     private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {

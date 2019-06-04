@@ -1,7 +1,16 @@
 package com.epam.drill
 
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.endpoints.*
+import com.epam.drill.endpoints.AgentHandler
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.endpoints.DrillOtherHandlers
+import com.epam.drill.endpoints.DrillPluginWs
+import com.epam.drill.endpoints.DrillServerWs
+import com.epam.drill.endpoints.DrillWsSession
+import com.epam.drill.endpoints.ObservableMapStorage
+import com.epam.drill.endpoints.PluginDispatcher
+import com.epam.drill.endpoints.ServerWsTopics
+import com.epam.drill.endpoints.WsTopic
 import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
 import com.epam.drill.jwt.config.JwtConfig
@@ -11,7 +20,7 @@ import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
-import com.epam.drill.storage.MongoClient
+import com.epam.drill.service.DataSourceRegistry
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -46,8 +55,8 @@ import org.kodein.di.generic.singleton
 import java.time.Duration
 
 val storage = Kodein.Module(name = "agentStorage") {
-    bind<ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<AgentInfo, DefaultWebSocketSession, MutableSet<DrillWsSession>>() }
-    bind<MongoClient>() with singleton { MongoClient(kodein) }
+    bind<DataSourceRegistry>() with eagerSingleton { DataSourceRegistry() }
+    bind<ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
@@ -80,7 +89,7 @@ val pluginServices = Kodein.Module(name = "pluginServices") {
     bind<AgentPlugins>() with eagerSingleton { AgentPlugins(kodein) }
 }
 
-var installation: Application.() -> Unit ={
+var installation: Application.() -> Unit = {
     @Suppress("UNUSED_VARIABLE") val jwtAudience = environment.config.property("jwt.audience").getString()
     val jwtRealm = environment.config.property("jwt.realm").getString()
 

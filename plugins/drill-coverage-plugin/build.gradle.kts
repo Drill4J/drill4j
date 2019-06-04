@@ -47,6 +47,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jacoco:org.jacoco.core:0.8.3")
                 implementation("org.javers:javers-core:5.3.4")
+
                 project.dependencies.add("adminDeps","org.jacoco:org.jacoco.core:0.8.3")
                 project.dependencies.add("adminDeps","org.javers:javers-core:5.3.4")
 

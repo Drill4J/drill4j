@@ -1,7 +1,7 @@
 package com.epam.drill.endpoints
 
 
-class ObservableMapStorage<K, V, R>(private val targetMap: MutableMap<K, V> = HashMap()) {
+class ObservableMapStorage<K, V, R>(val targetMap: MutableMap<K, V> = HashMap()) {
     val onUpdate: MutableSet<Pair<ObservableContext<R>, suspend R.((MutableMap<K, V>)) -> Unit>> = mutableSetOf()
     val onAdd: MutableSet<Pair<ObservableContext<R>, suspend R.(K, V) -> Unit>> = mutableSetOf()
     val onRemove: MutableSet<Pair<ObservableContext<R>, suspend R.(K) -> Unit>> = mutableSetOf()
@@ -76,6 +76,28 @@ class ObservableMapStorage<K, V, R>(private val targetMap: MutableMap<K, V> = Ha
                 second(targetMap)
             }
         }
+    }
+
+    suspend fun update() {
+        onUpdate.forEach {
+            val first = it.first
+            val second = it.second
+            first {
+                second(targetMap)
+            }
+        }
+
+    }
+
+    suspend fun singleUpdate(key: K) {
+        onAdd.forEach {
+            val first = it.first
+            val second = it.second
+            first {
+                second(key, targetMap[key]!!)
+            }
+        }
+
     }
 
 }

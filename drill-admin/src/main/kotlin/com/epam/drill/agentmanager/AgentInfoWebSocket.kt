@@ -23,30 +23,19 @@ open class AgentInfoWebSocket(
 )
 
 @Suppress("unused")
+@Serializable
 class AgentInfoWebSocketSingle(
-    id: String,
-    name: String,
-    description: String,
-    group: String,
-    status: Boolean = true,
-    buildVersion: String,
-
-    adminUrl: String = "",
-    ipAddress: String = "",
-    activePluginsCount: Int = 0,
-    pluginsCount: Int = 0,
+    val id: String,
+    val name: String,
+    val description: String,
+    val group: String,
+    val status: Boolean = true,
+    val buildVersion: String,
+    val adminUrl: String = "",
+    val ipAddress: String = "",
+    val activePluginsCount: Int = 0,
+    val pluginsCount: Int = 0,
     val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf()
-) : AgentInfoWebSocket(
-    id = id,
-    name = name,
-    description = description,
-    group = group,
-    status = status,
-    adminUrl = adminUrl,
-    ipAddress = ipAddress,
-    buildVersion = buildVersion,
-    activePluginsCount = activePluginsCount,
-    pluginsCount = pluginsCount
 )
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
