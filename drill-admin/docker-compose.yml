@@ -28,7 +28,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=drill_base
-
+    networks:
+      - drill4j-dev-network
 
 networks:
   drill4j-dev-network:
