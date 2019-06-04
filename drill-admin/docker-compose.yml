@@ -28,6 +28,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=drill_base
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
     networks:
       - drill4j-dev-network
 

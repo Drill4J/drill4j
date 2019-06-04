@@ -27,7 +27,7 @@ class DataSourceRegistry {
     private fun hikari(): HikariDataSource {
         val config = HikariConfig()
         config.driverClassName = "org.postgresql.Driver"
-        config.jdbcUrl = "jdbc:postgresql://localhost:5432/drill_base"
+        config.jdbcUrl = "jdbc:postgresql://${System.getenv("POSTGRES_HOST")?:"localhost"}:${System.getenv("POSTGRES_PORT")?:"5432"}/drill_base"
         config.username = "postgres"
         config.password = "password"
         config.maximumPoolSize = 3
