@@ -37,20 +37,15 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     init {
         app.routing {
             webSocket("/agent/attach") {
+                //fixme retrieve this from agent
+                val buildVersion = "fixed"
                 val agentId = call.request.headers[AgentIdParam]!!
 
-                val agentInfo = agentManager.agentConfiguration(agentId)
+                val agentInfo = agentManager.agentConfiguration(agentId, buildVersion)
                 agentInfo.ipAddress = call.request.local.remoteHost
                 agentManager.put(agentInfo, this)
 
-                asyncTransaction {
-                    addLogger(StdOutSqlLogger)
-                    AgentBuildVersion.findById(agentInfo.buildVersion)?.apply {
-                        name = agentInfo.name
-                    } ?: AgentBuildVersion.new(agentInfo.buildVersion) {
-                        name = agentInfo.name
-                    }
-                }
+
 
                 println("Agent registered")
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")

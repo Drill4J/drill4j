@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
 
-class ExposeTest {
+class StorageTest {
     @Test
     fun test() {
         val connect = Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")

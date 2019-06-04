@@ -1,9 +1,9 @@
 package com.epam.drill.common
 
-import com.epam.drill.agentmanager.AgentInfoWebSocket
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.endpoints.AgentUpdate
-import kotlinx.serialization.Serializable
+import com.epam.drill.dataclasses.AgentBuildVersion
+import com.epam.drill.dataclasses.AgentBuildVersions
+import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
@@ -16,7 +16,7 @@ import java.util.*
 object AgentInfos : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
     val name = varchar("name", length = 50)
-    val groupName = varchar("group_name", length = 50)
+    val groupName = varchar("group_name", length = 50).nullable()
     val description = varchar("description", length = 50)
     val isEnable = bool("is_enabled")
     val adminUrl = varchar("admin_url", length = 50)
@@ -24,7 +24,16 @@ object AgentInfos : IdTable<String>() {
 }
 
 
-object ConnectedTable : Table() {
+object ABVsConnectedTable : Table() {
+    val agentId = reference("agentId", AgentInfos, ReferenceOption.CASCADE).primaryKey(0)
+    val buildVersionId = reference("buildVersionId", AgentBuildVersions, ReferenceOption.CASCADE).primaryKey(1)
+
+    init {
+        index(true, agentId, buildVersionId)
+    }
+}
+
+object APConnectedTable : Table() {
     val agentId = reference("agentId", AgentInfos, ReferenceOption.CASCADE).primaryKey(0)
     val pluginId = reference("pluginId", PluginBeans, ReferenceOption.CASCADE).primaryKey(1)
 
@@ -42,7 +51,8 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var isEnable by AgentInfos.isEnable
     var adminUrl by AgentInfos.adminUrl
     var buildVersion by AgentInfos.buildVersion
-    var rawPluginNames by PluginBeanDb via ConnectedTable
+    var rawPluginNames by PluginBeanDb via APConnectedTable
+    var buildVersions by AgentBuildVersion via ABVsConnectedTable
 }
 
 
@@ -84,7 +94,8 @@ fun AgentInfoDb.toAgentInfo() =
         buildVersion = this.buildVersion,
         isEnable = this.isEnable,
         adminUrl = this.adminUrl,
-        rawPluginNames = this@toAgentInfo.rawPluginNames.map { it.toPluginBean() }.toMutableSet()
+        rawPluginNames = this@toAgentInfo.rawPluginNames.map { it.toPluginBean() }.toMutableSet(),
+        buildVersions = this.buildVersions.map { it.toAgentBuildVersionJson() }.toMutableSet()
     )
 
 fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
@@ -92,6 +103,15 @@ fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
     this.groupName = au.group
     this.description = au.description
     this.buildVersion = au.buildVersion
+    au.buildVersions.forEach { (k, v) ->
+        this.buildVersions.forEach {
+            if (it.buildVersion == k) {
+                it.name = v
+            }
+
+        }
+
+    }
 }
 
 fun PluginBeanDb.toPluginBean() =

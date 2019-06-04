@@ -1,8 +1,6 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.agentmanager.AgentInfoWebSocket
-import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.Plugins
@@ -19,7 +17,6 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -66,21 +63,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                             agentWsMessage("/plugins/action", message)
                         )
                     call.respond { HttpStatusCode.OK }
-                }
-            }
-
-
-            //todo move it to another place
-            authenticate {
-                post<Routes.Api.UpdateAgentConfig> { ll ->
-                    val agentId = ll.agentId
-                    if (agentManager[agentId] != null) {
-                        val au = Json.parse(AgentInfoWebSocketSingle.serializer(), call.receive())
-                        agentManager.updateAgent(agentId, au)
-                        call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
-                    } else {
-                        call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
-                    }
                 }
             }
 

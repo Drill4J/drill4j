@@ -1,6 +1,7 @@
 package com.epam.drill
 
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.endpoints.AgentEndpoints
 import com.epam.drill.endpoints.AgentHandler
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.DrillOtherHandlers
@@ -61,6 +62,7 @@ val storage = Kodein.Module(name = "agentStorage") {
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
     bind<AgentManager>() with eagerSingleton { AgentManager(kodein) }
+    bind<AgentEndpoints>() with eagerSingleton { AgentEndpoints(kodein) }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
