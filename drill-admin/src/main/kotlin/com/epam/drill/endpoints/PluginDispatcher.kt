@@ -1,7 +1,6 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.agentmanager.AgentInfoWebSocket
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean

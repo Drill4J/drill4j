@@ -5,10 +5,10 @@ import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.self
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.Family
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.merge
 import com.epam.drill.common.toAgentInfo
+import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import kotlinx.serialization.Serializable
@@ -21,13 +21,13 @@ import org.kodein.di.generic.instance
 
 class AgentManager(override val kodein: Kodein) : KodeinAware {
     val agentStorage: AgentStorage by instance()
+    val agentPlugins: AgentPlugins by instance()
 
     suspend fun agentConfiguration(agentId: String): AgentInfo {
         val agentInfo = asyncTransaction { AgentInfoDb.findById(agentId) }
         if (agentInfo != null)
             return asyncTransaction {
-                val toAgentInfo = agentInfo.toAgentInfo()
-                toAgentInfo
+                agentInfo.toAgentInfo()
             }
         else {
             return asyncTransaction {
@@ -39,17 +39,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     buildVersion = "???"
                     isEnable = true
                     adminUrl = ""
-                    val elements = PluginBeanDb.new {
-                        pluginId = "coverage"
-                        name = "AwesomeCoveragePlugin"
-                        description = "This is the awesome custom plugin"
-                        type = "Custom"
-                        family = Family.INSTRUMENTATION
-                        enabled = true
-                        config =
-                            "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
-                    }
-                    rawPluginNames = SizedCollection(elements)
+                    rawPluginNames = SizedCollection(emptyList())
                 }
                     .toAgentInfo()
             }
@@ -92,6 +82,31 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     fun byId(agentId: String) = agentStorage.targetMap[agentId]?.first
 
+    fun addPluginFromLib(agentId: String, pluginId: String): AgentInfo? {
+        val agentInfoDb = AgentInfoDb.findById(agentId)
+        if(!(agentInfoDb == null)) {
+            val col = agentInfoDb?.rawPluginNames?.toMutableSet()
+            val plugin = agentPlugins.getBean(pluginId)
+            val dbBean = PluginBeanDb.new {
+                this.pluginId = plugin!!.id
+                this.name = plugin.name
+                this.description = plugin.description
+                this.type = plugin.type
+                this.family = plugin.family
+                this.enabled = plugin.enabled
+                this.config = plugin.config
+            }
+            col!!.add(dbBean)
+            val rawNames = SizedCollection(col)
+            agentInfoDb.rawPluginNames = rawNames
+            println("Plugin with id $pluginId have successfully been added to agent with id $agentId!")
+            return agentInfoDb.toAgentInfo()
+        }
+        else{
+            println("Agent with id $agentId have not been found on your DB.")
+            return null
+        }
+    }
 
 }
 
