@@ -1,7 +1,8 @@
-package com.epam.drill.endpoints
+package com.epam.drill.endpoints.agent
 
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
+import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.router.Routes
 import com.google.gson.Gson
 import io.ktor.application.Application

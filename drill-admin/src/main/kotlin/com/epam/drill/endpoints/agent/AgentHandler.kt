@@ -1,9 +1,15 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 
-package com.epam.drill.endpoints
+package com.epam.drill.endpoints.agent
 
-import com.epam.drill.common.*
-import com.epam.drill.plugins.Plugins
+import com.epam.drill.common.AgentConfig
+import com.epam.drill.common.AgentConfigParam
+import com.epam.drill.common.Message
+import com.epam.drill.common.MessageType
+import com.epam.drill.common.NeedSyncParam
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.endpoints.fromJson
+import com.epam.drill.endpoints.plugin.PluginDispatcher
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -21,7 +27,6 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val agentManager: AgentManager by instance()
     private val pd: PluginDispatcher by kodein.instance()
-    private val plugins: Plugins by kodein.instance()
 
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 

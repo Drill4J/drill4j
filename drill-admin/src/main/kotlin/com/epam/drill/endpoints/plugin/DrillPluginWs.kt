@@ -1,12 +1,15 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
-package com.epam.drill.endpoints
+package com.epam.drill.endpoints.plugin
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.dataclasses.JsonMessages
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.endpoints.fromJson
+import com.epam.drill.endpoints.textFrame
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.service.asyncTransaction
 import com.google.gson.Gson

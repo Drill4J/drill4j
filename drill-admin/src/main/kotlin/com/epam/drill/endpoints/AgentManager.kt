@@ -1,9 +1,9 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.agentmanager.AgentStorage
-import com.epam.drill.agentmanager.get
-import com.epam.drill.agentmanager.self
+import com.epam.drill.storage.AgentStorage
+import com.epam.drill.storage.get
+import com.epam.drill.storage.self
 import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.AgentPlugins

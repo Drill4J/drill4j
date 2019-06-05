@@ -17,8 +17,8 @@
     <logger name="d.f.embed.mongo.AbstractMongoProcess" level="OFF"/>
     <logger name="d.f.embed.mongo.runtime.Mongod" level="OFF"/>
     <logger name="DrillPluginWs" level="TRACE"/>
-    <logger name="com.epam.drill.endpoints.DrillPluginWs" level="TRACE"/>
+    <logger name="com.epam.drill.endpoints.plugin.DrillPluginWs" level="TRACE"/>
     <logger name="com.epam.drill.plugins.AgentPlugins" level="TRACE"/>
-    <logger name="com.epam.drill.endpoints.AgentHandler" level="INFO"/>
+    <logger name="com.epam.drill.endpoints.agent.AgentHandler" level="INFO"/>
     <!--<logger name="" level="OFF"/>-->
 </configuration>

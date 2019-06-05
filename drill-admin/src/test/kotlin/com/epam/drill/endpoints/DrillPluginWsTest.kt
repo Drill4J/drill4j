@@ -3,7 +3,7 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.storage.AgentStorage
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType

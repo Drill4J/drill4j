@@ -1,4 +1,4 @@
-package com.epam.drill.endpoints
+package com.epam.drill.storage
 
 
 class ObservableSetStorage<T>(private val targetSet: MutableSet<T> = mutableSetOf()) : MutableSet<T> by targetSet {

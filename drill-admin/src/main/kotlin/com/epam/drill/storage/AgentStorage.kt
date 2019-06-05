@@ -1,8 +1,7 @@
-package com.epam.drill.agentmanager
+package com.epam.drill.storage
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.endpoints.DrillWsSession
-import com.epam.drill.endpoints.ObservableMapStorage
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 
 typealias AgentStorage = ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>

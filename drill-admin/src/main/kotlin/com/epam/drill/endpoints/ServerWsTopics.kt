@@ -1,7 +1,7 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.agentmanager.byId
+import com.epam.drill.storage.byId
 import com.epam.drill.agentmanager.toAgentInfoWebSocket
 import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
@@ -12,6 +12,9 @@ import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
+import com.epam.drill.storage.add
+import com.epam.drill.storage.remove
+import com.epam.drill.storage.update
 import io.ktor.application.Application
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.transactions.transaction

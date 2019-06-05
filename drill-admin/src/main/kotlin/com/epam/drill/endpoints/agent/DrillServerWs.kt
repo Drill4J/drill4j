@@ -1,9 +1,14 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
-package com.epam.drill.endpoints
+package com.epam.drill.endpoints.agent
 
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.endpoints.DrillWsSession
+import com.epam.drill.endpoints.WsTopic
+import com.epam.drill.endpoints.messageEvent
+import com.epam.drill.endpoints.removeTopic
+import com.epam.drill.endpoints.sendTo
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame

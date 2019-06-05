@@ -1,4 +1,4 @@
-package com.epam.drill.endpoints
+package com.epam.drill.storage
 
 
 class ObservableMapStorage<K, V, R>(val targetMap: MutableMap<K, V> = HashMap()) {

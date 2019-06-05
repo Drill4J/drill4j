@@ -1,8 +1,11 @@
-package com.epam.drill.endpoints
+package com.epam.drill.endpoints.plugin
 
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.endpoints.SeqMessage
+import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
 import com.google.gson.Gson
@@ -11,6 +14,7 @@ import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.KtorExperimentalLocationsAPI
+import io.ktor.locations.get
 import io.ktor.locations.patch
 import io.ktor.locations.post
 import io.ktor.request.receive
@@ -73,7 +77,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 post<Routes.Api.Agent.AddNewPlugin> { ll ->
                     val agentId = ll.agentId
                     val pluginId = Json.parse(PluginId.serializer(), call.receive()).pluginId
-                    val (status, msg) = when(pluginId) {
+                    val (status, msg) = when (pluginId) {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
                         in plugins -> {
                             if (agentId in agentManager) {
@@ -96,6 +100,13 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                             agentWsMessage("/plugins/togglePlugin", ll.pluginId)
                         )
                     call.respond { HttpStatusCode.OK }
+                }
+            }
+            authenticate {
+                get<Routes.Api.PluginConfiguration> {
+
+                    call.respond(plugins.plugins.keys.toTypedArray())
+
                 }
             }
         }

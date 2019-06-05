@@ -1,19 +1,17 @@
 package com.epam.drill
 
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.endpoints.AgentEndpoints
-import com.epam.drill.endpoints.AgentHandler
 import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.DrillOtherHandlers
-import com.epam.drill.endpoints.DrillPluginWs
-import com.epam.drill.endpoints.DrillServerWs
 import com.epam.drill.endpoints.DrillWsSession
-import com.epam.drill.endpoints.ObservableMapStorage
-import com.epam.drill.endpoints.PluginDispatcher
 import com.epam.drill.endpoints.ServerWsTopics
 import com.epam.drill.endpoints.WsTopic
+import com.epam.drill.endpoints.agent.AgentEndpoints
+import com.epam.drill.endpoints.agent.AgentHandler
+import com.epam.drill.endpoints.agent.DrillServerWs
 import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
+import com.epam.drill.endpoints.plugin.DrillPluginWs
+import com.epam.drill.endpoints.plugin.PluginDispatcher
 import com.epam.drill.jwt.config.JwtConfig
 import com.epam.drill.jwt.user.source.UserSource
 import com.epam.drill.jwt.user.source.UserSourceImpl
@@ -22,6 +20,7 @@ import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
 import com.epam.drill.service.DataSourceRegistry
+import com.epam.drill.storage.ObservableMapStorage
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -62,7 +61,11 @@ val storage = Kodein.Module(name = "agentStorage") {
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
     bind<AgentManager>() with eagerSingleton { AgentManager(kodein) }
-    bind<AgentEndpoints>() with eagerSingleton { AgentEndpoints(kodein) }
+    bind<AgentEndpoints>() with eagerSingleton {
+        AgentEndpoints(
+            kodein
+        )
+    }
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
@@ -76,14 +79,21 @@ val userSource: UserSource = UserSourceImpl()
 val handlers = Kodein.Module(name = "handlers") {
     bind<SwaggerDrillAdminServer>() with eagerSingleton { SwaggerDrillAdminServer(kodein) }
     bind<PluginDispatcher>() with eagerSingleton { PluginDispatcher(kodein) }
-    bind<DrillOtherHandlers>() with eagerSingleton { DrillOtherHandlers(kodein) }
 }
 
 
 val wsHandlers = Kodein.Module(name = "wsHandlers") {
-    bind<AgentHandler>() with eagerSingleton { AgentHandler(kodein) }
+    bind<AgentHandler>() with eagerSingleton {
+        AgentHandler(
+            kodein
+        )
+    }
     bind<WsService>() with eagerSingleton { DrillPluginWs(kodein) }
-    bind<DrillServerWs>() with eagerSingleton { DrillServerWs(kodein) }
+    bind<DrillServerWs>() with eagerSingleton {
+        DrillServerWs(
+            kodein
+        )
+    }
 }
 
 val pluginServices = Kodein.Module(name = "pluginServices") {
