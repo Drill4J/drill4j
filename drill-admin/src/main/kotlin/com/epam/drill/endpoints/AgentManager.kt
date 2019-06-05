@@ -20,18 +20,17 @@ import com.epam.drill.storage.self
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.cio.websocket.Frame
 import kotlinx.serialization.cbor.Cbor
+import mu.KotlinLogging
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import org.slf4j.LoggerFactory
+
+private val logger = KotlinLogging.logger {}
 
 class AgentManager(override val kodein: Kodein) : KodeinAware {
-    companion object {
-        val logger = LoggerFactory.getLogger(AgentManager::class.java)
-    }
 
     val agentStorage: AgentStorage by instance()
     val plugins: Plugins by instance()
@@ -129,7 +128,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 }
             }
         } else {
-            logger.warn("Agent with id $agentId not found in your DB.")
+            logger.warn { "Agent with id $agentId not found in your DB." }
             null
         }
     }?.let { pluginBeanDb ->
@@ -138,7 +137,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         agentStorage.update()
         agentStorage.singleUpdate(agentId)
         updateAgentConfig(agentInfo)
-        logger.info("Plugin $pluginId successfully added to agent with id $agentId!")
+        logger.info { "Plugin $pluginId successfully added to agent with id $agentId!" }
     }
 
     suspend fun updateAgentConfig(agentInfo: AgentInfo) {

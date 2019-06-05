@@ -10,15 +10,4 @@
     </root>
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
-    <logger name="org.mongodb.driver.cluster" level="OFF"/>
-    <logger name="org.mongodb.driver.connection" level="OFF"/>
-    <logger name="d.f.e.process.runtime.ProcessControl" level="OFF"/>
-    <logger name="d.f.e.p.runtime.AbstractProcess" level="OFF"/>
-    <logger name="d.f.embed.mongo.AbstractMongoProcess" level="OFF"/>
-    <logger name="d.f.embed.mongo.runtime.Mongod" level="OFF"/>
-    <logger name="DrillPluginWs" level="TRACE"/>
-    <logger name="com.epam.drill.endpoints.plugin.DrillPluginWs" level="TRACE"/>
-    <logger name="com.epam.drill.plugins.AgentPlugins" level="TRACE"/>
-    <logger name="com.epam.drill.endpoints.agent.AgentHandler" level="INFO"/>
-    <!--<logger name="" level="OFF"/>-->
 </configuration>

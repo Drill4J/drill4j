@@ -16,7 +16,7 @@ import com.epam.drill.jwt.config.JwtConfig
 import com.epam.drill.jwt.user.source.UserSource
 import com.epam.drill.jwt.user.source.UserSourceImpl
 import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.plugins.AgentPlugins
+import com.epam.drill.plugins.PluginLoaderService
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
 import com.epam.drill.service.DataSourceRegistry
@@ -98,7 +98,7 @@ val wsHandlers = Kodein.Module(name = "wsHandlers") {
 
 val pluginServices = Kodein.Module(name = "pluginServices") {
     bind<Plugins>() with singleton { Plugins() }
-    bind<AgentPlugins>() with eagerSingleton { AgentPlugins(kodein) }
+    bind<PluginLoaderService>() with eagerSingleton { PluginLoaderService(kodein) }
 }
 
 var installation: Application.() -> Unit = {

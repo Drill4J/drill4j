@@ -18,17 +18,18 @@ import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.loads
+import mu.KotlinLogging
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import org.slf4j.LoggerFactory
+
+private val logger = KotlinLogging.logger {}
 
 class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val agentManager: AgentManager by instance()
     private val pd: PluginDispatcher by kodein.instance()
 
-    private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
     init {
         app.routing {
@@ -43,8 +44,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
 
                 agentManager.put(agentInfo, this)
 
-                println("Agent registered")
-                agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
+                logger.info { "Agent WS is connected. Client's address is ${call.request.local.remoteHost}" }
 
                 if (call.request.headers[NeedSyncParam]!!.toBoolean()) {
                     agentManager.updateAgentConfig(agentInfo)
@@ -56,15 +56,13 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                             val message = Message::class fromJson frame.readText() ?: return@webSocket
                             when (message.type) {
                                 MessageType.PLUGIN_DATA -> {
-                                    agLog.debug(message.message)
+                                    logger.debug(message.message)
                                     pd.processPluginData(message.message, agentInfo)
                                 }
                                 MessageType.DEBUG -> {
 //                                    send(frame)
                                 }
                                 else -> {
-                                    //fixme log
-//                                    logWarn("Not implemented YET!!")
                                 }
                             }
 
@@ -73,7 +71,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 } catch (ex: Exception) {
                     ex.printStackTrace()
                 } finally {
-                    agLog.error("agentDisconnected!")
+                    logger.info { "agentDisconnected ${agentInfo.id} disconnected!" }
                     agentManager.remove(agentInfo)
                 }
 

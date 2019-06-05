@@ -8,17 +8,18 @@ import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.retrieveApiClass
 import io.ktor.util.error
+import mu.KotlinLogging
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
-val logger = LoggerFactory.getLogger(AgentPlugins::class.java)
 
-class AgentPlugins(override val kodein: Kodein) : KodeinAware {
+private val logger = KotlinLogging.logger {}
+
+class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
     private val plugins: Plugins by kodein.instance()
     private val wsService: WsService by kodein.instance()
     private val fileList: List<File> =
@@ -28,16 +29,16 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         try {
             fileList.forEach {
                 if (!it.exists()) {
-                    logger.warn("didn't find plugin folder. Search directories: ${it.absolutePath}")
+                    logger.debug { "didn't find plugin folder. Search directories: ${it.absolutePath}" }
                 } else {
                     val files = it.listFiles() ?: arrayOf()
                     if (files.isNotEmpty()) {
-                        logger.info(
+                        logger.info {
                             "${files.size} were found.\n" +
                                     files.contentToString()
-                        )
+                        }
                     } else {
-                        logger.warn("didn't find any plugins...")
+                        logger.warn { "didn't find any plugins..." }
                     }
                     for (pluginDir in files) {
                         val jar = JarFile(pluginDir)
@@ -50,7 +51,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
                             val processAgentPart = processAgentPart(jar, tempDirectory)
                             val dp = DP(processAdminPart, processAgentPart, pluginBean)
                             plugins.plugins[processAdminPart.id] = dp
-                            logger.info("plugin '${processAdminPart.id}' was loaded successfully")
+                            logger.info { "plugin '${processAdminPart.id}' was loaded successfully" }
                         }
                     }
                 }
@@ -93,7 +94,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         return file
     }
 
-    fun createTempDirectory(tempDir: File, id: String): File {
+    private fun createTempDirectory(tempDir: File, id: String): File {
         val temp = File(tempDir, id)
         if (!(temp.mkdirs())) {
 //            throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
