@@ -4,14 +4,10 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.common.*
 import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.router.DevRoutes
-import com.epam.drill.service.asyncTransaction
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.routing
-import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
@@ -46,7 +42,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
 
                 if (call.request.headers[NeedSyncParam]!!.toBoolean()) {
-                    updateAgentConfig(agentInfo)
+                    agentManager.updateAgentConfig(agentInfo)
                 }
 
                 try {
@@ -78,36 +74,5 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
 
             }
         }
-    }
-
-    suspend fun updateAgentConfig(agentInfo: AgentInfo) {
-        val session = agentManager[agentInfo.id]
-        session!!.send(
-            Frame.Binary(
-                false,
-                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
-            )
-        )
-        agentInfo.rawPluginNames.forEach { pb ->
-            val pluginId = pb.id
-            val agentPluginPart = plugins.plugins[pluginId]?.agentPluginPart!!
-            val pluginMessage =
-                PluginMessage(
-                    DrillEvent.LOAD_PLUGIN,
-                    pluginId,
-                    agentPluginPart.readBytes().toList(),
-                    pb,
-                    "-"
-                )
-            session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
-        }
-
-
-        session.send(
-            Frame.Binary(
-                false,
-                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_FINISHED, ""))
-            )
-        )
     }
 }
