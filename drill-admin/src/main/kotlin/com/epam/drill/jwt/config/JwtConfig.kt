@@ -4,7 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.epam.drill.jwt.user.User
-import java.util.Date
+import java.util.*
 
 object JwtConfig {
     private const val secret = "HDZZh35d82zdzHJFF86tt"

@@ -14,7 +14,6 @@ import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.createTestEnvironment
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.junit.Test
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
@@ -24,7 +23,6 @@ import kotlin.test.assertNotNull
 
 @ExperimentalCoroutinesApi
 @KtorExperimentalLocationsAPI
-@ObsoleteCoroutinesApi
 internal class DrillServerWsTest {
     @Test
     fun testConversation() {

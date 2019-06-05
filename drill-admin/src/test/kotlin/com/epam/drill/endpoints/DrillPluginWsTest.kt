@@ -28,7 +28,6 @@ import io.ktor.util.KtorExperimentalAPI
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import org.junit.BeforeClass
@@ -44,14 +43,12 @@ import kotlin.test.fail
 
 
 @KtorExperimentalAPI
-@ObsoleteCoroutinesApi
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
 class DrillPluginWsTest {
 
     @ExperimentalCoroutinesApi
     @KtorExperimentalLocationsAPI
-    @ObsoleteCoroutinesApi
     @KtorExperimentalAPI
     companion object {
         var engine: TestApplicationEngine? = null

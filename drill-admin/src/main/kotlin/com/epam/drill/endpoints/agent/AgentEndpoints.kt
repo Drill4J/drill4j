@@ -14,13 +14,11 @@ import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
 
 @KtorExperimentalLocationsAPI
-@ObsoleteCoroutinesApi
 class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val agentManager: AgentManager by instance()

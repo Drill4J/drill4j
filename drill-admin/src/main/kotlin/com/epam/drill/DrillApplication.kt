@@ -47,7 +47,6 @@ import io.ktor.response.respond
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.kodein.di.Kodein
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
@@ -75,7 +74,6 @@ val devContainer = Kodein.Module(name = "devContainer") {
 val userSource: UserSource = UserSourceImpl()
 
 @KtorExperimentalLocationsAPI
-@ObsoleteCoroutinesApi
 val handlers = Kodein.Module(name = "handlers") {
     bind<SwaggerDrillAdminServer>() with eagerSingleton { SwaggerDrillAdminServer(kodein) }
     bind<PluginDispatcher>() with eagerSingleton { PluginDispatcher(kodein) }
@@ -153,7 +151,7 @@ var kodeinConfig: Kodein.MainBuilder.() -> Unit = {
     import(devContainer, allowOverride = true)
 }
 
-@ObsoleteCoroutinesApi
+
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
 fun Application.module(): Kodein {

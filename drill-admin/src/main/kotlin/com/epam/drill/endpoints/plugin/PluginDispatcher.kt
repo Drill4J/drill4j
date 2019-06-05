@@ -20,7 +20,6 @@ import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
@@ -29,7 +28,6 @@ import org.kodein.di.generic.instance
 import java.util.*
 
 @KtorExperimentalLocationsAPI
-@ObsoleteCoroutinesApi
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val plugins: Plugins by instance()

@@ -1,8 +1,8 @@
 package com.epam.drill.service
 
 import com.epam.drill.common.ABVsConnectedTable
-import com.epam.drill.common.AgentInfos
 import com.epam.drill.common.APConnectedTable
+import com.epam.drill.common.AgentInfos
 import com.epam.drill.common.PluginBeans
 import com.epam.drill.dataclasses.AgentBuildVersions
 import com.epam.drill.dataclasses.JsonMessages
