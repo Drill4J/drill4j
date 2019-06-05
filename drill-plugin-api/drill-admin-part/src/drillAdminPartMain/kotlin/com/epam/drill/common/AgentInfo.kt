@@ -13,8 +13,8 @@ data class AgentInfo(
 
     val adminUrl: String = "",
     var ipAddress: String = "",
-    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf(),
-    val buildVersions: MutableSet<AgentBuildVersionJson>
+    val buildVersions: MutableSet<AgentBuildVersionJson> = mutableSetOf(),
+    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
 
 ) {
     override fun equals(other: Any?): Boolean {
@@ -35,6 +35,7 @@ data class AgentInfo(
         return result
     }
 }
+
 
 @Serializable
 data class AgentBuildVersionJson(val id: String, val name: String)

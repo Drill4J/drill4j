@@ -2,15 +2,8 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.common.AgentConfigParam
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NeedSyncParam
-import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.*
 import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.agentPluginPart
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -42,43 +35,15 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
 
                 val agentInfo = agentManager.agentConfiguration(agentConfig.id, agentConfig.buildVersion)
                 agentInfo.ipAddress = call.request.local.remoteHost
+
                 agentManager.put(agentInfo, this)
-
-
 
                 println("Agent registered")
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
 
                 if (call.request.headers[NeedSyncParam]!!.toBoolean()) {
-                    send(
-                        Frame.Binary(
-                            false,
-                            Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
-                        )
-                    )
-                    agentInfo.rawPluginNames.forEach { pb ->
-                        val pluginId = pb.id
-                        val agentPluginPart = plugins.plugins[pluginId]?.agentPluginPart!!
-                        val pluginMessage =
-                            PluginMessage(
-                                DrillEvent.LOAD_PLUGIN,
-                                pluginId,
-                                agentPluginPart.readBytes().toList(),
-                                pb,
-                                "-"
-                            )
-                        send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
-                    }
-
-
-                    send(
-                        Frame.Binary(
-                            false,
-                            Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_FINISHED, ""))
-                        )
-                    )
+                    agentManager.updateAgentConfig(agentInfo)
                 }
-
 
                 try {
                     incoming.consumeEach { frame ->

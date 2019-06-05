@@ -69,7 +69,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
         val constructor = pluginApiClass!!.getConstructor(WsService::class.java, String::class.java)
         val pluginBean = extractPluginBean(jarFile, tempDirectory)
-        plugins.pluginBeans.add(pluginBean)
+        plugins.pluginBeans.put(pluginBean.id, pluginBean)
         return constructor.newInstance(wsService, pluginBean.id) as AdminPluginPart
     }
 
@@ -100,5 +100,7 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         return temp
     }
 
+    fun getBean(pluginId: String) = plugins[pluginId]
 
+    fun getAdminPart(pluginId: String) = plugins.plugins.get(pluginId)!!.second
 }

@@ -22,8 +22,8 @@ fun PluginBean.toPluginWebSocket() = PluginWebSocket(
 
 fun MutableSet<PluginBean>.toPluginsWebSocket() = this.map { it.toPluginWebSocket() }.toMutableSet()
 
-fun MutableSet<PluginBean>.toAllPluginsWebSocket(agents: Set<AgentInfo>?) = this.map {
-    val pluginBeanWebSocket = it.toPluginWebSocket()
+fun MutableMap<String, PluginBean>.toAllPluginsWebSocket(agents: Set<AgentInfo>?) = this.map {
+    val pluginBeanWebSocket = it.value.toPluginWebSocket()
     pluginBeanWebSocket.config = null
     pluginBeanWebSocket.status = null
     pluginBeanWebSocket.installedAgentsCount = calculateInstalledAgentsCount(pluginBeanWebSocket.id, agents)

@@ -4,6 +4,8 @@ import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginBeans
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.dataclasses.JsonMessages
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -15,11 +17,13 @@ import org.junit.Test
 class StorageTest {
     @Test
     fun test() {
-        val connect = Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
+        var hik = hikari()
+        val connect = Database.connect(hik)
         transaction(connect) {
             addLogger(StdOutSqlLogger)
+
             SchemaUtils.create(PluginBeans, AgentInfos, JsonMessages)
-            transaction {
+            val transaction = transaction {
                 val pb = PluginBeanDb.new {
                     pluginId = "x"
                     name = "x"
@@ -31,18 +35,33 @@ class StorageTest {
                 }
                 pb
             }
+
+            println()
         }
-        transaction(connect) {
+        val transaction1 = transaction(connect) {
             JsonMessage.new("xx") {
                 message = "xxx"
             }
         }
         println()
-        transaction(connect) {
+        val transaction = transaction(connect) {
             val map = JsonMessages.select {
                 JsonMessages.id.eq("xx")
             }.map { it[JsonMessages.message] }.first()
+
+
             println(map)
         }
     }
+
+    private fun hikari(): HikariDataSource {
+        val config = HikariConfig()
+        config.driverClassName = "org.h2.Driver"
+        config.jdbcUrl = "jdbc:h2:mem:test"
+        config.maximumPoolSize = 3
+        config.isAutoCommit = false
+        config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+        return HikariDataSource(config)
+    }
+
 }

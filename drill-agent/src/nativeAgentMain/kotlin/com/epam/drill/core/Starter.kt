@@ -89,7 +89,7 @@ private fun runAgent(options: String?) {
 fun String?.asAgentParams(): Map<String, String> {
     if (this.isNullOrEmpty()) return mutableMapOf()
     return try {
-        this.split(",").associate {
+        this!!.split(",").associate {
             val split = it.split("=")
             split[0] to split[1]
         }

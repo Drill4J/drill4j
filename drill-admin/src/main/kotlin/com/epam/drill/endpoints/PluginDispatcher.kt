@@ -17,6 +17,8 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -66,6 +68,27 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 }
             }
 
+
+            authenticate {
+                post<Routes.Api.Agent.AddNewPlugin> { ll ->
+                    val agentId = ll.agentId
+                    val pluginId = Json.parse(PluginId.serializer(), call.receive()).pluginId
+                    val (status, msg) = when(pluginId) {
+                        null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
+                        in plugins -> {
+                            if (agentId in agentManager) {
+                                agentManager.addPluginFromLib(agentId, pluginId)
+                                HttpStatusCode.OK to "Plugin '$pluginId' was added to agent '$agentId'"
+                            } else {
+                                HttpStatusCode.BadRequest to "Agent '$agentId' not found"
+                            }
+                        }
+                        else -> HttpStatusCode.BadRequest to "Plugin $pluginId not found."
+                    }
+                    call.respond(status, msg)
+                }
+            }
+
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
                     agentManager[ll.agentId]
@@ -89,3 +112,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         }
     }
 }
+
+@Serializable
+data class PluginId(val pluginId: String?)

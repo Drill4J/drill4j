@@ -8,8 +8,12 @@ import kotlin.collections.HashSet
 
 
 class Plugins {
-    var plugins: MutableMap<String, DP> = HashMap()
-    var pluginBeans: MutableSet<PluginBean> = HashSet()
+    val plugins: MutableMap<String, DP> = HashMap()
+    val pluginBeans: MutableMap<String, PluginBean> = HashMap()
+
+    operator fun get(pluginId: String) = pluginBeans[pluginId]
+
+    operator fun contains(pluginId: String) = pluginId in pluginBeans
 }
 typealias DP = Pair<AdminPluginPart, File>
 
