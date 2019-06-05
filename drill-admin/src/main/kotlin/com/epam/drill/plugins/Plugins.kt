@@ -4,20 +4,15 @@ import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import java.io.File
 import java.util.*
-import kotlin.collections.HashSet
 
 
-class Plugins {
-    val plugins: MutableMap<String, DP> = HashMap()
-    val pluginBeans: MutableMap<String, PluginBean> = HashMap()
+class Plugins(val plugins: MutableMap<String, DP> = HashMap()) : MutableMap<String, DP> by plugins
 
-    operator fun get(pluginId: String) = pluginBeans[pluginId]
-
-    operator fun contains(pluginId: String) = pluginId in pluginBeans
-}
-typealias DP = Pair<AdminPluginPart, File>
+typealias DP = Triple<AdminPluginPart, File, PluginBean>
 
 val DP.serverInstance: AdminPluginPart
     get() = first
 val DP.agentPluginPart: File
     get() = second
+val DP.pluginBean: PluginBean
+    get() = third

@@ -51,7 +51,7 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var isEnable by AgentInfos.isEnable
     var adminUrl by AgentInfos.adminUrl
     var buildVersion by AgentInfos.buildVersion
-    var rawPluginNames by PluginBeanDb via APConnectedTable
+    var plugins by PluginBeanDb via APConnectedTable
     var buildVersions by AgentBuildVersion via ABVsConnectedTable
 }
 
@@ -94,7 +94,7 @@ fun AgentInfoDb.toAgentInfo() =
         buildVersion = this.buildVersion,
         isEnable = this.isEnable,
         adminUrl = this.adminUrl,
-        rawPluginNames = this@toAgentInfo.rawPluginNames.map { it.toPluginBean() }.toMutableSet(),
+        plugins = this@toAgentInfo.plugins.map { it.toPluginBean() }.toMutableSet(),
         buildVersions = this.buildVersions.map { it.toAgentBuildVersionJson() }.toMutableSet()
     )
 

@@ -87,7 +87,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                 }
 
                 drillAgent.send(agentWsMessage("/plugins/unload", pluginId.pluginId))
-//            drillAgent.agentInfo.rawPluginNames.removeIf { x -> x.id == up.pluginName }
+//            drillAgent.agentInfo.plugins.removeIf { x -> x.id == up.pluginName }
                 call.respond("event 'unload' was sent to AGENT")
             }
         }

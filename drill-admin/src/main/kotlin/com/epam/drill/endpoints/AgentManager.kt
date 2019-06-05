@@ -1,16 +1,24 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.DrillEvent
+import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.merge
+import com.epam.drill.common.toAgentInfo
+import com.epam.drill.common.toPluginBean
+import com.epam.drill.dataclasses.AgentBuildVersion
+import com.epam.drill.plugins.Plugins
+import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.plugins.pluginBean
+import com.epam.drill.service.asyncTransaction
 import com.epam.drill.storage.AgentStorage
 import com.epam.drill.storage.get
 import com.epam.drill.storage.self
-import com.epam.drill.common.*
-import com.epam.drill.dataclasses.AgentBuildVersion
-import com.epam.drill.plugins.AgentPlugins
-import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.cio.websocket.Frame
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -26,7 +34,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     val agentStorage: AgentStorage by instance()
-    val agentPlugins: AgentPlugins by instance()
+    val plugins: Plugins by instance()
 
     suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
         addLogger(StdOutSqlLogger)
@@ -34,32 +42,30 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         if (agentInfoDb != null) {
             agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
                 agentInfoDb.buildVersions =
-                        SizedCollection(AgentBuildVersion.new {
-                            this.buildVersion = pBuildVersion
-                            this.name = ""
-                        })
+                    SizedCollection(AgentBuildVersion.new {
+                        this.buildVersion = pBuildVersion
+                        this.name = ""
+                    })
             }
 
             agentInfoDb.toAgentInfo()
         } else {
             AgentInfoDb.new(agentId) {
-                name = "???"
-                groupName = "???"
-                description = "???"
+                name = "-"
+                groupName = "-"
+                description = "-"
                 this.buildVersion = pBuildVersion
                 isEnable = true
                 adminUrl = ""
-                rawPluginNames = SizedCollection()
+                plugins = SizedCollection()
 
             }.apply {
                 this.buildVersions =
-                        SizedCollection(AgentBuildVersion.new {
-                            this.buildVersion = pBuildVersion
-                            this.name = ""
-                        })
+                    SizedCollection(AgentBuildVersion.new {
+                        this.buildVersion = pBuildVersion
+                        this.name = ""
+                    })
             }.toAgentInfo()
-
-
         }
 
     }
@@ -102,24 +108,25 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
-            val plugin = agentPlugins.getBean(pluginId)!!
-            val fillPluginBeanDb: PluginBeanDb.() -> Unit = {
-                this.pluginId = plugin.id
-                this.name = plugin.name
-                this.description = plugin.description
-                this.type = plugin.type
-                this.family = plugin.family
-                this.enabled = plugin.enabled
-                this.config = plugin.config
-            }
-            val rawPluginNames = agentInfoDb.rawPluginNames.toList()
-            val existingPluginBeanDb = rawPluginNames.find { it.pluginId == pluginId }
-            if (existingPluginBeanDb == null) {
-                val newPluginBeanDb = PluginBeanDb.new(fillPluginBeanDb)
-                agentInfoDb.rawPluginNames = SizedCollection(rawPluginNames + newPluginBeanDb)
-                newPluginBeanDb
-            } else {
-                existingPluginBeanDb.apply(fillPluginBeanDb)
+            plugins[pluginId]?.pluginBean?.let { plugin ->
+                val fillPluginBeanDb: PluginBeanDb.() -> Unit = {
+                    this.pluginId = plugin.id
+                    this.name = plugin.name
+                    this.description = plugin.description
+                    this.type = plugin.type
+                    this.family = plugin.family
+                    this.enabled = plugin.enabled
+                    this.config = plugin.config
+                }
+                val rawPluginNames = agentInfoDb.plugins.toList()
+                val existingPluginBeanDb = rawPluginNames.find { it.pluginId == pluginId }
+                if (existingPluginBeanDb == null) {
+                    val newPluginBeanDb = PluginBeanDb.new(fillPluginBeanDb)
+                    agentInfoDb.plugins = SizedCollection(rawPluginNames + newPluginBeanDb)
+                    newPluginBeanDb
+                } else {
+                    existingPluginBeanDb.apply(fillPluginBeanDb)
+                }
             }
         } else {
             logger.warn("Agent with id $agentId not found in your DB.")
@@ -127,7 +134,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         }
     }?.let { pluginBeanDb ->
         val agentInfo = byId(agentId)
-        agentInfo!!.rawPluginNames.add(pluginBeanDb.toPluginBean())
+        agentInfo!!.plugins.add(pluginBeanDb.toPluginBean())
         agentStorage.update()
         agentStorage.singleUpdate(agentId)
         updateAgentConfig(agentInfo)
@@ -142,18 +149,20 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
             )
         )
-        agentInfo.rawPluginNames.forEach { pb ->
+        agentInfo.plugins.forEach { pb ->
             val pluginId = pb.id
-            val agentPluginPart = agentPlugins.getAdminPart(pluginId)
-            val pluginMessage =
-                PluginMessage(
-                    DrillEvent.LOAD_PLUGIN,
-                    pluginId,
-                    agentPluginPart.readBytes().toList(),
-                    pb,
-                    "-"
-                )
-            session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
+            plugins[pluginId]?.agentPluginPart?.let { agentPluginPart ->
+                val pluginMessage =
+                    PluginMessage(
+                        DrillEvent.LOAD_PLUGIN,
+                        pluginId,
+                        agentPluginPart.readBytes().toList(),
+                        pb,
+                        "-"
+                    )
+
+                session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
+            }
         }
 
 
@@ -166,12 +175,3 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
 }
-
-
-@Serializable
-data class AgentUpdate(
-    val name: String,
-    val groupName: String,
-    val description: String,
-    val buildVersion: String
-)

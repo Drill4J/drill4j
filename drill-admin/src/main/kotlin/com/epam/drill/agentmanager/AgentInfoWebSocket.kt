@@ -49,9 +49,9 @@ fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     buildVersion = buildVersion,
     adminUrl = adminUrl,
     ipAddress = ipAddress,
-    activePluginsCount = rawPluginNames.activePluginsCount(),
-    pluginsCount = rawPluginNames.size,
-    rawPluginsName = rawPluginNames.toPluginsWebSocket(),
+    activePluginsCount = plugins.activePluginsCount(),
+    pluginsCount = plugins.size,
+    rawPluginsName = plugins.toPluginsWebSocket(),
     buildVersions = this.buildVersions
 )
 
@@ -68,8 +68,8 @@ fun MutableSet<AgentInfo>.toAgentInfosWebSocket() = this.map {
             buildVersion = buildVersion,
             adminUrl = adminUrl,
             ipAddress = ipAddress,
-            activePluginsCount = rawPluginNames.activePluginsCount(),
-            pluginsCount = rawPluginNames.size
+            activePluginsCount = plugins.activePluginsCount(),
+            pluginsCount = plugins.size
         )
     }
 }

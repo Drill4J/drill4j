@@ -56,7 +56,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
-                    val pluginBean = agentManager.byId(ll.agentId)?.rawPluginNames?.first { it.id == pluginId }
+                    val pluginBean = agentManager.byId(ll.agentId)?.plugins?.first { it.id == pluginId }
                     call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
                 }
             }

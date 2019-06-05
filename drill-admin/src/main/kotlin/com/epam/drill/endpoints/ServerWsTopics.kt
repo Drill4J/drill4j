@@ -1,7 +1,6 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.storage.byId
 import com.epam.drill.agentmanager.toAgentInfoWebSocket
 import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
@@ -10,9 +9,11 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
+import com.epam.drill.plugins.pluginBean
 import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
 import com.epam.drill.storage.add
+import com.epam.drill.storage.byId
 import com.epam.drill.storage.remove
 import com.epam.drill.storage.update
 import io.ktor.application.Application
@@ -67,7 +68,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 }
 
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
-                    agentManager.agentStorage.byId(agent.agentId)?.let { agInfo ->
+                    agentManager.agentStorage.byId(agent.agentId)?.let {
                         transaction {
                             AgentInfoDb.findById(agent.agentId)?.buildVersions?.map {
                                 it.toAgentBuildVersionJson()
@@ -77,7 +78,8 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 }
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
-                    plugins.pluginBeans.toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.first }.toMutableSet())
+                    plugins.map { (_, dp) -> dp.pluginBean }
+                        .toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.first }.toMutableSet())
                 }
             }
 
