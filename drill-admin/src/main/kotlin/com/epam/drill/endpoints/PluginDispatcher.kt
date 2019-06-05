@@ -19,6 +19,7 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -85,10 +86,11 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
 
             authenticate {
-                post<Routes.Api.AddNewPlugin> { ll: Routes.Api.AddNewPlugin ->
+                post<Routes.Api.Agent.AddNewPlugin> { ll ->
                     val agentId = ll.agentId
-                    val pluginId = ll.pluginId
-                    if (agentManager.agentStorage[agentId] != null && plugins.getBean(pluginId) != null) {
+                    val plugId = Json.parse(PluginId.serializer(), call.receive())
+                    val pluginId = plugId.pluginId
+                    if (agentManager.agentStorage[agentId] != null && pluginId != null && plugins.getBean(pluginId) != null) {
                         agentManager.addPluginFromLib(agentId, pluginId)
                         call.respond(HttpStatusCode.OK, "Plugin '$pluginId' was added to agent '$agentId'")
                     } else {
@@ -123,3 +125,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         }
     }
 }
+
+@Serializable
+data class PluginId(val pluginId: String?)

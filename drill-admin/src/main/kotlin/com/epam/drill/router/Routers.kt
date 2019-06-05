@@ -13,9 +13,6 @@ object Routes {
             @Location("/{agentId}/toggle-standby")
             data class AgentToggleStandby(val agentId: String)
 
-            @Location("/{agentId}/load-plugin")
-            data class LoadPlugin(val agentId: String)
-
             @Location("/{agentId}/unload-plugin")
             data class UnloadPlugin(val agentId: String)
 
@@ -30,14 +27,14 @@ object Routes {
 
             @Location("/{agentId}/{pluginId}/toggle-plugin")
             data class TogglePlugin(val agentId: String, val pluginId: String)
+
+            @Location("/{agentId}/load-plugin")
+            data class AddNewPlugin(val agentId: String)
         }
 
 
         @Location("/agent/{agentId}")
         data class UpdateAgentConfig(val agentId: String)
-
-        @Location("/agent/add-plugin/{agentId}/{pluginId}")
-        data class AddNewPlugin(val agentId: String, val pluginId: String)
 
         @Location("/plugin-content/{pluginId}")
         data class PluginContent(val pluginId: String)

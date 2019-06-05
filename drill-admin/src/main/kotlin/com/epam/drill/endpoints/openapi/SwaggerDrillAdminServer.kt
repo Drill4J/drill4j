@@ -93,51 +93,6 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            post<Routes.Api.Agent.LoadPlugin> { lp ->
-                val pluginId = call.receive<PluginId>()
-                val drillAgent = agentManager[lp.agentId]
-                if (drillAgent == null) {
-                    call.respond("can't find the agent '${lp.agentId}'")
-                    return@post
-                }
-                val agentPluginPartFile = plugins.plugins[pluginId.pluginId]?.agentPluginPart
-                if (agentPluginPartFile == null) {
-                    call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${lp.agentId}'")
-                    return@post
-                }
-                val inChannel: FileChannel = agentPluginPartFile.inputStream().channel
-                val fileSize: Long = inChannel.size()
-                val buffer: ByteBuffer = ByteBuffer.allocate(fileSize.toInt())
-
-                val message = Gson().toJson(
-                    Message(MessageType.MESSAGE, "/plugins/load", pluginId.pluginId)
-                ).toUtf8Bytes()
-
-                val messagePosition = ByteBuffer.allocate(4).putInt(message.size)
-                val filePosition = ByteBuffer.allocate(4).putInt(message.size)
-                messagePosition.flip()
-                filePosition.flip()
-
-                inChannel.read(buffer)
-                buffer.flip()
-
-
-                val put = ByteBuffer.allocate(8 + message.size + fileSize.toInt())
-                    .put(messagePosition)
-                    .put(filePosition)
-                    .put(message)
-                    .put(buffer)
-
-
-                put.flip()
-//                println(put.array().contentToString())
-//                put.flip()
-                drillAgent.send(Frame.Binary(true, put))
-                call.respond("event 'load' and plugin's file(${lp.agentId}) was sent to AGENT")
-            }
-        }
-
-        authenticate {
             get<Routes.Api.Agent.Agent> { up ->
                 call.respond(agentManager.byId(up.agentId) ?: "can't find")
             }
