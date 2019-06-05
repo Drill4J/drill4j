@@ -1,10 +1,12 @@
 package com.epam.drill.plugins.coverage
 
+import com.epam.drill.ClassPath
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.InstrumentationPlugin
 import com.epam.drill.plugin.api.processing.Sender
 import com.epam.drill.plugin.api.processing.UnloadReason
 import com.epam.drill.session.DrillRequest
+import com.epam.drill.url
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list

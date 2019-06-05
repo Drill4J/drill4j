@@ -3,12 +3,20 @@ package com.epam.drill.core
 import com.epam.drill.api.enableJvmtiEventClassFileLoadHook
 import com.epam.drill.api.enableJvmtiEventNativeMethodBind
 import com.epam.drill.api.enableJvmtiEventVmInit
+import com.epam.drill.common.AgentConfig
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
+import jvmapi.JNIEnvVar
+import jvmapi.JNI_CreateJavaVM
+import jvmapi.JNI_EEXIST
+import jvmapi.JNI_ERR
 import jvmapi.JNI_OK
+import jvmapi.JNI_VERSION_1_2
+import jvmapi.JavaVMInitArgs
+import jvmapi.JavaVMOption
 import jvmapi.JavaVMVar
 import jvmapi.SetEventCallbacks
 import jvmapi.SetNativeMethodPrefix
@@ -19,12 +27,21 @@ import jvmapi.jint
 import jvmapi.jvmtiEventCallbacks
 import jvmapi.saveVmToGlobal
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
+import platform.posix.printf
+import kotlin.native.concurrent.TransferMode
+import kotlin.native.concurrent.Worker
 import kotlin.native.concurrent.freeze
 
 
@@ -53,8 +70,7 @@ private fun runAgent(options: String?) {
         val agentId = this.getValue("agentId")
         val drillInstallationDir = this.getValue("drillInstallationDir")
         exec { this.drillInstallationDir = drillInstallationDir }
-        exec { this.adminAddress = adminAddress }
-        exec { this.agentId = agentId }
+        exec { this.agentConfig = AgentConfig(agentId, adminAddress) }
         setUnhandledExceptionHook({ x: Throwable ->
             println("unhandled event $x")
         }.freeze())

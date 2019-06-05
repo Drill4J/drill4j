@@ -2,16 +2,15 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.AgentIdParam
+import com.epam.drill.common.AgentConfig
+import com.epam.drill.common.AgentConfigParam
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.NeedSyncParam
 import com.epam.drill.common.PluginMessage
-import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.service.asyncTransaction
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -19,8 +18,7 @@ import io.ktor.routing.routing
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
+import kotlinx.serialization.loads
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -37,11 +35,12 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     init {
         app.routing {
             webSocket("/agent/attach") {
-                //fixme retrieve this from agent
-                val buildVersion = "fixed"
-                val agentId = call.request.headers[AgentIdParam]!!
 
-                val agentInfo = agentManager.agentConfiguration(agentId, buildVersion)
+                val agentConfig = Cbor.loads(
+                    AgentConfig.serializer(), call.request.headers[AgentConfigParam]!!
+                )
+
+                val agentInfo = agentManager.agentConfiguration(agentConfig.id, agentConfig.buildVersion)
                 agentInfo.ipAddress = call.request.local.remoteHost
                 agentManager.put(agentInfo, this)
 

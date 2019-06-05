@@ -202,6 +202,11 @@ jvmtiError GetThreadInfo(jthread thread,
           jvmtiThreadInfo* info_ptr) {
   return checkEx((*(gdata->jvmti))->GetThreadInfo(gdata->jvmti, thread, info_ptr),"GetThreadInfo");
 }
+
+jint HJNI_CreateJavaVM(JavaVM **pvm, void **penv, void *args){
+    return JNI_CreateJavaVM(pvm,penv, args);
+}
+
 jvmtiError GetOwnedMonitorInfo(jthread thread,
           jint* owned_monitor_count_ptr,
           jobject** owned_monitors_ptr) {

@@ -23,6 +23,7 @@ kotlin {
         val drillAdminPartMain by getting
         drillAdminPartMain.apply {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
                 implementation(project(":drill-common"))
             }

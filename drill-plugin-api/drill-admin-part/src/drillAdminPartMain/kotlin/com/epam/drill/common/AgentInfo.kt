@@ -38,17 +38,3 @@ data class AgentInfo(
 
 @Serializable
 data class AgentBuildVersionJson(val id: String, val name: String)
-
-
-@Serializable
-data class AgentAdditionalInfo(
-    val jvmInput: List<String>,
-    val availableProcessors: Int,
-    val arch: String,
-    val name: String,
-    val version: String,
-    val systemProperties: Map<String, String>
-)
-
-const val AgentIdParam = "agentId"
-const val NeedSyncParam = "needSync"
