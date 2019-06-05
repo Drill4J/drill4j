@@ -1,7 +1,8 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.DrillPluginFile
-import com.epam.drill.common.AgentIdParam
+import com.epam.drill.common.AgentConfig
+import com.epam.drill.common.AgentConfigParam
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
@@ -11,7 +12,6 @@ import com.epam.drill.core.concurrency.LockFreeMPSCQueue
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.exceptions.WsClosedException
 import com.epam.drill.core.exec
-import com.epam.drill.core.needSync
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.dumps
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
@@ -59,7 +60,7 @@ fun startWs() =
             delay(3000)
             try {
                 runBlocking {
-                    websocket(exec { adminAddress })
+                    websocket(exec { agentConfig.adminUrl })
                 }
             } catch (ex: Exception) {
 //                when (ex) {
@@ -77,8 +78,8 @@ suspend fun websocket(adminUrl: String) {
     wsLogger.debug { "try to create websocket $url" }
     val wsClient = WebSocketClient(
         url, params = mutableMapOf(
-            AgentIdParam to exec { agentId },
-            NeedSyncParam to needSync.toString()
+            AgentConfigParam to Cbor.dumps(AgentConfig.serializer(), exec { agentConfig }),
+            NeedSyncParam to exec { agentConfig.needSync }.toString()
         )
     )
     wsClient.onOpen {
@@ -113,7 +114,7 @@ suspend fun websocket(adminUrl: String) {
                 exec { pl[load.pluginName] = load.pl!! }
                 loader.execute(TransferMode.UNSAFE, { load }) { plugMessage ->
                     runBlocking {
-                        exec { needSync = false }
+                        exec { agentConfig.needSync = false }
                         val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
                         if (!pluginsDir.exists()) pluginsDir.mkdir()
                         val vfsFile = pluginsDir[plugMessage.pluginName]
@@ -126,7 +127,7 @@ suspend fun websocket(adminUrl: String) {
                 }
             }
             load.event == DrillEvent.SYNC_FINISHED -> {
-                needSync = false
+                exec { agentConfig.needSync = false }
                 wsLogger.info { "Agent synchronization is finished" }
             }
             load.event == DrillEvent.SYNC_STARTED -> wsLogger.info { "Agent synchronization is started" }

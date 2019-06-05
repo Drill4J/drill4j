@@ -1,4 +1,4 @@
-/*import com.epam.drill.common.AgentInfos
+import com.epam.drill.common.AgentInfos
 import com.epam.drill.common.Family
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginBeans
@@ -14,12 +14,12 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Test
 
-class ExposeTest {
+class StorageTest {
     @Test
     fun test() {
-            var hik = hikari()
-            val connect = Database.connect(hik)
-            transaction(connect) {
+        var hik = hikari()
+        val connect = Database.connect(hik)
+        transaction(connect) {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.create(PluginBeans, AgentInfos, JsonMessages)
@@ -36,17 +36,6 @@ class ExposeTest {
                 pb
             }
 
-
-//            val munich = AgentInfoDb.new("fcuk") {
-//                name = "x"
-//                groupName = "x"
-//                description = "x"
-//                isEnable = true
-//                adminUrl = "x"
-//                buildVersion = "x"
-//
-//            }
-//            munich.rawPluginNames = SizedCollection(listOf(transaction))
             println()
         }
         val transaction1 = transaction(connect) {
@@ -63,23 +52,16 @@ class ExposeTest {
 
             println(map)
         }
-//        transaction{
-//            println(AgentInfoDb.all().iterator().next())
-//        }
-//        println(transaction.message)
     }
 
     private fun hikari(): HikariDataSource {
         val config = HikariConfig()
-        config.driverClassName = "org.postgresql.Driver"
-        config.jdbcUrl = "jdbc:postgresql://localhost:5432/drill_base"
+        config.driverClassName = "org.h2.Driver"
+        config.jdbcUrl = "jdbc:h2:mem:test"
         config.maximumPoolSize = 3
         config.isAutoCommit = false
         config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        config.setUsername("postgres");
-        config.setPassword("password");
-        config.validate()
         return HikariDataSource(config)
     }
 
-}*/
+}

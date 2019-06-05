@@ -1,5 +1,7 @@
 package com.epam.drill.plugins.coverage
 
+import com.epam.drill.ClassPath
+import com.epam.drill.getByteCodeOf
 import org.junit.Test
 
 
@@ -15,4 +17,4 @@ open class ClassPathX {
 
     }
 
-   }
+}

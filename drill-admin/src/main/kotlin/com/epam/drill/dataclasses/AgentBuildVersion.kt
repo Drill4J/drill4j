@@ -1,25 +1,21 @@
 package com.epam.drill.dataclasses
 
-import com.epam.drill.common.ConnectedTable.uniqueIndex
-import org.jetbrains.exposed.dao.Entity
-import org.jetbrains.exposed.dao.EntityClass
+import com.epam.drill.common.AgentBuildVersionJson
 import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.dao.IdTable
-import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.IntIdTable
 
-object AgentBuildVersions : IdTable<String>() {
-    override val id: Column<EntityID<String>> = varchar("version", length = 100).primaryKey().entityId().uniqueIndex()
+object AgentBuildVersions : IntIdTable() {
+    val buildVersion = varchar("build_version", length = 100)
     val name = varchar("name", length = 100)
 }
 
+class AgentBuildVersion(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<AgentBuildVersion>(AgentBuildVersions)
 
-class AgentBuildVersion(id: EntityID<String>) : Entity<String>(id) {
-    companion object : EntityClass<String, AgentBuildVersion>(AgentBuildVersions)
-
+    var buildVersion by AgentBuildVersions.buildVersion
     var name by AgentBuildVersions.name
 }
 
-fun AgentBuildVersion.toAgentBuildVersionJson() =
-    AgentBuildVersionJson(this.id.value, this.name)
-
-data class AgentBuildVersionJson(val id: String, val name: String)
+fun AgentBuildVersion.toAgentBuildVersionJson() = AgentBuildVersionJson(this.buildVersion, this.name)

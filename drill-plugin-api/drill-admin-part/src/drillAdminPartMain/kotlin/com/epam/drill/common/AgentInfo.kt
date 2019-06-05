@@ -6,14 +6,15 @@ import kotlinx.serialization.Serializable
 data class AgentInfo(
     val id: String,
     var name: String,
-    var groupName: String,
+    var groupName: String? = "",
     var description: String,
     var isEnable: Boolean,
     var buildVersion: String,
 
     val adminUrl: String = "",
     var ipAddress: String = "",
-    var rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
+    val buildVersions: MutableSet<AgentBuildVersionJson> = mutableSetOf(),
+    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
 
 ) {
     override fun equals(other: Any?): Boolean {
@@ -35,15 +36,6 @@ data class AgentInfo(
     }
 }
 
-@Serializable
-data class AgentAdditionalInfo(
-    val jvmInput: List<String>,
-    val availableProcessors: Int,
-    val arch: String,
-    val name: String,
-    val version: String,
-    val systemProperties: Map<String, String>
-)
 
-const val AgentIdParam = "agentId"
-const val NeedSyncParam = "needSync"
+@Serializable
+data class AgentBuildVersionJson(val id: String, val name: String)

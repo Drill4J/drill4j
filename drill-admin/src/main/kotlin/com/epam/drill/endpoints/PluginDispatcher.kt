@@ -1,8 +1,6 @@
 package com.epam.drill.endpoints
 
 
-import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.agentmanager.get
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.Plugins
@@ -71,34 +69,23 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
 
 
-            //todo move it to another place
-            authenticate {
-                post<Routes.Api.UpdateAgentConfig> { ll ->
-                    val agentId = ll.agentId
-                    if (agentManager[agentId] != null) {
-                        val au = Json.parse(AgentInfoWebSocketSingle.serializer(), call.receive())
-                        agentManager.updateAgent(agentId, au)
-                        call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
-                    } else {
-                        call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
-                    }
-                }
-            }
-
             authenticate {
                 post<Routes.Api.Agent.AddNewPlugin> { ll ->
                     val agentId = ll.agentId
-                    val plugId = Json.parse(PluginId.serializer(), call.receive())
-                    val pluginId = plugId.pluginId
-                    if (agentManager.agentStorage[agentId] != null && pluginId != null && plugins.getBean(pluginId) != null) {
-                        agentManager.addPluginFromLib(agentId, pluginId)
-                        call.respond(HttpStatusCode.OK, "Plugin '$pluginId' was added to agent '$agentId'")
-                    } else {
-                        call.respond(
-                            HttpStatusCode.BadRequest,
-                            "Agent '$agentId' not found or plugin '$pluginId' is corrupted"
-                        )
+                    val pluginId = Json.parse(PluginId.serializer(), call.receive()).pluginId
+                    val (status, msg) = when(pluginId) {
+                        null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
+                        in plugins -> {
+                            if (agentId in agentManager) {
+                                agentManager.addPluginFromLib(agentId, pluginId)
+                                HttpStatusCode.OK to "Plugin '$pluginId' was added to agent '$agentId'"
+                            } else {
+                                HttpStatusCode.BadRequest to "Agent '$agentId' not found"
+                            }
+                        }
+                        else -> HttpStatusCode.BadRequest to "Plugin $pluginId not found."
                     }
+                    call.respond(status, msg)
                 }
             }
 

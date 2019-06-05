@@ -1,7 +1,8 @@
 package com.epam.drill.service
 
+import com.epam.drill.common.ABVsConnectedTable
 import com.epam.drill.common.AgentInfos
-import com.epam.drill.common.ConnectedTable
+import com.epam.drill.common.APConnectedTable
 import com.epam.drill.common.PluginBeans
 import com.epam.drill.dataclasses.AgentBuildVersions
 import com.epam.drill.dataclasses.JsonMessages
@@ -20,14 +21,23 @@ class DataSourceRegistry {
         Database.connect(hikari())
         org.jetbrains.exposed.sql.transactions.transaction {
             addLogger(StdOutSqlLogger)
-            SchemaUtils.create(PluginBeans, AgentInfos, ConnectedTable, AgentBuildVersions, JsonMessages)
+            SchemaUtils.create(
+                PluginBeans,
+                AgentInfos,
+                APConnectedTable,
+                ABVsConnectedTable,
+                AgentBuildVersions,
+                JsonMessages
+            )
         }
     }
 
     private fun hikari(): HikariDataSource {
         val config = HikariConfig()
         config.driverClassName = "org.postgresql.Driver"
-        config.jdbcUrl = "jdbc:postgresql://${System.getenv("POSTGRES_HOST")?:"localhost"}:${System.getenv("POSTGRES_PORT")?:"5432"}/drill_base"
+        config.jdbcUrl =
+                "jdbc:postgresql://${System.getenv("POSTGRES_HOST") ?: "localhost"}:${System.getenv("POSTGRES_PORT")
+                    ?: "5432"}/drill_base"
         config.username = "postgres"
         config.password = "password"
         config.maximumPoolSize = 3

@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.coverage
+package com.epam.drill
 
 import java.io.File
 import java.io.IOException

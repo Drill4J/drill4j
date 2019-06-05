@@ -1,5 +1,6 @@
 package com.epam.drill.core
 
+import com.epam.drill.common.AgentConfig
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugin.api.processing.AgentPart
 import kotlinx.cinterop.CFunction
@@ -17,9 +18,7 @@ import kotlin.reflect.KFunction4
 import kotlin.reflect.KFunction5
 
 class DI {
-    lateinit var agentId: String
-    lateinit var adminAddress: String
-    var needSync: Boolean = true
+    lateinit var agentConfig: AgentConfig
     lateinit var drillInstallationDir: String
     var pstorage: MutableMap<String, AgentPart<*, *>> = mutableMapOf()
     val originalMethod = NativeMethodBinder()
@@ -86,9 +85,3 @@ val work = Worker.start(true)
 @ThreadLocal
 val dsa = DI()
 
-
-var needSync: Boolean
-    get() = exec { needSync }
-    set(value) {
-        exec { needSync = value }
-    }

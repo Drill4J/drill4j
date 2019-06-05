@@ -100,5 +100,5 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
         return temp
     }
 
-    fun getBean(pluginId: String) = plugins.getBean(pluginId)
+    fun getBean(pluginId: String) = plugins[pluginId]
 }

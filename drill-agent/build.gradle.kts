@@ -50,6 +50,11 @@ kotlin {
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
         }
+        jvm("javaAgent").compilations["test"].defaultSourceSet {
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
+        }
 
         jvm("javaAgent").compilations["test"].defaultSourceSet {
             dependencies {

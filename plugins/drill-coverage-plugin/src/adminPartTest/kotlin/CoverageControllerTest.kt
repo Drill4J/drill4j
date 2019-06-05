@@ -26,7 +26,8 @@ class CoverageControllerTest {
         description = "test",
         ipAddress = "127.0.0.1",
         isEnable = true,
-        buildVersion = "1.0.1"
+        buildVersion = "1.0.1",
+        buildVersions = mutableSetOf()
     )
     private val ws = WsServiceStub()
 
@@ -160,9 +161,9 @@ class WsServiceStub : WsService {
 
     override fun getPlWsSession() = setOf<String>()
 
-    override fun storeData(str: String, obj: Any){}
+    override fun storeData(str: String, obj: Any) {}
 
-    override fun getEntityBy(agentId: String, clazz: Class<Any>){}
+    override fun getEntityBy(agentId: String, clazz: Class<Any>) {}
 }
 
 

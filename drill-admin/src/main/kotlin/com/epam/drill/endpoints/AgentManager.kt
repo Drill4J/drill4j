@@ -3,11 +3,8 @@ package com.epam.drill.endpoints
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.agentmanager.AgentStorage
 import com.epam.drill.agentmanager.self
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.merge
-import com.epam.drill.common.toAgentInfo
+import com.epam.drill.common.*
+import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
@@ -18,32 +15,48 @@ import org.jetbrains.exposed.sql.addLogger
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
+import org.slf4j.LoggerFactory
 
 class AgentManager(override val kodein: Kodein) : KodeinAware {
+    companion object {
+        val logger = LoggerFactory.getLogger(AgentManager::class.java)
+    }
+
     val agentStorage: AgentStorage by instance()
     val agentPlugins: AgentPlugins by instance()
     val agentHandler: AgentHandler by instance()
 
-    suspend fun agentConfiguration(agentId: String): AgentInfo {
-        val agentInfo = asyncTransaction { AgentInfoDb.findById(agentId) }
-        if (agentInfo != null)
-            return asyncTransaction {
-                agentInfo.toAgentInfo()
+    suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
+        addLogger(StdOutSqlLogger)
+        val agentInfoDb = AgentInfoDb.findById(agentId)
+        if (agentInfoDb != null) {
+            agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
+                agentInfoDb.buildVersions =
+                        SizedCollection(AgentBuildVersion.new {
+                            this.buildVersion = pBuildVersion
+                            this.name = ""
+                        })
             }
-        else {
-            return asyncTransaction {
-                addLogger(StdOutSqlLogger)
-                AgentInfoDb.new(agentId) {
-                    name = "???"
-                    groupName = "???"
-                    description = "???"
-                    buildVersion = "???"
-                    isEnable = true
-                    adminUrl = ""
-                    rawPluginNames = SizedCollection(emptyList())
-                }
-                    .toAgentInfo()
-            }
+
+            agentInfoDb.toAgentInfo()
+        } else {
+            AgentInfoDb.new(agentId) {
+                name = "???"
+                groupName = "???"
+                description = "???"
+                this.buildVersion = pBuildVersion
+                isEnable = true
+                adminUrl = ""
+                rawPluginNames = SizedCollection()
+
+            }.apply {
+                this.buildVersions =
+                        SizedCollection(AgentBuildVersion.new {
+                            this.buildVersion = pBuildVersion
+                            this.name = ""
+                        })
+            }.toAgentInfo()
+
 
         }
 
@@ -51,9 +64,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
 
     suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
-        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
-
         asyncTransaction {
+            val agentInfoDb = AgentInfoDb.findById(agentId)
             addLogger(StdOutSqlLogger)
             agentInfoDb?.merge(au)
         }
@@ -79,46 +91,46 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     operator fun get(k: String) = agentStorage.targetMap[k]?.second
 
+    operator fun contains(k: String) = k in agentStorage.targetMap
+
     fun self(k: String) = agentStorage.self(k)
 
     fun byId(agentId: String) = agentStorage.targetMap[agentId]?.first
 
-    suspend fun addPluginFromLib(agentId: String, pluginId: String) {
-        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
-        var agentInfo: AgentInfo? = null
-        if (!(agentInfoDb == null)) {
-            val col = asyncTransaction { agentInfoDb.rawPluginNames.toMutableSet() }
-            val plugin = agentPlugins.getBean(pluginId)
-            asyncTransaction {
-                val dbBean = PluginBeanDb.new {
-                    this.pluginId = plugin!!.id
-                    this.name = plugin.name
-                    this.description = plugin.description
-                    this.type = plugin.type
-                    this.family = plugin.family
-                    this.enabled = plugin.enabled
-                    this.config = plugin.config
-                }
-                col.add(dbBean)
+    suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
+        val agentInfoDb = AgentInfoDb.findById(agentId)
+        if (agentInfoDb != null) {
+            val plugin = agentPlugins.getBean(pluginId)!!
+            val fillPluginBeanDb: PluginBeanDb.() -> Unit = {
+                this.pluginId = plugin.id
+                this.name = plugin.name
+                this.description = plugin.description
+                this.type = plugin.type
+                this.family = plugin.family
+                this.enabled = plugin.enabled
+                this.config = plugin.config
             }
-            val rawNames = SizedCollection(col)
-            asyncTransaction { agentInfoDb.rawPluginNames = rawNames }
-            println("Plugin with id $pluginId have successfully been added to agent with id $agentId!")
-            val byId = byId(agentId)
-            asyncTransaction { agentInfo = agentInfoDb.toAgentInfo() }
-            asyncTransaction {
-                byId.apply {
-                    this!!.rawPluginNames = agentInfo!!.rawPluginNames
-                }
+            val rawPluginNames = agentInfoDb.rawPluginNames.toList()
+            val existingPluginBeanDb = rawPluginNames.find { it.pluginId == pluginId }
+            if (existingPluginBeanDb == null) {
+                val newPluginBeanDb = PluginBeanDb.new(fillPluginBeanDb)
+                agentInfoDb.rawPluginNames = SizedCollection(rawPluginNames + newPluginBeanDb)
+                newPluginBeanDb
+            } else {
+                existingPluginBeanDb.apply(fillPluginBeanDb)
             }
-            agentStorage.update()
-            agentStorage.singleUpdate(agentId)
         } else {
-            println("Agent with id $agentId have not been found on your DB.")
+            logger.warn("Agent with id $agentId not found in your DB.")
+            null
         }
-        agentHandler.updateAgentConfig(agentInfo!!)
+    }?.let { pluginBeanDb ->
+        val agentInfo = byId(agentId)
+        agentInfo!!.rawPluginNames.add(pluginBeanDb.toPluginBean())
+        agentStorage.update()
+        agentStorage.singleUpdate(agentId)
+        agentHandler.updateAgentConfig(agentInfo)
+        logger.info("Plugin $pluginId successfully added to agent with id $agentId!")
     }
-
 }
 
 
