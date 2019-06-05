@@ -2,13 +2,16 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.agentmanager.AgentStorage
+import com.epam.drill.agentmanager.get
 import com.epam.drill.agentmanager.self
 import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.AgentPlugins
 import com.epam.drill.service.asyncTransaction
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
+import io.ktor.http.cio.websocket.Frame
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
@@ -24,7 +27,6 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     val agentStorage: AgentStorage by instance()
     val agentPlugins: AgentPlugins by instance()
-    val agentHandler: AgentHandler by instance()
 
     suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
         addLogger(StdOutSqlLogger)
@@ -128,9 +130,41 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         agentInfo!!.rawPluginNames.add(pluginBeanDb.toPluginBean())
         agentStorage.update()
         agentStorage.singleUpdate(agentId)
-        agentHandler.updateAgentConfig(agentInfo)
+        updateAgentConfig(agentInfo)
         logger.info("Plugin $pluginId successfully added to agent with id $agentId!")
     }
+
+    suspend fun updateAgentConfig(agentInfo: AgentInfo) {
+        val session = agentStorage[agentInfo.id]
+        session!!.send(
+            Frame.Binary(
+                false,
+                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
+            )
+        )
+        agentInfo.rawPluginNames.forEach { pb ->
+            val pluginId = pb.id
+            val agentPluginPart = agentPlugins.getAdminPart(pluginId)
+            val pluginMessage =
+                PluginMessage(
+                    DrillEvent.LOAD_PLUGIN,
+                    pluginId,
+                    agentPluginPart.readBytes().toList(),
+                    pb,
+                    "-"
+                )
+            session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
+        }
+
+
+        session.send(
+            Frame.Binary(
+                false,
+                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_FINISHED, ""))
+            )
+        )
+    }
+
 }
 
 

@@ -101,4 +101,6 @@ class AgentPlugins(override val kodein: Kodein) : KodeinAware {
     }
 
     fun getBean(pluginId: String) = plugins[pluginId]
+
+    fun getAdminPart(pluginId: String) = plugins.plugins.get(pluginId)!!.second
 }
