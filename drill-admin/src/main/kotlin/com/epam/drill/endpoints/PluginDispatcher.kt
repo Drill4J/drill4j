@@ -2,6 +2,7 @@ package com.epam.drill.endpoints
 
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
+import com.epam.drill.agentmanager.get
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.PluginBean
 import com.epam.drill.plugins.Plugins
@@ -79,6 +80,22 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
                     } else {
                         call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
+                    }
+                }
+            }
+
+            authenticate {
+                post<Routes.Api.AddNewPlugin> { ll: Routes.Api.AddNewPlugin ->
+                    val agentId = ll.agentId
+                    val pluginId = ll.pluginId
+                    if (agentManager.agentStorage[agentId] != null && plugins.getBean(pluginId) != null) {
+                        agentManager.addPluginFromLib(agentId, pluginId)
+                        call.respond(HttpStatusCode.OK, "Plugin '$pluginId' was added to agent '$agentId'")
+                    } else {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            "Agent '$agentId' not found or plugin '$pluginId' is corrupted"
+                        )
                     }
                 }
             }

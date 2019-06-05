@@ -22,6 +22,7 @@ import org.kodein.di.generic.instance
 class AgentManager(override val kodein: Kodein) : KodeinAware {
     val agentStorage: AgentStorage by instance()
     val agentPlugins: AgentPlugins by instance()
+    val agentHandler: AgentHandler by instance()
 
     suspend fun agentConfiguration(agentId: String): AgentInfo {
         val agentInfo = asyncTransaction { AgentInfoDb.findById(agentId) }
@@ -82,30 +83,40 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     fun byId(agentId: String) = agentStorage.targetMap[agentId]?.first
 
-    fun addPluginFromLib(agentId: String, pluginId: String): AgentInfo? {
-        val agentInfoDb = AgentInfoDb.findById(agentId)
-        if(!(agentInfoDb == null)) {
-            val col = agentInfoDb?.rawPluginNames?.toMutableSet()
+    suspend fun addPluginFromLib(agentId: String, pluginId: String) {
+        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
+        var agentInfo: AgentInfo? = null
+        if (!(agentInfoDb == null)) {
+            val col = asyncTransaction { agentInfoDb.rawPluginNames.toMutableSet() }
             val plugin = agentPlugins.getBean(pluginId)
-            val dbBean = PluginBeanDb.new {
-                this.pluginId = plugin!!.id
-                this.name = plugin.name
-                this.description = plugin.description
-                this.type = plugin.type
-                this.family = plugin.family
-                this.enabled = plugin.enabled
-                this.config = plugin.config
+            asyncTransaction {
+                val dbBean = PluginBeanDb.new {
+                    this.pluginId = plugin!!.id
+                    this.name = plugin.name
+                    this.description = plugin.description
+                    this.type = plugin.type
+                    this.family = plugin.family
+                    this.enabled = plugin.enabled
+                    this.config = plugin.config
+                }
+                col.add(dbBean)
             }
-            col!!.add(dbBean)
             val rawNames = SizedCollection(col)
-            agentInfoDb.rawPluginNames = rawNames
+            asyncTransaction { agentInfoDb.rawPluginNames = rawNames }
             println("Plugin with id $pluginId have successfully been added to agent with id $agentId!")
-            return agentInfoDb.toAgentInfo()
-        }
-        else{
+            val byId = byId(agentId)
+            asyncTransaction { agentInfo = agentInfoDb.toAgentInfo() }
+            asyncTransaction {
+                byId.apply {
+                    this!!.rawPluginNames = agentInfo!!.rawPluginNames
+                }
+            }
+            agentStorage.update()
+            agentStorage.singleUpdate(agentId)
+        } else {
             println("Agent with id $agentId have not been found on your DB.")
-            return null
         }
+        agentHandler.updateAgentConfig(agentInfo!!)
     }
 
 }

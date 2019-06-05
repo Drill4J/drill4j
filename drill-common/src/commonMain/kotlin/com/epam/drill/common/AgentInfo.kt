@@ -13,7 +13,7 @@ data class AgentInfo(
 
     val adminUrl: String = "",
     var ipAddress: String = "",
-    val rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
+    var rawPluginNames: MutableSet<PluginBean> = mutableSetOf()
 
 ) {
     override fun equals(other: Any?): Boolean {

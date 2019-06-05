@@ -2,12 +2,7 @@
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.AgentIdParam
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NeedSyncParam
-import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -16,6 +11,7 @@ import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.routing
+import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.cbor.Cbor
@@ -31,6 +27,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
     private val agentManager: AgentManager by instance()
     private val pd: PluginDispatcher by kodein.instance()
     private val plugins: Plugins by kodein.instance()
+    private var session: DefaultWebSocketServerSession? = null
 
     private val agLog = LoggerFactory.getLogger(AgentHandler::class.java)
 
@@ -55,34 +52,10 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 println("Agent registered")
                 agLog.info("Agent WS is connected. Client's address is ${call.request.local.remoteHost}")
 
+                session = this
+
                 if (call.request.headers[NeedSyncParam]!!.toBoolean()) {
-                    send(
-                        Frame.Binary(
-                            false,
-                            Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
-                        )
-                    )
-                    agentInfo.rawPluginNames.forEach { pb ->
-                        val pluginId = pb.id
-                        val agentPluginPart = plugins.plugins[pluginId]?.agentPluginPart!!
-                        val pluginMessage =
-                            PluginMessage(
-                                DrillEvent.LOAD_PLUGIN,
-                                pluginId,
-                                agentPluginPart.readBytes().toList(),
-                                pb,
-                                "-"
-                            )
-                        send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
-                    }
-
-
-                    send(
-                        Frame.Binary(
-                            false,
-                            Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_FINISHED, ""))
-                        )
-                    )
+                    updateAgentConfig(agentInfo)
                 }
 
 
@@ -115,5 +88,35 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
 
             }
         }
+    }
+
+    suspend fun updateAgentConfig(agentInfo: AgentInfo) {
+        session!!.send(
+            Frame.Binary(
+                false,
+                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_STARTED, ""))
+            )
+        )
+        agentInfo.rawPluginNames.forEach { pb ->
+            val pluginId = pb.id
+            val agentPluginPart = plugins.plugins[pluginId]?.agentPluginPart!!
+            val pluginMessage =
+                PluginMessage(
+                    DrillEvent.LOAD_PLUGIN,
+                    pluginId,
+                    agentPluginPart.readBytes().toList(),
+                    pb,
+                    "-"
+                )
+            session!!.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
+        }
+
+
+        session!!.send(
+            Frame.Binary(
+                false,
+                Cbor.dump(PluginMessage.serializer(), PluginMessage(DrillEvent.SYNC_FINISHED, ""))
+            )
+        )
     }
 }
