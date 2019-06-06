@@ -1,11 +1,10 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentStatus
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
-import com.epam.drill.plugins.coverage.CoverageEventType.CLASS_BYTES
-import com.epam.drill.plugins.coverage.CoverageEventType.INIT
-import com.epam.drill.plugins.coverage.CoverageEventType.INITIALIZED
+import com.epam.drill.plugins.coverage.CoverageEventType.*
 import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
@@ -22,6 +21,7 @@ class CoverageControllerTest {
     private val agentInfo = AgentInfo(
         id = "id",
         name = "test",
+        status = AgentStatus.READY,
         groupName = "test",
         description = "test",
         ipAddress = "127.0.0.1",

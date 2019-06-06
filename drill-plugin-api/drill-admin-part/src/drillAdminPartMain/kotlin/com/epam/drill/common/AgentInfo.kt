@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class AgentInfo(
     val id: String,
     var name: String,
+    var status: AgentStatus,
     var groupName: String? = "",
     var description: String,
     var isEnable: Boolean,
@@ -39,3 +40,12 @@ data class AgentInfo(
 
 @Serializable
 data class AgentBuildVersionJson(val id: String, val name: String)
+
+enum class AgentStatus(val code: Int) {
+    NOT_REGISTERED(0),
+    READY(1);
+
+    companion object {
+        fun from(findValue: Int): AgentStatus = AgentStatus.values().first { it.code == findValue }
+    }
+}

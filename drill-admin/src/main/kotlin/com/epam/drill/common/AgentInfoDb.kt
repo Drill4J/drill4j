@@ -16,6 +16,7 @@ import java.util.*
 object AgentInfos : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
     val name = varchar("name", length = 50)
+    val status = integer("status")
     val groupName = varchar("group_name", length = 50).nullable()
     val description = varchar("description", length = 50)
     val isEnable = bool("is_enabled")
@@ -46,6 +47,7 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, AgentInfoDb>(AgentInfos)
 
     var name by AgentInfos.name
+    var status by AgentInfos.status
     var groupName by AgentInfos.groupName
     var description by AgentInfos.description
     var isEnable by AgentInfos.isEnable
@@ -53,8 +55,10 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var buildVersion by AgentInfos.buildVersion
     var plugins by PluginBeanDb via APConnectedTable
     var buildVersions by AgentBuildVersion via ABVsConnectedTable
+
 }
 
+fun AgentInfoDb.status() = AgentStatus.from(this.status)
 
 object PluginBeans : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().clientDefault {
@@ -89,6 +93,7 @@ fun AgentInfoDb.toAgentInfo() =
     AgentInfo(
         id = this.id.value,
         name = this.name,
+        status = AgentStatus.from(this.status),
         groupName = this.groupName,
         description = this.description,
         buildVersion = this.buildVersion,
@@ -103,6 +108,7 @@ fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
     this.groupName = au.group
     this.description = au.description
     this.buildVersion = au.buildVersion
+    this.status = au.status.code
     au.buildVersions.forEach { (k, v) ->
         this.buildVersions.forEach {
             if (it.buildVersion == k) {
