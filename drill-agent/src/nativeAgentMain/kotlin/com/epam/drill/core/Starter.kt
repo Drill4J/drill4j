@@ -9,14 +9,7 @@ import com.epam.drill.logger.DLogger
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
-import jvmapi.JNIEnvVar
-import jvmapi.JNI_CreateJavaVM
-import jvmapi.JNI_EEXIST
-import jvmapi.JNI_ERR
 import jvmapi.JNI_OK
-import jvmapi.JNI_VERSION_1_2
-import jvmapi.JavaVMInitArgs
-import jvmapi.JavaVMOption
 import jvmapi.JavaVMVar
 import jvmapi.SetEventCallbacks
 import jvmapi.SetNativeMethodPrefix
@@ -27,21 +20,12 @@ import jvmapi.jint
 import jvmapi.jvmtiEventCallbacks
 import jvmapi.saveVmToGlobal
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
-import platform.posix.printf
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
 import kotlin.native.concurrent.freeze
 
 
@@ -89,7 +73,7 @@ private fun runAgent(options: String?) {
 fun String?.asAgentParams(): Map<String, String> {
     if (this.isNullOrEmpty()) return mutableMapOf()
     return try {
-        this!!.split(",").associate {
+        this.split(",").associate {
             val split = it.split("=")
             split[0] to split[1]
         }

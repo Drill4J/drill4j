@@ -92,7 +92,7 @@ tasks {
     }
 }
 
-tasks.withType<KotlinCompile>().all {
+tasks.withType<KotlinCompile>() {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.util.KtorExperimentalAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.serialization.UnstableDefault"

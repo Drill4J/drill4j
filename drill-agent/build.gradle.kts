@@ -8,9 +8,8 @@ import com.epam.drill.build.serializationRuntimeVersion
 import com.epam.drill.build.staticLibraryExtension
 import com.epam.drill.build.staticLibraryPrefix
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 plugins {
@@ -30,7 +29,12 @@ kotlin {
     targets {
         createNativeTargetForCurrentOs("nativeAgent") {
             mainCompilation {
-                outputKinds(DYNAMIC)
+                binaries {
+                    sharedLib(
+                        namePrefix = "drill-agent",
+                        buildTypes = setOf(DEBUG)
+                    )
+                }
                 val drillInternal by cinterops.creating
                 drillInternal.apply {
                 }
@@ -81,12 +85,10 @@ kotlin {
 
         named("nativeAgentMain") {
             dependencies {
-                if (Os.isFamily(Os.FAMILY_MAC))
-                    implementation("com.soywiz:korio-macosx64:$korioVersion")
-                else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    implementation("com.soywiz:korio-mingwx64:$korioVersion")
-                } else {
-                    implementation("com.soywiz:korio-linuxx64:$korioVersion")
+                when {
+                    Os.isFamily(Os.FAMILY_MAC) -> implementation("com.soywiz:korio-macosx64:$korioVersion")
+                    Os.isFamily(Os.FAMILY_WINDOWS) -> implementation("com.soywiz:korio-mingwx64:$korioVersion")
+                    else -> implementation("com.soywiz:korio-linuxx64:$korioVersion")
                 }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
@@ -99,7 +101,7 @@ kotlin {
 }
 
 
-val staticLibraryName = "${staticLibraryPrefix}main.$staticLibraryExtension"
+val staticLibraryName = "${staticLibraryPrefix}drill_jvmapi.$staticLibraryExtension"
 tasks {
     val javaAgentJar = "javaAgentJar"(Jar::class) {
         destinationDirectory.set(file("../distr"))
@@ -114,15 +116,17 @@ tasks {
 
     val deleteAndCopyAgent by registering {
 
-        dependsOn("linkMainDebugSharedNativeAgent")
+        dependsOn("linkDrill-agentDebugSharedNativeAgent")
         doFirst {
             delete(file("distr/$staticLibraryName"))
         }
         doLast {
-            val binary = (kotlin.targets["nativeAgent"].compilations["main"] as KotlinNativeCompilation).getBinary(
-                NativeOutputKind.valueOf("DYNAMIC"),
-                NativeBuildType.DEBUG
-            )
+            val binary = (kotlin.targets["nativeAgent"] as KotlinNativeTarget)
+                .binaries
+                .findSharedLib(
+                    "drill-agent",
+                    NativeBuildType.DEBUG
+                )?.outputFile
             copy {
                 from(file("$binary"))
                 into(file("../distr"))
@@ -141,10 +145,13 @@ tasks {
     }
 
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
-        binary.linkerOpts.add("subdep/$staticLibraryName")
-        copy {
-            from(staticLibraryName)
-            into(file("build/bin/nativeAgent/testDebugExecutable"))
+        doFirst {
+            copy {
+                println(file("subdep/$staticLibraryName").exists())
+                binary.linkerOpts.add("subdep/$staticLibraryName")
+                from(staticLibraryName)
+                into(file("build/bin/nativeAgent/testDebugExecutable"))
+            }
         }
     }
 

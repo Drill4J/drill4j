@@ -1,20 +1,20 @@
 package com.epam.drill.logger
 
-class Logger {
+class Logger(val name: String) {
     fun warn(function: () -> String) {
-        println("[DRILL WARN] " + function())
+        println("$name [DRILL WARN] " + function())
     }
 
     fun error(function: () -> String?) {
-        println("[DRILL ERROR] " + function())
+        println("$name [DRILL ERROR] " + function())
     }
 
     fun debug(function: () -> String) {
-        println("[DRILL DEBUG] " + function())
+        println("$name [DRILL DEBUG] " + function())
     }
 
     fun info(function: () -> String) {
-        println("[DRILL INFO] " + function())
+        println("$name [DRILL INFO] " + function())
     }
 
 }

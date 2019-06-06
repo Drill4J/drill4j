@@ -17,13 +17,13 @@ import org.junit.Test
 class StorageTest {
     @Test
     fun test() {
-        var hik = hikari()
+        val hik = hikari()
         val connect = Database.connect(hik)
         transaction(connect) {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.create(PluginBeans, AgentInfos, JsonMessages)
-            val transaction = transaction {
+            transaction {
                 val pb = PluginBeanDb.new {
                     pluginId = "x"
                     name = "x"
@@ -38,13 +38,13 @@ class StorageTest {
 
             println()
         }
-        val transaction1 = transaction(connect) {
+        transaction(connect) {
             JsonMessage.new("xx") {
                 message = "xxx"
             }
         }
-        println()
-        val transaction = transaction(connect) {
+
+        transaction(connect) {
             val map = JsonMessages.select {
                 JsonMessages.id.eq("xx")
             }.map { it[JsonMessages.message] }.first()

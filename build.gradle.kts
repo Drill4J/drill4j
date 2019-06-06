@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     base
 }
@@ -11,6 +13,11 @@ tasks {
     val runIntegrationTests by registering {
         dependsOn(gradle.includedBuild("integration-tests").task(":test"))
         group = "application"
+    }
+}
+allprojects {
+    tasks.withType<KotlinCompile> {
+        kotlinOptions.allWarningsAsErrors = true
     }
 }
 

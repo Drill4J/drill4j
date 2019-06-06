@@ -62,7 +62,7 @@ class CoveragePlugin @JvmOverloads constructor(
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
         val classPath1 = ClassPath()
         val scanItPlease = classPath1.scanItPlease(ClassLoader.getSystemClassLoader())
-        val filter = scanItPlease.filter { (k, v) ->
+        val filter = scanItPlease.filter { (k, _) ->
             config.pathPrefixes.any {
                 k.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                     .removeSuffix(".class").startsWith(it)

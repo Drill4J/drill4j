@@ -1,4 +1,5 @@
 import com.epam.drill.build.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("kotlin-multiplatform")
@@ -21,4 +22,10 @@ kotlin {
             }
         }
     }
+}
+
+tasks.withType<KotlinCompile>().all {
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI"
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.util.KtorExperimentalAPI"
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.serialization.UnstableDefault"
 }

@@ -2,9 +2,8 @@ import com.epam.drill.build.createNativeTargetForCurrentOs
 import com.epam.drill.build.jvmPaths
 import com.epam.drill.build.mainCompilation
 import com.epam.drill.build.serializationNativeVersion
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
 
 plugins {
     id("kotlin-multiplatform")
@@ -20,10 +19,15 @@ kotlin {
     targets {
         createNativeTargetForCurrentOs("jvmapi") {
             mainCompilation {
-                outputKinds(NativeOutputKind.DYNAMIC)
+                binaries {
+                    sharedLib(
+                        namePrefix = "drill-jvmapi",
+                        buildTypes = setOf(DEBUG)
+                    )
+                }
                 val jvmapi by cinterops.creating
                 jvmapi.apply {
-                    includeDirs(jvmPaths, "./src/nativeInterop/cpp","./")
+                    includeDirs(jvmPaths, "./src/nativeInterop/cpp", "./")
                 }
             }
         }
@@ -42,16 +46,17 @@ kotlin {
 
 tasks {
     "copyCinteropJvmapiJvmapi"{
-        dependsOn("linkMainDebugSharedJvmapi")
+        dependsOn("linkDrill-jvmapiDebugSharedJvmapi")
         doFirst {
-
             arrayOf(rootProject.file("drill-agent"), rootProject.file("drill-agent/subdep")).forEach {
                 copy {
                     from(
-                        (kotlin.targets["jvmapi"].compilations["main"] as KotlinNativeCompilation).getBinary(
-                            NativeOutputKind.valueOf("DYNAMIC"),
-                            NativeBuildType.DEBUG
-                        )
+                        (kotlin.targets["jvmapi"] as KotlinNativeTarget)
+                            .binaries
+                            .findSharedLib(
+                                "drill-jvmapi",
+                                NativeBuildType.DEBUG
+                            )?.outputFile
                     )
                     into(it)
                 }

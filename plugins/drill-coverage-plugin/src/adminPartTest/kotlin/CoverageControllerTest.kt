@@ -161,7 +161,7 @@ class WsServiceStub : WsService {
 
     override fun getPlWsSession() = setOf<String>()
 
-    override fun storeData(str: String, obj: Any) {}
+    override fun storeData(agentId: String, obj: Any) {}
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {}
 }
