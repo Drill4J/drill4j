@@ -36,6 +36,9 @@ object Routes {
         @Location("/agent/{agentId}")
         data class UpdateAgentConfig(val agentId: String)
 
+        @Location("/agent/register/{agentId}")
+        data class RegisterAgent(val agentId: String)
+
         @Location("/drill-admin/plugin/get-all-plugins")
         class AllPlugins
 
