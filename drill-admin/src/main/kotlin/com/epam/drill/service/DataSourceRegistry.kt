@@ -10,11 +10,12 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.addLogger
+import mu.KotlinLogging
+import org.jetbrains.exposed.sql.*
+import java.lang.System.getenv
+import java.nio.file.Paths
+
+private val logger = KotlinLogging.logger {}
 
 class DataSourceRegistry {
     init {
@@ -31,24 +32,33 @@ class DataSourceRegistry {
             )
         }
     }
-
-    private fun hikari(): HikariDataSource {
-        val config = HikariConfig()
-        config.driverClassName = "org.postgresql.Driver"
-        config.jdbcUrl =
-                "jdbc:postgresql://${System.getenv("POSTGRES_HOST") ?: "localhost"}:${System.getenv("POSTGRES_PORT")
-                    ?: "5432"}/drill_base"
-        config.username = "postgres"
-        config.password = "password"
-        config.maximumPoolSize = 3
-        config.isAutoCommit = false
-        config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        config.validate()
-        return HikariDataSource(config)
-    }
-
-
 }
+
+private fun hikari() = HikariDataSource(
+    HikariConfig().apply {
+        when (getenv("DB_DRIVER")) {
+            "postgresql" -> {
+                driverClassName = "org.postgresql.Driver"
+                val host = getenv("POSTGRES_HOST") ?: "localhost"
+                val port = (getenv("POSTGRES_PORT") ?: "5432")
+                jdbcUrl = "jdbc:postgresql://$host:$port/drill_base"
+                username = "postgres"
+                password = "password"
+
+            }
+            else -> { // embedded h2 db by default
+                val baseDir = getenv("DRILL_HOME") ?: System.getProperty("user.dir")
+                val dbPath = Paths.get(baseDir, "data").resolve("settings").toUri().path
+                logger.info { "External db is not configured. Backing to embedded H2 database $dbPath." }
+                driverClassName = "org.h2.Driver"
+                jdbcUrl = "jdbc:h2:$dbPath"
+            }
+        }
+        maximumPoolSize = 3
+        isAutoCommit = false
+        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+    }.apply(HikariConfig::validate)
+)
 
 suspend fun <T> asyncTransaction(statement: suspend Transaction.() -> T) = withContext(Dispatchers.IO) {
     org.jetbrains.exposed.sql.transactions.experimental.transaction(statement = statement)
