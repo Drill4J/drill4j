@@ -42,7 +42,7 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
             }
 
             authenticate {
-                post<Routes.Api.RegisterAgent> { ll ->
+                post<Routes.Api.Agent.RegisterAgent> { ll ->
                     val agentId = ll.agentId
                     val agInfo = agentManager.byId(agentId)
                     if (agInfo != null) {
@@ -55,9 +55,9 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                             buildVersion = agInfo.buildVersion
                         )
                         agentManager.updateAgent(agentId, au)
-                        call.respond(HttpStatusCode.OK, "agent '$agentId' have been registered")
+                        call.respond(HttpStatusCode.OK, "Agent '$agentId' have been registered")
                     } else {
-                        call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
+                        call.respond(HttpStatusCode.BadRequest, "Agent '$agentId' not found")
                     }
                 }
             }
