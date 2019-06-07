@@ -13,6 +13,7 @@ services:
     environment:
       - isDocker=true
       - DRILL_HOME=/drill
+      - DB_DRIVER=postgresql
       - POSTGRES_HOST=postgresdb
       - POSTGRES_PORT=5432
     restart: always
