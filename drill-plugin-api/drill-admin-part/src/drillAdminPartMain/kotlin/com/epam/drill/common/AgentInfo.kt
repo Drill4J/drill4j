@@ -43,7 +43,8 @@ data class AgentBuildVersionJson(val id: String, val name: String)
 
 enum class AgentStatus(val code: Int) {
     NOT_REGISTERED(0),
-    READY(1);
+    READY(1),
+    DISABLED(2);
 
     companion object {
         fun from(findValue: Int): AgentStatus = AgentStatus.values().first { it.code == findValue }
