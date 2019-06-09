@@ -79,8 +79,8 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
                         in plugins -> {
                             if (agentId in agentManager) {
-                                val agentInfo = agentManager.byId(agentId)
-                                if (pluginId in agentInfo!!.plugins.map { it -> it.id }) {
+                                val agentInfo = agentManager.byId(agentId)!!
+                                if (agentInfo.plugins.any { it.id == pluginId }) {
                                     HttpStatusCode.BadRequest to "Plugin '$pluginId' is already in agent '$agentId'"
                                 } else {
                                     agentManager.addPluginFromLib(agentId, pluginId)
