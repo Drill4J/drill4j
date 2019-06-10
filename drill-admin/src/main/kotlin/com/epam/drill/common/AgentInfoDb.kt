@@ -22,6 +22,7 @@ object AgentInfos : IdTable<String>() {
     val isEnable = bool("is_enabled")
     val adminUrl = varchar("admin_url", length = 50)
     val buildVersion = varchar("build_version", length = 50)
+    val buildAlias = varchar("build_alias", length = 50)
 }
 
 
@@ -53,6 +54,7 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var isEnable by AgentInfos.isEnable
     var adminUrl by AgentInfos.adminUrl
     var buildVersion by AgentInfos.buildVersion
+    var buildAlias by AgentInfos.buildAlias
     var plugins by PluginBeanDb via APConnectedTable
     var buildVersions by AgentBuildVersion via ABVsConnectedTable
 
@@ -97,6 +99,7 @@ fun AgentInfoDb.toAgentInfo() =
         groupName = this.groupName,
         description = this.description,
         buildVersion = this.buildVersion,
+        buildAlias = this.buildAlias,
         isEnable = this.isEnable,
         adminUrl = this.adminUrl,
         plugins = this@toAgentInfo.plugins.map { it.toPluginBean() }.toMutableSet(),

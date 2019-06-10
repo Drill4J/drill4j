@@ -11,6 +11,7 @@ data class AgentInfo(
     var description: String,
     var isEnable: Boolean,
     var buildVersion: String,
+    var buildAlias: String,
 
     val adminUrl: String = "",
     var ipAddress: String = "",
@@ -39,7 +40,7 @@ data class AgentInfo(
 
 
 @Serializable
-data class AgentBuildVersionJson(val id: String, val name: String)
+data class AgentBuildVersionJson(val id: String, var name: String)
 
 enum class AgentStatus(val code: Int) {
     NOT_REGISTERED(0),
@@ -47,6 +48,6 @@ enum class AgentStatus(val code: Int) {
     DISABLED(2);
 
     companion object {
-        fun from(findValue: Int): AgentStatus = AgentStatus.values().first { it.code == findValue }
+        fun from(findValue: Int): AgentStatus = values().first { it.code == findValue }
     }
 }

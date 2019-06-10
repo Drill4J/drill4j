@@ -27,6 +27,7 @@ class CoverageControllerTest {
         ipAddress = "127.0.0.1",
         isEnable = true,
         buildVersion = "1.0.1",
+        buildAlias = "test alias",
         buildVersions = mutableSetOf()
     )
     private val ws = WsServiceStub()
@@ -69,7 +70,7 @@ class CoverageControllerTest {
     @Test
     fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
-        val message = CoverageMessage(CoverageEventType.SESSION_FINISHED, "")
+        val message = CoverageMessage(SESSION_FINISHED, "")
 
 
         runBlocking {
@@ -95,7 +96,7 @@ class CoverageControllerTest {
         val countAllMethods = 6
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
-        val message = CoverageMessage(CoverageEventType.SESSION_FINISHED, "")
+        val message = CoverageMessage(SESSION_FINISHED, "")
 
         runBlocking {
             coverageController.processData(
