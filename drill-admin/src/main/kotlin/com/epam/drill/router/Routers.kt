@@ -30,6 +30,9 @@ object Routes {
 
             @Location("/{agentId}/load-plugin")
             data class AddNewPlugin(val agentId: String)
+
+            @Location("/{agentId}/register")
+            data class RegisterAgent(val agentId: String)
         }
 
 
