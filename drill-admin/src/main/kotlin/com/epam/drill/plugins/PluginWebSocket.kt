@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PluginWebSocket(
     var id: String, var name: String = "", var description: String = "", var type: String = "",
-    var status: Boolean? = true, var config: String? = "", var installedAgentsCount: Int? = 0
+    var status: Boolean? = true, var config: String? = "", var installedAgentsCount: Int? = 0,
+    var relation: String?
 )
 
 fun PluginBean.toPluginWebSocket() = PluginWebSocket(
@@ -17,7 +18,8 @@ fun PluginBean.toPluginWebSocket() = PluginWebSocket(
     type = type,
     status = enabled,
     config = config,
-    installedAgentsCount = 0
+    installedAgentsCount = 0,
+    relation = null
 )
 
 fun MutableSet<PluginBean>.toPluginsWebSocket() = this.map { it.toPluginWebSocket() }.toMutableSet()
