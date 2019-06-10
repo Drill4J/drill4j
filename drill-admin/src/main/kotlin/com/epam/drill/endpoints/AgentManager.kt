@@ -1,14 +1,7 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.merge
-import com.epam.drill.common.toAgentInfo
-import com.epam.drill.common.toPluginBean
+import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -39,22 +32,33 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         addLogger(StdOutSqlLogger)
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
-            agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
-                agentInfoDb.buildVersions =
-                    SizedCollection(AgentBuildVersion.new {
-                        this.buildVersion = pBuildVersion
-                        this.name = ""
-                    })
-            }
+            val status = agentInfoDb.status()
+            when (status) {
+                AgentStatus.READY -> {
+                    agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
+                        agentInfoDb.buildVersions =
+                            SizedCollection(AgentBuildVersion.new {
+                                this.buildVersion = pBuildVersion
+                                this.name = ""
+                            })
+                    }
+                }
+                AgentStatus.NOT_REGISTERED -> {
 
+                }
+                else -> {
+                    //TODO: process the rest of options
+                }
+            }
             agentInfoDb.toAgentInfo()
         } else {
             AgentInfoDb.new(agentId) {
                 name = "-"
+                status = AgentStatus.NOT_REGISTERED.code
                 groupName = "-"
                 description = "-"
                 this.buildVersion = pBuildVersion
-                isEnable = true
+                buildAlias = "Initial build"
                 adminUrl = ""
                 plugins = SizedCollection()
 
@@ -62,7 +66,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 this.buildVersions =
                     SizedCollection(AgentBuildVersion.new {
                         this.buildVersion = pBuildVersion
-                        this.name = ""
+                        this.name = "Initial build"
                     })
             }.toAgentInfo()
         }
@@ -82,6 +86,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             groupName = au.group
             description = au.description
             buildVersion = au.buildVersion
+            buildAlias = au.buildAlias
+            status = au.status
         }
         agentStorage.update()
         agentStorage.singleUpdate(agentId)

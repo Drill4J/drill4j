@@ -18,9 +18,10 @@ object AgentInfos : IdTable<String>() {
     val name = varchar("name", length = 50)
     val groupName = varchar("group_name", length = 50).nullable()
     val description = varchar("description", length = 50)
-    val isEnable = bool("is_enabled")
+    val status = integer("status")
     val adminUrl = varchar("admin_url", length = 50)
     val buildVersion = varchar("build_version", length = 50)
+    val buildAlias = varchar("build_alias", length = 50)
 }
 
 
@@ -48,13 +49,15 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var name by AgentInfos.name
     var groupName by AgentInfos.groupName
     var description by AgentInfos.description
-    var isEnable by AgentInfos.isEnable
+    var status by AgentInfos.status
     var adminUrl by AgentInfos.adminUrl
     var buildVersion by AgentInfos.buildVersion
+    var buildAlias by AgentInfos.buildAlias
     var plugins by PluginBeanDb via APConnectedTable
     var buildVersions by AgentBuildVersion via ABVsConnectedTable
 }
 
+fun AgentInfoDb.status() = AgentStatus.from(this.status)
 
 object PluginBeans : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().clientDefault {
@@ -89,10 +92,11 @@ fun AgentInfoDb.toAgentInfo() =
     AgentInfo(
         id = this.id.value,
         name = this.name,
+        status = AgentStatus.from(this.status),
         groupName = this.groupName,
         description = this.description,
         buildVersion = this.buildVersion,
-        isEnable = this.isEnable,
+        buildAlias = this.buildAlias,
         adminUrl = this.adminUrl,
         plugins = this@toAgentInfo.plugins.map { it.toPluginBean() }.toMutableSet(),
         buildVersions = this.buildVersions.map { it.toAgentBuildVersionJson() }.toMutableSet()
@@ -103,6 +107,8 @@ fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
     this.groupName = au.group
     this.description = au.description
     this.buildVersion = au.buildVersion
+    this.buildAlias = au.buildAlias
+    this.status = au.status.code
     au.buildVersions.forEach { (k, v) ->
         this.buildVersions.forEach {
             if (it.buildVersion == k) {
