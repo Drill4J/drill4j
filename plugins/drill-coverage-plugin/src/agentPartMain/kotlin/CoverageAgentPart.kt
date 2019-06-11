@@ -10,6 +10,8 @@ import com.epam.drill.url
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
+import org.jacoco.core.internal.data.CRC64
+import java.util.concurrent.atomic.AtomicReference
 
 val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
@@ -28,6 +30,11 @@ class CoveragePlugin @JvmOverloads constructor(
     override val id: String,
     private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
 ) : AgentPart<CoverConfig, Action>(), InstrumentationPlugin {
+
+    val instrumenter = instrumenter(instrContext)
+
+    private val loadedClassesRef = AtomicReference<Map<String, Long?>>(emptyMap())
+
     override fun doRawAction(action: String) {
         doAction(Json.parse(actionSerializer, action))
     }
@@ -54,10 +61,6 @@ class CoveragePlugin @JvmOverloads constructor(
         DrillRequest.RetransformClasses(filter.toTypedArray())
     }
 
-    val instrumenter = instrumenter(instrContext)
-
-    private val classNameSet = mutableSetOf<String>()
-
     override fun initPlugin() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
         val classPath1 = ClassPath()
@@ -69,26 +72,24 @@ class CoveragePlugin @JvmOverloads constructor(
             }
         }
 
-
         val initInfo = InitInfo(filter.count(), initializingMessage)
         sendMessage(CoverageEventType.INIT, json.stringify(InitInfo.serializer(), initInfo))
-        filter.forEach { (resourceName, classInfo) ->
-            classNameSet.add(
-                resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                    .removeSuffix(".class")
-            )
+        val loadedClasses = filter.map { (resourceName, classInfo) ->
+            val className = resourceName
+                .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
+                .removeSuffix(".class")
             val bytes = classInfo.url(resourceName).readBytes()
-            sendClass(
-                ClassBytes(
-                    resourceName.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                        .removeSuffix(".class"), bytes.toList()
-                )
-            )
-        }
+            
+            sendClass(ClassBytes(className, bytes.toList()))
+            val classId = CRC64.classId(bytes)
+            className to classId
+
+        }.toMap()
+        loadedClassesRef.set(loadedClasses)
         val initializedStr = "Plugin $id initialized!"
         sendMessage(CoverageEventType.INITIALIZED, initializedStr)
         println(initializedStr)
-        println("Loaded ${classNameSet.count()} classes: $classNameSet")
+        println("Loaded ${loadedClasses.count()} classes")
     }
 
 
@@ -129,14 +130,9 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
-        return if (className in classNameSet) { //instrument only classes from the selected packages
-            try {
-                instrumenter(className, initialBytes)
-            } catch (ex: Throwable) {
-                ex.printStackTrace()
-                throw ex
-            }
-        } else null
+        return loadedClassesRef.get()[className]?.let { classId ->
+            instrumenter(className, classId, initialBytes)
+        }
     }
 
     private fun sendClass(classBytes: ClassBytes) {
@@ -160,5 +156,4 @@ class CoveragePlugin @JvmOverloads constructor(
 
     override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
-
 }

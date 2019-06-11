@@ -4,6 +4,7 @@ import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
+import org.jacoco.core.internal.data.CRC64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -33,10 +34,12 @@ class InstrumentationTests {
     val targetClass = TestTarget::class.java
 
     val originalBytes = targetClass.readBytes()
+    
+    val originalClassId = CRC64.classId(originalBytes) 
 
     @Test
     fun `instrumented class should be larger the the original`() {
-        val instrumented = instrument(targetClass.name, originalBytes)
+        val instrumented = instrument(targetClass.name, originalClassId, originalBytes)
         assertTrue { instrumented.count() > originalBytes.count() }
     }
 
@@ -61,7 +64,7 @@ class InstrumentationTests {
 
     private fun addInstrumentedClass() {
         val name = targetClass.name
-        val instrumented = instrument(name, originalBytes)
+        val instrumented = instrument(name, originalClassId, originalBytes)
         memoryClassLoader.addDefinition(name, instrumented)
     }
 }

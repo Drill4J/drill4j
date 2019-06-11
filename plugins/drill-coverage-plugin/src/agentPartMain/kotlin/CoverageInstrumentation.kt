@@ -1,14 +1,11 @@
 package com.epam.drill.plugins.coverage
 
-import org.jacoco.core.instr.Instrumenter
-import org.jacoco.core.internal.data.CRC64
 import org.jacoco.core.internal.flow.ClassProbesAdapter
 import org.jacoco.core.internal.flow.ClassProbesVisitor
 import org.jacoco.core.internal.flow.MethodProbesVisitor
 import org.jacoco.core.internal.instr.ClassInstrumenter
 import org.jacoco.core.internal.instr.IProbeArrayStrategy
 import org.jacoco.core.internal.instr.InstrSupport
-import org.jacoco.core.runtime.IExecutionDataAccessorGenerator
 import org.objectweb.asm.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +19,7 @@ typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
 /**
  * Instrumenter type
  */
-typealias DrillInstrumenter = (String, ByteArray) -> ByteArray
+typealias DrillInstrumenter = (String, Long, ByteArray) -> ByteArray
 
 class ExecDatum(
     val id: Long,
@@ -105,35 +102,33 @@ fun instrumenter(probeArrayProvider: ProbeArrayProvider): DrillInstrumenter {
 
 private class CustomInstrumenter(
     private val probeArrayProvider: ProbeArrayProvider
-) : Instrumenter(EmptyExecutionDataAccessorGenerator), DrillInstrumenter {
+) : DrillInstrumenter {
 
-    override fun invoke(className: String, classBody: ByteArray): ByteArray = instrument(classBody, className)
-
-    override fun instrument(buffer: ByteArray?, name: String?): ByteArray {
+    override fun invoke(className: String, classId: Long, classBody: ByteArray) =
         try {
-            return instrument(buffer!!)
+            instrument(className, classId, classBody)
         } catch (e: RuntimeException) {
-            throw IOException("Error while instrumenting $name.", e)
+            throw IOException("Error while instrumenting $className classId=$classId.", e)
         }
 
-    }
-
-    private fun instrument(source: ByteArray): ByteArray {
-        val classId = CRC64.classId(source)
-        val reader = InstrSupport.classReaderFor(source)
-        val writer = object : ClassWriter(reader, 0) {
-            override fun getCommonSuperClass(type1: String, type2: String): String = throw IllegalStateException()
-        }
-        val className = reader.className
-        val version = InstrSupport.getVersionMajor(source)
+    fun instrument(className: String, classId: Long, classBody: ByteArray): ByteArray {
+        val version = InstrSupport.getVersionMajor(classBody)
 
         //count probes before transformation
         val counter = ProbeCounter()
+        val reader = InstrSupport.classReaderFor(classBody)
         reader.accept(ClassProbesAdapter(counter, false), 0)
 
-        val strategy =
-            DrillProbeStrategy(probeArrayProvider, className, classId, InstrSupport.needsFrames(version), counter.count)
-
+        val strategy = DrillProbeStrategy(
+            probeArrayProvider,
+            className,
+            classId,
+            InstrSupport.needsFrames(version),
+            counter.count
+        )
+        val writer = object : ClassWriter(reader, 0) {
+            override fun getCommonSuperClass(type1: String, type2: String): String = throw IllegalStateException()
+        }
         val visitor = ClassProbesAdapter(
             ClassInstrumenter(strategy, writer),
             InstrSupport.needsFrames(version)
@@ -141,10 +136,6 @@ private class CustomInstrumenter(
         reader.accept(visitor, ClassReader.EXPAND_FRAMES)
         return writer.toByteArray()
     }
-}
-
-private object EmptyExecutionDataAccessorGenerator : IExecutionDataAccessorGenerator {
-    override fun generateDataAccessor(classid: Long, classname: String?, probecount: Int, mv: MethodVisitor?): Int = 0
 }
 
 private class ProbeCounter : ClassProbesVisitor() {
