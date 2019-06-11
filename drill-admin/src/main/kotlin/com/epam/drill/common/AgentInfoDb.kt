@@ -11,7 +11,8 @@ import org.jetbrains.exposed.dao.IdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
-import java.util.*
+import java.util.UUID
+
 
 object AgentInfos : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
