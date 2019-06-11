@@ -5,6 +5,7 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.agentWsMessage
+import com.epam.drill.plugins.PluginWebSocket
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.pluginBean
@@ -124,17 +125,19 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
             get<Routes.Api.GetPluginInfo> { ll ->
                 val installedPlugs = agentManager.agentStorage.byId(ll.agentId)
                     ?.toAgentInfoWebSocket()?.rawPluginsName
-                val allPlugs = plugins.plugins.values.map { dp -> dp.pluginBean.toPluginWebSocket() }
-                if (installedPlugs != null) {
-                    call.respond(allPlugs.map { plug ->
-                        if (plug in installedPlugs)
-                            plug.apply { relation = "Installed" } else plug
-                    })
-                } else {
-                    call.respond(allPlugs)
+                val allPlugs = plugins.plugins.values.map { dp ->
+                    dp.pluginBean.toPluginWebSocket()
                 }
+                call.respond(allPlugs.map { plug ->
+                    if (plug partOf installedPlugs)
+                        plug.apply {
+                            relation = "Installed"
+                        } else plug
+                })
             }
         }
     }
 
+    private infix fun PluginWebSocket.partOf(set: Set<PluginWebSocket>?) =
+        if (set == null) false else this in set
 }

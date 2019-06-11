@@ -6,8 +6,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PluginWebSocket(
-    var id: String, var name: String = "", var description: String = "", var type: String = "",
-    var status: Boolean? = true, var config: String? = "", var installedAgentsCount: Int? = 0,
+    var id: String,
+    var name: String = "",
+    var description: String = "",
+    var type: String = "",
+    var status: Boolean? = true,
+    var config: String? = "",
+    var installedAgentsCount: Int? = 0,
     var relation: String?
 )
 
