@@ -36,7 +36,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
             agentManager.agentStorage.onUpdate += update(mutableSetOf()) { storage ->
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
                 sessionStorage.sendTo(
-                    storage.values.map { it.first }.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
+                    storage.values.map { it.agent }.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
                         destination
                     )
                 )
@@ -45,7 +45,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
             agentManager.agentStorage.onAdd += add(mutableSetOf()) { k, v ->
                 val destination = app.toLocation(WsRoutes.GetAgent(k))
                 if (sessionStorage.exists(destination))
-                    sessionStorage.sendTo(v.first.toAgentInfoWebSocket().messageEvent(destination))
+                    sessionStorage.sendTo(v.agent.toAgentInfoWebSocket().messageEvent(destination))
             }
 
             agentManager.agentStorage.onRemove += remove(mutableSetOf()) { k ->
@@ -56,7 +56,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
             wsTopic {
                 topic<WsRoutes.GetAllAgents> { _, _ ->
-                    agentManager.agentStorage.values.map { it.first }.sortedWith(compareBy(AgentInfo::id))
+                    agentManager.agentStorage.values.map { it.agent }.sortedWith(compareBy(AgentInfo::id))
                         .toMutableSet()
                         .toAgentInfosWebSocket()
 
@@ -78,7 +78,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
                     plugins.map { (_, dp) -> dp.pluginBean }
-                        .toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.first }.toMutableSet())
+                        .toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.agent }.toMutableSet())
                 }
             }
 

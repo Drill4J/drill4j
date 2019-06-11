@@ -6,7 +6,7 @@ import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.plugins.serverInstance
+import com.epam.drill.plugins.pluginBean
 import com.epam.drill.router.Routes
 import com.google.gson.Gson
 import io.ktor.application.Application
@@ -112,7 +112,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerDrillAdmin() {
         authenticate {
             get<Routes.Api.AllPlugins> {
-                call.respond(plugins.plugins.values.map { dp -> dp.serverInstance.id })
+                call.respond(plugins.plugins.values.map { dp -> dp.pluginBean.id })
             }
         }
     }

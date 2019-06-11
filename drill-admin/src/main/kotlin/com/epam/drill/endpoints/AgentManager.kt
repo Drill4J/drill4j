@@ -94,18 +94,19 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     suspend fun put(agentInfo: AgentInfo, session: DefaultWebSocketSession) {
-        agentStorage.put(agentInfo.id, Pair(agentInfo, session))
+        agentStorage.put(agentInfo.id, AgentEntry(agentInfo, session))
     }
 
     suspend fun remove(agentInfo: AgentInfo) {
         agentStorage.remove(agentInfo.id)
     }
 
-    fun agentSession(k: String) = agentStorage.targetMap[k]?.second
+    fun agentSession(k: String) = agentStorage.targetMap[k]?.agentSession
 
     operator fun contains(k: String) = k in agentStorage.targetMap
 
-    operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.first
+    operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.agent
+    fun full(agentId: String) = agentStorage.targetMap[agentId]
 
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
         val agentInfoDb = AgentInfoDb.findById(agentId)

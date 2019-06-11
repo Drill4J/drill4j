@@ -2,11 +2,7 @@ package com.epam.drill
 
 import com.epam.drill.cache.CacheService
 import com.epam.drill.cache.impl.HazelcastCacheService
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.DrillWsSession
-import com.epam.drill.endpoints.ServerWsTopics
-import com.epam.drill.endpoints.WsTopic
+import com.epam.drill.endpoints.*
 import com.epam.drill.endpoints.agent.AgentEndpoints
 import com.epam.drill.endpoints.agent.AgentHandler
 import com.epam.drill.endpoints.agent.DrillServerWs
@@ -38,7 +34,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.locations.KtorExperimentalLocationsAPI
@@ -57,7 +52,7 @@ import java.time.Duration
 
 val storage = Kodein.Module(name = "agentStorage") {
     bind<DataSourceRegistry>() with eagerSingleton { DataSourceRegistry() }
-    bind<ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<String, Pair<AgentInfo, DefaultWebSocketSession>, MutableSet<DrillWsSession>>() }
+    bind<ObservableMapStorage<String, AgentEntry, MutableSet<DrillWsSession>>>() with singleton { ObservableMapStorage<String, AgentEntry, MutableSet<DrillWsSession>>() }
     bind<WsTopic>() with singleton { WsTopic(kodein) }
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
