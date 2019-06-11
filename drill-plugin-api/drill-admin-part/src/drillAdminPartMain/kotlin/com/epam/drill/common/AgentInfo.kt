@@ -41,12 +41,8 @@ data class AgentInfo(
 @Serializable
 data class AgentBuildVersionJson(val id: String, var name: String)
 
-enum class AgentStatus(val code: Int) {
-    NOT_REGISTERED(0),
-    READY(1),
-    DISABLED(2);
-
-    companion object {
-        fun from(findValue: Int): AgentStatus = values().first { it.code == findValue }
-    }
+enum class AgentStatus{
+    NOT_REGISTERED,
+    READY,
+    DISABLED;
 }

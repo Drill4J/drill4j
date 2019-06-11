@@ -19,7 +19,7 @@ object AgentInfos : IdTable<String>() {
     val name = varchar("name", length = 50)
     val groupName = varchar("group_name", length = 50).nullable()
     val description = varchar("description", length = 50)
-    val status = integer("status")
+    var status = enumeration("status", AgentStatus::class)
     val adminUrl = varchar("admin_url", length = 50)
     val buildVersion = varchar("build_version", length = 50)
     val buildAlias = varchar("build_alias", length = 50)
@@ -58,8 +58,6 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
     var buildVersions by AgentBuildVersion via ABVsConnectedTable
 }
 
-fun AgentInfoDb.status() = AgentStatus.from(this.status)
-
 object PluginBeans : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().clientDefault {
         UUID.randomUUID().toString()
@@ -93,7 +91,7 @@ fun AgentInfoDb.toAgentInfo() =
     AgentInfo(
         id = this.id.value,
         name = this.name,
-        status = AgentStatus.from(this.status),
+        status = this.status,
         groupName = this.groupName,
         description = this.description,
         buildVersion = this.buildVersion,
@@ -109,7 +107,7 @@ fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
     this.description = au.description
     this.buildVersion = au.buildVersion
     this.buildAlias = au.buildAlias
-    this.status = au.status.code
+    this.status = au.status
     au.buildVersions.forEach { (k, v) ->
         this.buildVersions.forEach {
             if (it.buildVersion == k) {

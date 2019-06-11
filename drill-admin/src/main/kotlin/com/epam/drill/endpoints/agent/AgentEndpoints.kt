@@ -17,6 +17,7 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -48,7 +49,7 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                     val agentId = ll.agentId
                     val agInfo = agentManager.byId(agentId)
                     if (agInfo != null) {
-                        val regInfo = Gson().fromJson(call.receive<String>(), AgentRegistrationInfo::class.java)
+                        val regInfo = Json.parse(AgentRegistrationInfo.serializer(), call.receive())
                         val bv = agInfo.buildVersion
                         val alias = regInfo.buildAlias
                         val au = AgentInfoWebSocketSingle(

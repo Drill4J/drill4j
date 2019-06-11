@@ -8,7 +8,6 @@ import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginMessage
 import com.epam.drill.common.merge
-import com.epam.drill.common.status
 import com.epam.drill.common.toAgentInfo
 import com.epam.drill.common.toPluginBean
 import com.epam.drill.dataclasses.AgentBuildVersion
@@ -37,11 +36,13 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     val agentStorage: AgentStorage by instance()
     val plugins: Plugins by instance()
 
+    val INITIAL_BUILD_ALIAS = "Initial build"
+
     suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
         addLogger(StdOutSqlLogger)
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
-            val status = agentInfoDb.status()
+            val status = agentInfoDb.status
             when (status) {
                 AgentStatus.READY -> {
                     agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
@@ -53,21 +54,21 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     }
                 }
                 AgentStatus.NOT_REGISTERED -> {
-
+                    //TODO: add some processing for unregistered agents
                 }
-                else -> {
-                    //TODO: process the rest of options
+                AgentStatus.DISABLED -> {
+                    //TODO: add some processing for disabled agents
                 }
             }
             agentInfoDb.toAgentInfo()
         } else {
             AgentInfoDb.new(agentId) {
                 name = "-"
-                status = AgentStatus.NOT_REGISTERED.code
+                status = AgentStatus.NOT_REGISTERED
                 groupName = "-"
                 description = "-"
                 this.buildVersion = pBuildVersion
-                buildAlias = "Initial build"
+                buildAlias = INITIAL_BUILD_ALIAS
                 adminUrl = ""
                 plugins = SizedCollection()
 
@@ -75,7 +76,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 this.buildVersions =
                     SizedCollection(AgentBuildVersion.new {
                         this.buildVersion = pBuildVersion
-                        this.name = "Initial build"
+                        this.name = INITIAL_BUILD_ALIAS
                     })
             }.toAgentInfo()
         }
