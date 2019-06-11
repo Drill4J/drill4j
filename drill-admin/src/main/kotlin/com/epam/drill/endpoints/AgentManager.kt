@@ -31,12 +31,12 @@ import org.kodein.di.generic.instance
 
 private val logger = KotlinLogging.logger {}
 
+const val INITIAL_BUILD_ALIAS = "Initial build"
+
 class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     val agentStorage: AgentStorage by instance()
     val plugins: Plugins by instance()
-
-    val INITIAL_BUILD_ALIAS = "Initial build"
 
     suspend fun agentConfiguration(agentId: String, pBuildVersion: String) = asyncTransaction {
         addLogger(StdOutSqlLogger)
