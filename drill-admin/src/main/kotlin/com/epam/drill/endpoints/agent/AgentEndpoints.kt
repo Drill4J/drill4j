@@ -43,7 +43,17 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                 }
             }
 
-
+            authenticate {
+                post<Routes.Api.Agent.UnregisterAgent> { ll ->
+                    val agentId = ll.agentId
+                    if (agentManager[agentId] != null) {
+                        agentManager.resetAgent(agentId)
+                        call.respond(HttpStatusCode.OK, "agent '$agentId' was reset")
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
+                    }
+                }
+            }
             authenticate {
                 post<Routes.Api.Agent.RegisterAgent> { ll ->
                     val agentId = ll.agentId

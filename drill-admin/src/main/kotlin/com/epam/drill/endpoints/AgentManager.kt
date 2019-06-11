@@ -1,6 +1,7 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
+import com.epam.drill.common.AgentBuildVersionJson
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.AgentInfoDb
 import com.epam.drill.common.AgentStatus
@@ -102,6 +103,29 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         agentStorage.update()
         agentStorage.singleUpdate(agentId)
 
+    }
+
+    suspend fun resetAgent(agentId: String) {
+        var buildVersion: String? = null
+        asyncTransaction {
+            val agentInfoDb = AgentInfoDb.findById(agentId)
+            addLogger(StdOutSqlLogger)
+            buildVersion = agentInfoDb?.buildVersion
+        }
+        if (buildVersion != null) {
+            val au = AgentInfoWebSocketSingle(
+                id = agentId,
+                name = "-",
+                status = AgentStatus.NOT_REGISTERED,
+                group = "-",
+                description = "-",
+                buildVersion = buildVersion!!,
+                buildAlias = "Initial build",
+                adminUrl = "",
+                ipAddress = ""
+            ).apply { buildVersions.add(AgentBuildVersionJson(buildVersion!!, "Initial build")) }
+            updateAgent(agentId, au)
+        }
     }
 
     suspend fun put(agentInfo: AgentInfo, session: DefaultWebSocketSession) {
