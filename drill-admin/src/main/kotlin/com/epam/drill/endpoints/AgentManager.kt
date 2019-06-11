@@ -1,7 +1,16 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.*
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.AgentStatus
+import com.epam.drill.common.DrillEvent
+import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.merge
+import com.epam.drill.common.status
+import com.epam.drill.common.toAgentInfo
+import com.epam.drill.common.toPluginBean
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
