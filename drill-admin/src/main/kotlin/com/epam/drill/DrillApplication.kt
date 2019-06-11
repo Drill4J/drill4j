@@ -1,5 +1,7 @@
 package com.epam.drill
 
+import com.epam.drill.cache.CacheService
+import com.epam.drill.cache.impl.HazelcastCacheService
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.DrillWsSession
@@ -60,6 +62,7 @@ val storage = Kodein.Module(name = "agentStorage") {
     bind<ServerWsTopics>() with eagerSingleton { ServerWsTopics(kodein) }
     bind<MutableSet<DrillWsSession>>() with eagerSingleton { HashSet<DrillWsSession>() }
     bind<AgentManager>() with eagerSingleton { AgentManager(kodein) }
+    bind<CacheService>() with eagerSingleton { HazelcastCacheService() }
     bind<AgentEndpoints>() with eagerSingleton {
         AgentEndpoints(
             kodein
@@ -152,6 +155,7 @@ var kodeinConfig: Kodein.MainBuilder.() -> Unit = {
 }
 
 
+@Suppress("unused")
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
 fun Application.module(): Kodein {

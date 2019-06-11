@@ -57,6 +57,7 @@ dependencies {
     implementation("com.h2database:h2:1.4.197")
     implementation("org.postgresql:postgresql:9.4-1200-jdbc41")
     implementation("com.zaxxer:HikariCP:2.7.8")
+    implementation("com.hazelcast:hazelcast:3.12")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
 
@@ -92,7 +93,7 @@ tasks {
     }
 }
 
-tasks.withType<KotlinCompile>() {
+tasks.withType<KotlinCompile> {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.util.KtorExperimentalAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.serialization.UnstableDefault"

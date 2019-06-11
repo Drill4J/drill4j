@@ -2,15 +2,14 @@
 
 package com.epam.drill.endpoints.plugin
 
+import com.epam.drill.cache.CacheService
+import com.epam.drill.cache.type.Cache
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.dataclasses.JsonMessage
-import com.epam.drill.dataclasses.JsonMessages
 import com.epam.drill.endpoints.fromJson
 import com.epam.drill.endpoints.textFrame
 import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.service.asyncTransaction
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.CloseReason
@@ -22,9 +21,6 @@ import io.ktor.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.select
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -38,7 +34,10 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
 
     private val app: Application by instance()
+    private val cacheService: CacheService by instance()
+    private val eventStorage: Cache<String, String> by cacheService
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
+
 
     override fun getPlWsSession(): Set<String> {
         return sessionStorage.keys
@@ -49,15 +48,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
         val id = destination + ":" + agentInfo.buildVersion
         logger.debug { "send data to $id destination" }
-        asyncTransaction {
-            addLogger(StdOutSqlLogger)
-            JsonMessage.findById(id)
-                ?.apply { this.message = messageForSend }
-                ?: JsonMessage.new(id) {
-                    this.message = messageForSend
-                }
-
-        }
+        eventStorage[id] = messageForSend
 
         sessionStorage[destination]?.let { sessionSet ->
             for (session in sessionSet) {
@@ -97,16 +88,10 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                     val buildVersion = subscribeInfo.buildVersion
 
 
-                                    val message = asyncTransaction {
-                                        val map = JsonMessages.select {
-                                            JsonMessages.id.eq(
-                                                event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                                    subscribeInfo.agentId
-                                                } else buildVersion)
-                                            )
-                                        }.map { it[JsonMessages.message] }.firstOrNull()
-                                        map
-                                    }
+                                    val message =
+                                        eventStorage[(event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
+                                            subscribeInfo.agentId
+                                        } else buildVersion))]
 
                                     if (message.isNullOrEmpty()) {
                                         this.send(
