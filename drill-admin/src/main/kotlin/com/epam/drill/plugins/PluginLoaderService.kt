@@ -5,7 +5,6 @@ import com.epam.drill.common.PluginBean
 import com.epam.drill.extractPluginBean
 import com.epam.drill.loadInRuntime
 import com.epam.drill.plugin.api.end.AdminPluginPart
-import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.retrieveApiClass
 import io.ktor.util.error
 import mu.KotlinLogging
@@ -21,7 +20,6 @@ private val logger = KotlinLogging.logger {}
 
 class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
     private val plugins: Plugins by kodein.instance()
-    private val wsService: WsService by kodein.instance()
     private val fileList: List<File> =
         listOf(File("../distr/adminStorage"), File(System.getenv("DRILL_HOME") + "/adminStorage"))
 
@@ -47,11 +45,11 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
                         val (processAdminPart, pluginBean) = processAdminPart(jar, tempDirectory)
                         val loadedPlugins = plugins.plugins.keys
 
-                        if (!loadedPlugins.contains(processAdminPart.id)) {
+                        if (!loadedPlugins.contains(pluginBean.id)) {
                             val processAgentPart = processAgentPart(jar, tempDirectory)
                             val dp = DP(processAdminPart, processAgentPart, pluginBean)
-                            plugins.plugins[processAdminPart.id] = dp
-                            logger.info { "plugin '${processAdminPart.id}' was loaded successfully" }
+                            plugins.plugins[pluginBean.id] = dp
+                            logger.info { "plugin '${pluginBean.id}' was loaded successfully" }
                         }
                     }
                 }
@@ -62,7 +60,7 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
     }
 
-    private fun processAdminPart(jar: JarFile, tempDirectory: File): Pair<AdminPluginPart, PluginBean> {
+    private fun processAdminPart(jar: JarFile, tempDirectory: File): Pair<Class<AdminPluginPart>, PluginBean> {
         val adminPartJar: JarEntry = jar.getJarEntry("admin-part.jar")
         val f = extractJarEntityToTempDir(jar, tempDirectory, adminPartJar)
         val cl = ClassLoader.getSystemClassLoader()
@@ -70,9 +68,9 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
         val jarFile = JarFile(f)
         val entrySet = jarFile.entries().iterator().asSequence().toSet()
         val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
-        val constructor = pluginApiClass!!.getConstructor(WsService::class.java, String::class.java)
         val pluginBean = extractPluginBean(jarFile, tempDirectory)
-        return constructor.newInstance(wsService, pluginBean.id) as AdminPluginPart to pluginBean
+        @Suppress("UNCHECKED_CAST")
+        return pluginApiClass as Class<AdminPluginPart> to pluginBean
     }
 
     private fun processAgentPart(jar: JarFile, tempDirectory: File): File {
