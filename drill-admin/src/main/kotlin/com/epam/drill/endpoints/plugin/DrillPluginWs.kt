@@ -7,7 +7,6 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.dataclasses.JsonMessage
 import com.epam.drill.dataclasses.JsonMessages
-import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.fromJson
 import com.epam.drill.endpoints.textFrame
 import com.epam.drill.plugin.api.end.WsService
@@ -29,7 +28,6 @@ import org.jetbrains.exposed.sql.select
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -41,7 +39,6 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
     private val app: Application by instance()
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
-    private val agentManager: AgentManager by instance()
 
     override fun getPlWsSession(): Set<String> {
         return sessionStorage.keys
@@ -104,7 +101,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                         val map = JsonMessages.select {
                                             JsonMessages.id.eq(
                                                 event.destination + ":" + (if (buildVersion.isNullOrEmpty()) {
-                                                    (agentManager.self(subscribeInfo.agentId))//?.buildVersion
+                                                    subscribeInfo.agentId
                                                 } else buildVersion)
                                             )
                                         }.map { it[JsonMessages.message] }.firstOrNull()

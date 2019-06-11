@@ -1,23 +1,13 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.merge
-import com.epam.drill.common.toAgentInfo
-import com.epam.drill.common.toPluginBean
+import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.pluginBean
 import com.epam.drill.service.asyncTransaction
 import com.epam.drill.storage.AgentStorage
-import com.epam.drill.storage.get
-import com.epam.drill.storage.self
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.cio.websocket.Frame
 import kotlinx.serialization.cbor.Cbor
@@ -42,8 +32,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         addLogger(StdOutSqlLogger)
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
-            val status = agentInfoDb.status
-            when (status) {
+            when (agentInfoDb.status) {
                 AgentStatus.READY -> {
                     agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
                         agentInfoDb.buildVersions =
@@ -90,7 +79,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             addLogger(StdOutSqlLogger)
             agentInfoDb?.merge(au)
         }
-        val byId = byId(agentId)
+        val byId = get(agentId)
         byId?.apply {
             name = au.name
             groupName = au.group
@@ -112,13 +101,11 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         agentStorage.remove(agentInfo.id)
     }
 
-    operator fun get(k: String) = agentStorage.targetMap[k]?.second
+    fun agentSession(k: String) = agentStorage.targetMap[k]?.second
 
     operator fun contains(k: String) = k in agentStorage.targetMap
 
-    fun self(k: String) = agentStorage.self(k)
-
-    fun byId(agentId: String) = agentStorage.targetMap[agentId]?.first
+    operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.first
 
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
         val agentInfoDb = AgentInfoDb.findById(agentId)
@@ -148,7 +135,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             null
         }
     }?.let { pluginBeanDb ->
-        val agentInfo = byId(agentId)
+        val agentInfo = get(agentId)
         agentInfo!!.plugins.add(pluginBeanDb.toPluginBean())
         agentStorage.update()
         agentStorage.singleUpdate(agentId)
@@ -157,7 +144,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     suspend fun updateAgentConfig(agentInfo: AgentInfo) {
-        val session = agentStorage[agentInfo.id]
+        val session = agentSession(agentInfo.id)
         session!!.send(
             Frame.Binary(
                 false,

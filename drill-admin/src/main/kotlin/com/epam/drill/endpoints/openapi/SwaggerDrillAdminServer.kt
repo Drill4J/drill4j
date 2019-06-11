@@ -54,7 +54,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerAgent() {
         authenticate {
             patch<Routes.Api.Agent.Agent> { config ->
-                agentManager[config.agentId]?.send(
+                agentManager.agentSession(config.agentId)?.send(
                     Frame.Text(
                         Gson().toJson(
                             Message(
@@ -65,14 +65,14 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                         )
                     )
                 )
-                call.respond { if (agentManager.byId(config.agentId) != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
+                call.respond { if (agentManager[config.agentId] != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
             }
         }
 
         authenticate {
             post<Routes.Api.Agent.UnloadPlugin> { up ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent = agentManager[up.agentId]
+                val drillAgent = agentManager.agentSession(up.agentId)
                 if (drillAgent == null) {
                     call.respond("can't find the agent '${up.agentId}'")
                     return@post
@@ -91,13 +91,13 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
         authenticate {
             get<Routes.Api.Agent.Agent> { up ->
-                call.respond(agentManager.byId(up.agentId) ?: "can't find")
+                call.respond(agentManager[up.agentId] ?: "can't find")
             }
         }
 
         authenticate {
             post<Routes.Api.Agent.AgentToggleStandby> { agent ->
-                agentManager[agent.agentId]
+                agentManager.agentSession(agent.agentId)
                     ?.send(
                         agentWsMessage("agent/toggleStandBy", agent.agentId)
                     )

@@ -13,7 +13,6 @@ import com.epam.drill.plugins.pluginBean
 import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.router.WsRoutes
 import com.epam.drill.storage.add
-import com.epam.drill.storage.byId
 import com.epam.drill.storage.remove
 import com.epam.drill.storage.update
 import io.ktor.application.Application
@@ -34,10 +33,10 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
     init {
 
         runBlocking {
-            agentManager.agentStorage.onUpdate += update(mutableSetOf()) {
+            agentManager.agentStorage.onUpdate += update(mutableSetOf()) { storage ->
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
                 sessionStorage.sendTo(
-                    it.values.map { it.first }.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
+                    storage.values.map { it.first }.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
                         destination
                     )
                 )
@@ -64,11 +63,11 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 }
 
                 topic<WsRoutes.GetAgent> { x, _ ->
-                    agentManager.agentStorage.byId(x.agentId)?.toAgentInfoWebSocket()
+                    agentManager[x.agentId]?.toAgentInfoWebSocket()
                 }
 
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
-                    agentManager.agentStorage.byId(agent.agentId)?.let {
+                    agentManager[agent.agentId]?.let {
                         transaction {
                             AgentInfoDb.findById(agent.agentId)?.buildVersions?.map {
                                 it.toAgentBuildVersionJson()

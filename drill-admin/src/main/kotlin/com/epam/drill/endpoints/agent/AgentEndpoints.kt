@@ -33,7 +33,7 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 post<Routes.Api.UpdateAgentConfig> { ll ->
                     val agentId = ll.agentId
-                    if (agentManager[agentId] != null) {
+                    if (agentManager.agentSession(agentId) != null) {
                         val au = Gson().fromJson(call.receive<String>(), AgentInfoWebSocketSingle::class.java)
                         agentManager.updateAgent(agentId, au)
                         call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
@@ -47,7 +47,7 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 post<Routes.Api.Agent.RegisterAgent> { ll ->
                     val agentId = ll.agentId
-                    val agInfo = agentManager.byId(agentId)
+                    val agInfo = agentManager[agentId]
                     if (agInfo != null) {
                         val regInfo = Json.parse(AgentRegistrationInfo.serializer(), call.receive())
                         val bv = agInfo.buildVersion

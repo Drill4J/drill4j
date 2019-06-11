@@ -50,11 +50,11 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
                     val message = call.receive<String>()
                     val pluginId = Gson().fromJson<PluginBean>(message, PluginBean::class.java).id
-                    agentManager[ll.agentId]
+                    agentManager.agentSession(ll.agentId)
                         ?.send(
                             agentWsMessage("/plugins/updatePluginConfig", message)
                         )
-                    val pluginBean = agentManager.byId(ll.agentId)?.plugins?.first { it.id == pluginId }
+                    val pluginBean = agentManager[ll.agentId]?.plugins?.first { it.id == pluginId }
                     call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
                 }
             }
@@ -62,7 +62,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 post<Routes.Api.Agent.PluginAction> { ll ->
                     val message = call.receive<String>()
 
-                    agentManager[ll.agentId]
+                    agentManager.agentSession(ll.agentId)
                         ?.send(
                             agentWsMessage("/plugins/action", message)
                         )
@@ -79,7 +79,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
                         in plugins -> {
                             if (agentId in agentManager) {
-                                val agentInfo = agentManager.byId(agentId)!!
+                                val agentInfo = agentManager[agentId]!!
                                 if (agentInfo.plugins.any { it.id == pluginId }) {
                                     HttpStatusCode.BadRequest to "Plugin '$pluginId' is already in agent '$agentId'"
                                 } else {
@@ -98,7 +98,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentManager[ll.agentId]
+                    agentManager.agentSession(ll.agentId)
                         ?.send(
                             agentWsMessage("/plugins/togglePlugin", ll.pluginId)
                         )
