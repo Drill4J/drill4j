@@ -5,7 +5,11 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.agentWsMessage
-import com.epam.drill.plugins.*
+import com.epam.drill.plugins.Plugins
+import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.plugins.pluginBean
+import com.epam.drill.plugins.serverInstance
+import com.epam.drill.plugins.toPluginWebSocket
 import com.epam.drill.router.Routes
 import com.epam.drill.storage.byId
 import com.google.gson.Gson
