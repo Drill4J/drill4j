@@ -4,18 +4,22 @@ package com.epam.drill.endpoints.agent
 
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.common.parse
+import com.epam.drill.common.stringify
 import com.epam.drill.endpoints.DrillWsSession
 import com.epam.drill.endpoints.WsTopic
-import com.epam.drill.endpoints.messageEvent
 import com.epam.drill.endpoints.removeTopic
 import com.epam.drill.endpoints.sendTo
-import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.routing
+import io.ktor.swagger.Json
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -35,7 +39,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                     incoming.consumeEach { frame ->
 
                         val json = (frame as Frame.Text).readText()
-                        val event = Gson().fromJson(json, Message::class.java)
+                        val event = Message.serializer() parse json
                         when (event.type) {
                             MessageType.SUBSCRIBE -> {
                                 val wsSession = DrillWsSession(event.destination, rawWsSession)
@@ -62,6 +66,7 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
         }
     }
 
+    @UseExperimental(ImplicitReflectionSerializer::class)
     private suspend fun subscribe(
         wsSession: DrillWsSession,
         event: Message
@@ -70,10 +75,25 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
         println("${event.destination} is subscribed")
         app.run {
             wsTopic {
-                sessionStorage.sendTo(
-                    resolve(event.destination, sessionStorage)!!
-                        .messageEvent(event.destination)
-                )
+                val resolve = resolve(event.destination, sessionStorage)!!
+                if (resolve is Collection<*>) {
+                    sessionStorage.sendTo(
+                        Message(
+                            MessageType.MESSAGE,
+                            event.destination,
+                            Json.stringify(resolve)
+                        )
+                    )
+                } else {
+                    @Suppress("UNCHECKED_CAST") val serializer = resolve::class.serializer() as KSerializer<Any>
+                    sessionStorage.sendTo(
+                        Message(
+                            MessageType.MESSAGE,
+                            event.destination,
+                            serializer stringify resolve
+                        )
+                    )
+                }
             }
         }
     }

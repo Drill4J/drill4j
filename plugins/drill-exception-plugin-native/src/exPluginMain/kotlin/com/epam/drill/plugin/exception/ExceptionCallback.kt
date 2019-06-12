@@ -6,7 +6,6 @@ import com.epam.drillnative.api.sendToSocket
 import com.soywiz.klock.DateTime
 import jvmapi.*
 import kotlinx.cinterop.*
-import kotlinx.serialization.json.Json
 
 
 fun exceptionCallback(

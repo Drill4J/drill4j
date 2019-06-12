@@ -2,6 +2,8 @@ package com.epam.drill.plugins.coverage
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.AgentStatus
+import com.epam.drill.common.parse
+import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
 import com.epam.drill.plugins.coverage.CoverageEventType.CLASS_BYTES
@@ -11,15 +13,12 @@ import com.epam.drill.plugins.coverage.CoverageEventType.SESSION_FINISHED
 import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@UnstableDefault
 class CoverageControllerTest {
     private val agentInfo = AgentInfo(
         id = "id",
@@ -44,7 +43,7 @@ class CoverageControllerTest {
     @Test
     fun `should switch agent data ref to ClassDataBuilder on init`() = runBlocking {
         val initInfo = InitInfo(1, "hello")
-        val message = CoverageMessage(INIT, Json.stringify(InitInfo.serializer(), initInfo))
+        val message = CoverageMessage(INIT, InitInfo.serializer() stringify initInfo)
 
         sendMessage(message)
 
@@ -78,7 +77,7 @@ class CoverageControllerTest {
         runBlocking {
             coverageController.processData(
                 agentInfo,
-                DrillMessage("", Json.stringify(CoverageMessage.serializer(), message))
+                DrillMessage("", CoverageMessage.serializer() stringify message)
             )
         }
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
@@ -103,7 +102,7 @@ class CoverageControllerTest {
         runBlocking {
             coverageController.processData(
                 agentInfo,
-                DrillMessage("", Json.stringify(CoverageMessage.serializer(), message))
+                DrillMessage("", CoverageMessage.serializer() stringify message)
             )
         }
 
@@ -131,25 +130,24 @@ class CoverageControllerTest {
     private suspend fun sendClass(clazz: Class<*>) {
         val bytes = clazz.readBytes()
         val classBytes = ClassBytes(clazz.path, bytes.toList())
-        val messageString = Json.stringify(ClassBytes.serializer(), classBytes)
+        val messageString = ClassBytes.serializer() stringify classBytes
         val message = CoverageMessage(CLASS_BYTES, messageString)
         sendMessage(message)
     }
 
     private suspend fun sendInit(vararg classes: Class<*>) {
         val initInfo = InitInfo(classes.count(), "Start initialization")
-        sendMessage(CoverageMessage(INIT, Json.stringify(InitInfo.serializer(), initInfo)))
+        sendMessage(CoverageMessage(INIT, InitInfo.serializer() stringify initInfo))
     }
 
     private suspend fun sendMessage(message: CoverageMessage) {
         coverageController.processData(
             agentInfo,
-            DrillMessage("", Json.stringify(CoverageMessage.serializer(), message))
+            DrillMessage("", CoverageMessage.serializer() stringify message)
         )
     }
 }
 
-@UnstableDefault
 class WsServiceStub : WsService {
 
     val sent = mutableListOf<Pair<String, Any>>()
@@ -159,7 +157,7 @@ class WsServiceStub : WsService {
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         sent.add(destination to message)
         if (destination == "/coverage-by-packages")
-            javaPackagesCoverage = Json.parse(JavaPackageCoverage.serializer().list, message)
+            javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
     }
 
     override fun getPlWsSession() = setOf<String>()

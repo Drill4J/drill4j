@@ -8,12 +8,13 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.NeedSyncParam
 import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.parse
+import com.epam.drill.common.stringify
 import com.epam.drill.core.concurrency.LockFreeMPSCQueue
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.exceptions.WsClosedException
 import com.epam.drill.core.exec
 import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
@@ -87,37 +88,48 @@ suspend fun websocket(adminUrl: String) {
     }
 
     wsClient.onAnyMessage.add {
-        //        wsLogger.debug { "got a message $rawMessage" }
-        wsLogger.warn { "to" }
-        sendMessage(kotlinx.serialization.json.Json.stringify(Message.serializer(), Message(MessageType.DEBUG, "", "")))
+        sendMessage(Message.serializer() stringify Message(MessageType.DEBUG, "", ""))
     }
+
     wsClient.onStringMessage.add { rawMessage ->
         val message = rawMessage.toWsMessage()
-        val destination = message.destination
-        val topic = WsRouter[destination]
-        if (topic != null) {
-            when (topic) {
-                is FileTopic -> throw RuntimeException("We can't use File topic in not binary retriever")
-                is InfoTopic -> topic.block(message.message)
-                is GenericTopic<*> -> topic.deserializeAndRun(message.message)
+        if (message.type == MessageType.INFO) {
+            when (message.message) {
+                DrillEvent.SYNC_FINISHED.name -> {
+                    exec { agentConfig.needSync = false }
+                    wsLogger.info { "Agent synchronization is finished" }
+                }
+                DrillEvent.SYNC_STARTED.name -> {
+                    wsLogger.info { "Agent synchronization is started" }
+                }
             }
         } else {
-            wsLogger.warn { "topic with name '$destination' didn't register" }
+            val destination = message.destination
+            val topic = WsRouter[destination]
+            if (topic != null) {
+                when (topic) {
+                    is FileTopic -> throw RuntimeException("We can't use File topic in not binary retriever")
+                    is InfoTopic -> topic.block(message.message)
+                    is GenericTopic<*> -> topic.deserializeAndRun(message.message)
+                }
+            } else {
+                wsLogger.warn { "topic with name '$destination' didn't register" }
+            }
         }
-
 
     }
     wsClient.onBinaryMessage.add {
         val load = Cbor.load(PluginMessage.serializer(), it)
         when {
             load.event == DrillEvent.LOAD_PLUGIN -> {
-                exec { pl[load.pluginName] = load.pl!! }
+                val pluginId = load.pl.id
+                exec { pl[pluginId] = load.pl }
                 loader.execute(TransferMode.UNSAFE, { load }) { plugMessage ->
                     runBlocking {
                         exec { agentConfig.needSync = false }
                         val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
                         if (!pluginsDir.exists()) pluginsDir.mkdir()
-                        val vfsFile = pluginsDir[plugMessage.pluginName]
+                        val vfsFile = pluginsDir[plugMessage.pl.id]
                         if (!vfsFile.exists()) vfsFile.mkdir()
                         val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
                         plugMessage.pluginFile.toByteArray().writeToFile(plugin)
@@ -126,11 +138,6 @@ suspend fun websocket(adminUrl: String) {
 
                 }
             }
-            load.event == DrillEvent.SYNC_FINISHED -> {
-                exec { agentConfig.needSync = false }
-                wsLogger.info { "Agent synchronization is finished" }
-            }
-            load.event == DrillEvent.SYNC_STARTED -> wsLogger.info { "Agent synchronization is started" }
         }
 
 
@@ -164,7 +171,7 @@ suspend fun websocket(adminUrl: String) {
     }
 }
 
-private fun String.toWsMessage() = json.parse(Message.serializer(), this)
+private fun String.toWsMessage() = Message.serializer().parse(this)
 
 
 fun Worker.executeCoroutines(block: suspend CoroutineScope.() -> Unit): Future<Unit> {

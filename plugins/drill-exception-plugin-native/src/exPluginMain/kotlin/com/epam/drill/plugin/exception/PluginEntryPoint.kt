@@ -6,7 +6,6 @@ import com.epam.drillnative.api.getPlugin
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
-import kotlinx.serialization.json.Json
 import kotlin.native.concurrent.ThreadLocal
 
 

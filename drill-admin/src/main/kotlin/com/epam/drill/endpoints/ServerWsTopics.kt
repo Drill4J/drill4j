@@ -1,12 +1,15 @@
 package com.epam.drill.endpoints
 
 
+import com.epam.drill.agentmanager.AgentInfoWebSocket
+import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.agentmanager.toAgentInfoWebSocket
 import com.epam.drill.agentmanager.toAgentInfosWebSocket
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.AgentInfoDb
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.common.stringify
 import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.pluginBean
@@ -17,6 +20,7 @@ import com.epam.drill.storage.remove
 import com.epam.drill.storage.update
 import io.ktor.application.Application
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.list
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -36,16 +40,29 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
             agentManager.agentStorage.onUpdate += update(mutableSetOf()) { storage ->
                 val destination = app.toLocation(WsRoutes.GetAllAgents())
                 sessionStorage.sendTo(
-                    storage.values.map { it.agent }.sortedWith(compareBy(AgentInfo::id)).toMutableSet().toAgentInfosWebSocket().messageEvent(
-                        destination
+
+                    Message(
+                        MessageType.MESSAGE, destination,
+                        AgentInfoWebSocket.serializer().list stringify storage.values.map { it.agent }.sortedWith(
+                            compareBy(AgentInfo::id)
+                        ).toMutableSet().toAgentInfosWebSocket()
                     )
+
+
                 )
 
             }
             agentManager.agentStorage.onAdd += add(mutableSetOf()) { k, v ->
                 val destination = app.toLocation(WsRoutes.GetAgent(k))
-                if (sessionStorage.exists(destination))
-                    sessionStorage.sendTo(v.agent.toAgentInfoWebSocket().messageEvent(destination))
+                if (sessionStorage.exists(destination)) {
+                    sessionStorage.sendTo(
+                        Message(
+                            MessageType.MESSAGE,
+                            destination,
+                            AgentInfoWebSocketSingle.serializer() stringify v.agent.toAgentInfoWebSocket()
+                        )
+                    )
+                }
             }
 
             agentManager.agentStorage.onRemove += remove(mutableSetOf()) { k ->

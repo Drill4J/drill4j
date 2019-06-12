@@ -2,13 +2,12 @@ package com.epam.drill.endpoints.openapi
 
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.common.stringify
 import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.pluginBean
 import com.epam.drill.router.Routes
-import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
@@ -56,15 +55,15 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
             patch<Routes.Api.Agent.Agent> { config ->
                 agentManager.agentSession(config.agentId)?.send(
                     Frame.Text(
-                        Gson().toJson(
-                            Message(
-                                MessageType.MESSAGE,
-                                "/agent/updateAgentConfig",
-                                call.receive()
-                            )
-                        )
+                        Message.serializer() stringify
+                                Message(
+                                    MessageType.MESSAGE,
+                                    "/agent/updateAgentConfig",
+                                    call.receive()
+                                )
                     )
                 )
+
                 call.respond { if (agentManager[config.agentId] != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
             }
         }
@@ -83,7 +82,15 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                     return@post
                 }
 
-                drillAgent.send(agentWsMessage("/plugins/unload", pluginId.pluginId))
+                drillAgent.send(
+                    Frame.Text(
+                        Message.serializer() stringify Message(
+                            MessageType.MESSAGE,
+                            "/plugins/unload",
+                            pluginId.pluginId
+                        )
+                    )
+                )
 //            drillAgent.agentInfo.plugins.removeIf { x -> x.id == up.pluginName }
                 call.respond("event 'unload' was sent to AGENT")
             }
@@ -99,7 +106,13 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
             post<Routes.Api.Agent.AgentToggleStandby> { agent ->
                 agentManager.agentSession(agent.agentId)
                     ?.send(
-                        agentWsMessage("agent/toggleStandBy", agent.agentId)
+                        Frame.Text(
+                            (Message.serializer() stringify Message(
+                                MessageType.MESSAGE,
+                                "agent/toggleStandBy",
+                                agent.agentId
+                            ))
+                        )
                     )
                 call.respond { HttpStatusCode.OK }
             }

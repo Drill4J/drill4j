@@ -1,9 +1,9 @@
 package com.epam.drill.plugin.api.processing
 
 import com.epam.drill.common.PluginBean
+import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.DrillPlugin
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 
 actual abstract class AgentPart<T, A> : DrillPlugin(), Switchable, Lifecycle {
 
@@ -33,7 +33,7 @@ actual abstract class AgentPart<T, A> : DrillPlugin(), Switchable, Lifecycle {
 
     actual fun rawConfig(): String {
         return if (np != null)
-            Json().stringify(np!!.confSerializer, np!!.config!!)
+            np!!.confSerializer stringify np!!.config!!
         else ""
     }
 
