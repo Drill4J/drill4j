@@ -7,8 +7,8 @@ import com.epam.drill.common.AgentConfigParam
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.NeedSyncParam
+import com.epam.drill.common.parse
 import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.fromJson
 import com.epam.drill.endpoints.plugin.PluginDispatcher
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
@@ -53,7 +53,7 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
-                            val message = Message::class fromJson frame.readText() ?: return@webSocket
+                            val message = Message.serializer() parse  frame.readText()
                             when (message.type) {
                                 MessageType.PLUGIN_DATA -> {
                                     logger.debug(message.message)

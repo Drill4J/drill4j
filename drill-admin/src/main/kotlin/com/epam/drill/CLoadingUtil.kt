@@ -1,7 +1,7 @@
 package com.epam.drill
 
 import com.epam.drill.common.PluginBean
-import com.google.gson.Gson
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.net.URL
 import java.util.jar.JarEntry
@@ -43,7 +43,7 @@ fun extractPluginBean(jarFile: JarFile, parCat: File): PluginBean {
             }
         }
     }
-    return Gson().fromJson<PluginBean>(cs.readText(), PluginBean::class.java)
+    return Json.parse(PluginBean.serializer(), cs.readText())
 }
 
 

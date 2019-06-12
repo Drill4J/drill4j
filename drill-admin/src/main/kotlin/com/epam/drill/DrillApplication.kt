@@ -2,11 +2,14 @@ package com.epam.drill
 
 import com.epam.drill.cache.CacheService
 import com.epam.drill.cache.impl.HazelcastCacheService
-import com.epam.drill.endpoints.*
+import com.epam.drill.endpoints.AgentEntry
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.endpoints.DrillWsSession
+import com.epam.drill.endpoints.ServerWsTopics
+import com.epam.drill.endpoints.WsTopic
 import com.epam.drill.endpoints.agent.AgentEndpoints
 import com.epam.drill.endpoints.agent.AgentHandler
 import com.epam.drill.endpoints.agent.DrillServerWs
-import com.epam.drill.endpoints.openapi.DevEndpoints
 import com.epam.drill.endpoints.openapi.SwaggerDrillAdminServer
 import com.epam.drill.endpoints.plugin.DrillPluginWs
 import com.epam.drill.endpoints.plugin.PluginDispatcher
@@ -27,10 +30,7 @@ import io.ktor.auth.UserPasswordCredential
 import io.ktor.auth.jwt.jwt
 import io.ktor.features.CORS
 import io.ktor.features.CallLogging
-import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
-import io.ktor.gson.GsonConverter
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -66,7 +66,6 @@ val storage = Kodein.Module(name = "agentStorage") {
 }
 
 val devContainer = Kodein.Module(name = "devContainer") {
-    bind<DevEndpoints>() with eagerSingleton { DevEndpoints(kodein) }
 }
 
 val userSource: UserSource = UserSourceImpl()
@@ -101,9 +100,6 @@ var installation: Application.() -> Unit = {
     @Suppress("UNUSED_VARIABLE") val jwtAudience = environment.config.property("jwt.audience").getString()
     val jwtRealm = environment.config.property("jwt.realm").getString()
 
-    install(ContentNegotiation) {
-        register(ContentType.Application.Json, GsonConverter())
-    }
     install(StatusPages) {
         exception<Throwable> { cause ->
             call.respond(HttpStatusCode.InternalServerError, "Internal Server Error")

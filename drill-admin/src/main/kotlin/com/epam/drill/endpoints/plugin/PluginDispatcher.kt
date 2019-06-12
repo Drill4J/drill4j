@@ -2,22 +2,27 @@ package com.epam.drill.endpoints.plugin
 
 
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.Message
+import com.epam.drill.common.MessageType
 import com.epam.drill.common.PluginBean
+import com.epam.drill.common.parse
+import com.epam.drill.common.stringify
 import com.epam.drill.endpoints.AgentEntry
 import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.SeqMessage
 import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.message.MessageWrapper
 import com.epam.drill.plugins.DP
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.pluginClass
 import com.epam.drill.router.Routes
-import com.google.gson.Gson
+import com.epam.drill.util.parse
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
 import io.ktor.locations.patch
@@ -26,11 +31,9 @@ import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.routing
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
-import java.util.*
 
 @KtorExperimentalLocationsAPI
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
@@ -40,7 +43,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val wsService: WsService by kodein.instance()
 
     suspend fun processPluginData(pluginData: String, agentInfo: AgentInfo) {
-        val message: SeqMessage = parseRequest(pluginData)
+        val message = MessageWrapper.serializer().parse(pluginData)
         val pluginId = message.pluginId
         try {
             val dp: DP = plugins.plugins[pluginId] ?: return
@@ -70,12 +73,10 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         app.routing {
             authenticate {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
-                    val message = call.receive<String>()
-                    val pluginId = Gson().fromJson<PluginBean>(message, PluginBean::class.java).id
+                    val pb = call.parse(PluginBean.serializer())
+                    val pluginId = pb.id
                     agentManager.agentSession(ll.agentId)
-                        ?.send(
-                            agentWsMessage("/plugins/updatePluginConfig", message)
-                        )
+                        ?.send(PluginBean.serializer().agentWsMessage("/plugins/updatePluginConfig", pb))
                     val pluginBean = agentManager[ll.agentId]?.plugins?.first { it.id == pluginId }
                     call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
                 }
@@ -86,9 +87,15 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
                     agentManager.agentSession(ll.agentId)
                         ?.send(
-                            agentWsMessage("/plugins/action", message)
+                            Frame.Text(
+                                Message.serializer() stringify Message(
+                                    MessageType.MESSAGE,
+                                    "/plugins/action",
+                                    message
+                                )
+                            )
                         )
-                    call.respond { HttpStatusCode.OK }
+                    call.respond(HttpStatusCode.OK ,"")
                 }
             }
 
@@ -96,7 +103,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 post<Routes.Api.Agent.AddNewPlugin> { ll ->
                     val agentId = ll.agentId
-                    val pluginId = Json.parse(PluginId.serializer(), call.receive()).pluginId
+                    val pluginId = call.parse(PluginId.serializer()).pluginId
                     val (status, msg) = when (pluginId) {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
                         in plugins -> {
@@ -125,8 +132,15 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
                     agentManager.agentSession(ll.agentId)
+
                         ?.send(
-                            agentWsMessage("/plugins/togglePlugin", ll.pluginId)
+                            Frame.Text(
+                                Message.serializer() stringify
+                                        Message(
+                                            MessageType.MESSAGE,
+                                            "/plugins/togglePlugin", ll.pluginId
+                                        )
+                            )
                         )
                     call.respond { HttpStatusCode.OK }
                 }
@@ -138,17 +152,6 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
                 }
             }
-        }
-    }
-
-    private fun parseRequest(readText: String): SeqMessage {
-        try {
-            val fromJson = Gson().fromJson(readText, SeqMessage::class.javaObjectType)
-            fromJson.id = UUID.randomUUID().toString()
-            return fromJson
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            throw ex
         }
     }
 }

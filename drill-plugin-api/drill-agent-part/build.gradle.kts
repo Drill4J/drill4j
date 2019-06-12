@@ -1,5 +1,5 @@
-import com.epam.drill.build.*
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.serializationRuntimeVersion
 
 plugins {
     id("kotlin-multiplatform")
@@ -24,6 +24,6 @@ kotlin {
     }
 }
 
-tasks.withType<KotlinCompile>().all {
-    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.serialization.UnstableDefault"
-}
+//tasks.withType<KotlinCompile>().all {
+//    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.serialization.UnstableDefault"
+//}

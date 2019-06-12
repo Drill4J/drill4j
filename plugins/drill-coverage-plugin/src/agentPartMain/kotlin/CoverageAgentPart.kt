@@ -1,14 +1,14 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.ClassPath
+import com.epam.drill.common.parse
+import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.InstrumentationPlugin
 import com.epam.drill.plugin.api.processing.Sender
 import com.epam.drill.plugin.api.processing.UnloadReason
 import com.epam.drill.session.DrillRequest
 import com.epam.drill.url
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
 import org.jacoco.core.internal.data.CRC64
 import java.util.concurrent.atomic.AtomicReference
@@ -19,12 +19,9 @@ val instrContext = object : InstrContext {
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
 
-private val json = Json.Companion
-
 
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 
-@UnstableDefault
 @Suppress("unused")
 class CoveragePlugin @JvmOverloads constructor(
     override val id: String,
@@ -36,7 +33,7 @@ class CoveragePlugin @JvmOverloads constructor(
     private val loadedClassesRef = AtomicReference<Map<String, Long?>>(emptyMap())
 
     override fun doRawAction(action: String) {
-        doAction(Json.parse(actionSerializer, action))
+        doAction(actionSerializer parse action)
     }
 
     override fun on() {
@@ -73,13 +70,13 @@ class CoveragePlugin @JvmOverloads constructor(
         }
 
         val initInfo = InitInfo(filter.count(), initializingMessage)
-        sendMessage(CoverageEventType.INIT, json.stringify(InitInfo.serializer(), initInfo))
+        sendMessage(CoverageEventType.INIT, InitInfo.serializer() stringify initInfo)
         val loadedClasses = filter.map { (resourceName, classInfo) ->
             val className = resourceName
                 .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                 .removeSuffix(".class")
             val bytes = classInfo.url(resourceName).readBytes()
-            
+
             sendClass(ClassBytes(className, bytes.toList()))
             val classId = CRC64.classId(bytes)
             className to classId
@@ -136,20 +133,17 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     private fun sendClass(classBytes: ClassBytes) {
-        val classJson = json.stringify(ClassBytes.serializer(), classBytes)
+        val classJson = ClassBytes.serializer() stringify classBytes
         sendMessage(CoverageEventType.CLASS_BYTES, classJson)
     }
 
     private fun sendExecutionData(exData: List<ExDataTemp>) {
-        val exDataJson = json.stringify(ExDataTemp.serializer().list, exData)
+        val exDataJson = ExDataTemp.serializer().list stringify exData
         sendMessage(CoverageEventType.COVERAGE_DATA_PART, exDataJson)
     }
 
     private fun sendMessage(type: CoverageEventType, str: String) {
-        val message = json.stringify(
-            CoverageMessage.serializer(),
-            CoverageMessage(type, str)
-        )
+        val message = CoverageMessage.serializer() stringify CoverageMessage(type, str)
         Sender.sendMessage("coverage", message)
     }
 

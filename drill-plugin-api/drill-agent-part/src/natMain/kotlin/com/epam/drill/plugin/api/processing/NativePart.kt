@@ -1,14 +1,18 @@
 package com.epam.drill.plugin.api.processing
 
 import com.epam.drill.common.PluginBean
-import kotlinx.cinterop.*
+import com.epam.drill.common.parse
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.toKString
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 
 actual abstract class NativePart<T> : Switchable, Lifecycle {
     var rawConfig: CPointer<ByteVar>? = null
 
-    val config: T get() = Json().parse(confSerializer, rawConfig!!.toKString())
+    val config: T get() = confSerializer parse rawConfig!!.toKString()
 
     fun load(immediately: Boolean) {
         initPlugin()

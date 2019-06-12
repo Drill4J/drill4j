@@ -11,10 +11,8 @@ typealias WsUrl = String
 @Serializable
 data class PluginMessage(
     val event: DrillEvent,
-    val pluginName: String,
     val pluginFile: PluginFileBytes = emptyList(),
-    val pl: PluginBean? = null,
-    val counString: String = ""
+    val pl: PluginBean
 )
 
 typealias PluginFileBytes = List<Byte>

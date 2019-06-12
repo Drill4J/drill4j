@@ -2,15 +2,15 @@ package com.epam.drill.core.ws
 
 import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.PluginBean
+import com.epam.drill.common.parse
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.core.util.json
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.UnloadReason
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
-import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.KSerializer
 import kotlin.native.concurrent.ThreadLocal
 
 val topicLogger
@@ -112,7 +112,7 @@ object WsRouter {
 
     @Suppress("ClassName")
     open class inners(open val destination: String) {
-        fun <T> withGenericTopic(des: DeserializationStrategy<T>, block: suspend (T) -> Unit): GenericTopic<T> {
+        fun <T> withGenericTopic(des: KSerializer<T>, block: suspend (T) -> Unit): GenericTopic<T> {
             val genericTopic = GenericTopic(destination, des, block)
             mapper[destination] = genericTopic
             return genericTopic
@@ -165,11 +165,11 @@ open class Topic(open val destination: String)
 
 class GenericTopic<T>(
     override val destination: String,
-    private val deserializer: DeserializationStrategy<T>,
+    private val deserializer: KSerializer<T>,
     val block: suspend (T) -> Unit
 ) : Topic(destination) {
     suspend fun deserializeAndRun(message: String) {
-        block(json.parse(deserializer, message))
+        block(deserializer parse message)
     }
 }
 
