@@ -4,9 +4,13 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.stringify
 import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.plugins.PluginWebSocket
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.plugins.getAllPluginBeans
+import com.epam.drill.plugins.partOf
 import com.epam.drill.plugins.pluginBean
+import com.epam.drill.plugins.toPluginWebSocket
 import com.epam.drill.router.Routes
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -22,6 +26,8 @@ import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.list
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
@@ -117,6 +123,25 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                 call.respond { HttpStatusCode.OK }
             }
         }
+
+        authenticate {
+            get<Routes.Api.GetPluginInfo> { ll ->
+                val installedPluginBeanIds = agentManager
+                    .getAllInstalledPluginBeanIds(ll.agentId)
+                val allPluginBeans = plugins.getAllPluginBeans()
+                call.respond(
+                    Json.stringify(PluginWebSocket.serializer().list,
+                        allPluginBeans.map { plug ->
+                            val pluginWebSocket = plug.toPluginWebSocket()
+                            if (plug partOf installedPluginBeanIds) {
+                                pluginWebSocket.relation = "Installed"
+                            }
+                            pluginWebSocket
+                        })
+                )
+            }
+        }
+
     }
 
     /**
