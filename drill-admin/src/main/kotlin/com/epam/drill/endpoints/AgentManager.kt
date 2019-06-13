@@ -1,18 +1,7 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.merge
-import com.epam.drill.common.stringify
-import com.epam.drill.common.toAgentInfo
-import com.epam.drill.common.toPluginBean
+import com.epam.drill.common.*
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -184,6 +173,28 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             )
         )
 
+    }
+
+    suspend fun resetAgent(agentId: String) {
+        val buildVersion = asyncTransaction {
+            val agentInfoDb = AgentInfoDb.findById(agentId)
+            addLogger(StdOutSqlLogger)
+            agentInfoDb?.buildVersion
+        }
+        if (buildVersion != null) {
+            val au = AgentInfoWebSocketSingle(
+                id = agentId,
+                name = "-",
+                status = AgentStatus.NOT_REGISTERED,
+                group = "-",
+                description = "-",
+                buildVersion = buildVersion,
+                buildAlias = "Initial build",
+                adminUrl = "",
+                ipAddress = ""
+            ).apply { buildVersions.add(AgentBuildVersionJson(buildVersion, "Initial build")) }
+            updateAgent(agentId, au)
+        }
     }
 
 }
