@@ -1,7 +1,18 @@
 package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.*
+import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.AgentInfoDb
+import com.epam.drill.common.AgentStatus
+import com.epam.drill.common.DrillEvent
+import com.epam.drill.common.Message
+import com.epam.drill.common.MessageType
+import com.epam.drill.common.PluginBeanDb
+import com.epam.drill.common.PluginMessage
+import com.epam.drill.common.merge
+import com.epam.drill.common.stringify
+import com.epam.drill.common.toAgentInfo
+import com.epam.drill.common.toPluginBean
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -106,6 +117,9 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     operator fun contains(k: String) = k in agentStorage.targetMap
 
     operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.agent
+    operator fun set(agentId: String, agentInfo: AgentInfo) {
+        agentStorage.targetMap[agentId]?.agent = agentInfo
+    }
     fun full(agentId: String) = agentStorage.targetMap[agentId]
 
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
@@ -176,25 +190,15 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     suspend fun resetAgent(agentId: String) {
-        val buildVersion = asyncTransaction {
-            val agentInfoDb = AgentInfoDb.findById(agentId)
-            addLogger(StdOutSqlLogger)
-            agentInfoDb?.buildVersion
-        }
-        if (buildVersion != null) {
-            val au = AgentInfoWebSocketSingle(
-                id = agentId,
-                name = "-",
-                status = AgentStatus.NOT_REGISTERED,
-                group = "-",
-                description = "-",
-                buildVersion = buildVersion,
-                buildAlias = "Initial build",
-                adminUrl = "",
-                ipAddress = ""
-            ).apply { buildVersions.add(AgentBuildVersionJson(buildVersion, "Initial build")) }
-            updateAgent(agentId, au)
-        }
+        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
+        val buildVersion = agentInfoDb?.buildVersion ?: "Undefined version"
+        asyncTransaction { agentInfoDb?.delete() }
+        val agentInfo = agentConfiguration(agentId, buildVersion)
+        agentInfo.ipAddress = get(agentId)?.ipAddress ?: "Undefined ip"
+        updateAgentConfig(agentInfo)
+        set(agentId, agentInfo)
+        agentStorage.update()
+        agentStorage.singleUpdate(agentId)
     }
 
 }
