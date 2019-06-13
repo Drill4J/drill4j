@@ -117,9 +117,12 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     operator fun contains(k: String) = k in agentStorage.targetMap
 
     operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.agent
-    operator fun set(agentId: String, agentInfo: AgentInfo) {
-        agentStorage.targetMap[agentId]?.agent = agentInfo
+
+    suspend fun set(agentId: String, agentInfo: AgentInfo) {
+        val oldEntry = agentStorage.targetMap[agentId]
+        agentStorage.put(agentId, AgentEntry(oldEntry!!, agentInfo))
     }
+
     fun full(agentId: String) = agentStorage.targetMap[agentId]
 
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
@@ -190,9 +193,12 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     suspend fun resetAgent(agentId: String) {
-        val agentInfoDb = asyncTransaction { AgentInfoDb.findById(agentId) }
-        val buildVersion = agentInfoDb?.buildVersion ?: "Undefined version"
-        asyncTransaction { agentInfoDb?.delete() }
+        val buildVersion = asyncTransaction {
+            val agentInfoDb = AgentInfoDb.findById(agentId)
+            val bv = agentInfoDb?.buildVersion ?: "Undefined version"
+            agentInfoDb?.delete()
+            bv
+        }
         val agentInfo = agentConfiguration(agentId, buildVersion)
         agentInfo.ipAddress = get(agentId)?.ipAddress ?: "Undefined ip"
         updateAgentConfig(agentInfo)
