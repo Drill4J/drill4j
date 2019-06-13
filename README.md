@@ -19,15 +19,30 @@ Work in progress.
 
 ## Development installation
 
-To build agent and runtime:
+To launch the development environment, follow these steps:
+1. Install [JDK 8](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html). Installation path cannot have space characters.
+2. Run gradle tasks 'buildAgent', 'buildCoveragePluginDev','runAgent'.
+3. Run gradle task 'runDrillAdmin'.
+4. Build frontend, follow this [link](https://github.com/Drill4J/admin-ui).
+5. Install [Drill4J extension](https://chrome.google.com/webstore/detail/drill4j-browser-extension/lhlkfdlgddnmbhhlcopcliflikibeplm?hl=ru) for chrome.
 
-1.  cd docker-compose
+
+#### Deploy Drill4J using Docker
+Install docker
+Docker is supported by all major Linux distributions, MacOS and Windows.
+
+Note: for Windows users. [Docker for Windows](https://docs.docker.com/docker-for-windows/) requires 64-bit Windows 10 Pro and Microsoft Hyper-V. If your system does not satisfy these requirements, you can install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/), which uses Oracle Virtual Box instead of Hyper-V.
+
+[Download](https://www.docker.com/community-edition) and install Docker (Docker Engine, Compose, etc)
+
+IMPORTANT If you use Docker for Windows or MacOS, make sure there is at least 3gb dedicated for Docker.
+
+Open CMD and enter commands:
+
+1.  cd <path_to_the_folder>\docker-compose 
 2.  docker-compose run --rm gradle buildAgent buildCoveragePluginDev
-
-To run the demo:
-
-1.  docker-compose -p rp up -d
-2.  gradlew runDrillAdmin
+3.  docker-compose -p rp up -d
+4.  gradlew runDrillAdmin
 
 ## Technology
 
