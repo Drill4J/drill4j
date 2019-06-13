@@ -16,3 +16,8 @@ val DP.agentPluginPart: File
     get() = second
 val DP.pluginBean: PluginBean
     get() = third
+
+fun Plugins.getAllPluginBeans() = plugins.values.map { it.pluginBean }
+
+infix fun PluginBean.partOf(set: List<String>?) =
+    if (set == null) false else this.id in set

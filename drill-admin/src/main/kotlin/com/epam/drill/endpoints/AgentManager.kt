@@ -119,6 +119,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.agent
     fun full(agentId: String) = agentStorage.targetMap[agentId]
 
+    fun getAllInstalledPluginBeanIds(agentId: String) = get(agentId)?.plugins?.map { it.id }
+
     suspend fun addPluginFromLib(agentId: String, pluginId: String) = asyncTransaction {
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
