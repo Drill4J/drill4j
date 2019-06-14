@@ -15,4 +15,6 @@ object WsRoutes {
     @Location("/get-all-plugins")
     class GetAllPlugins
 
+    @Location("/{agentId}/get-plugin-info")
+    data class GetPluginInfo(val agentId: String)
 }

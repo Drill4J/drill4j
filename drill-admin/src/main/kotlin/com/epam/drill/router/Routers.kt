@@ -35,9 +35,6 @@ object Routes {
             data class RegisterAgent(val agentId: String)
         }
 
-        @Location("/{agentId}/get-plugin-info")
-        data class GetPluginInfo(val agentId: String)
-
         @Location("/agent/{agentId}")
         data class UpdateAgentConfig(val agentId: String)
 
