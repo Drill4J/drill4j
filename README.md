@@ -20,7 +20,7 @@ Work in progress.
 ## Development installation
 
 To launch the development environment, follow these steps:
-1. Install [JDK 8](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html). Installation path cannot have space characters.
+1. Install JDK 8. Installation path cannot have space characters.
 2. Run gradle tasks 'buildAgent', 'buildCoveragePluginDev','runAgent'.
 3. Run gradle task 'runDrillAdmin'.
 4. Build frontend, follow this [link](https://github.com/Drill4J/admin-ui).
@@ -41,7 +41,7 @@ Open CMD and enter commands:
 
 1.  cd <path_to_the_folder>\docker-compose 
 2.  docker-compose run --rm gradle buildAgent buildCoveragePluginDev
-3.  docker-compose -p rp up -d
+3.  docker-compose up -d
 4.  gradlew runDrillAdmin
 
 ## Technology
