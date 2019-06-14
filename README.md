@@ -20,7 +20,7 @@ Work in progress.
 ## Development installation
 
 To launch the development environment, follow these steps:
-1. Install JDK 8. Installation path cannot have space characters.
+1. Install JDK 8. **Installation path cannot have space characters**.
 2. Run gradle tasks 'buildAgent', 'buildCoveragePluginDev','runAgent'.
 3. Run gradle task 'runDrillAdmin'.
 4. Build frontend, follow this [link](https://github.com/Drill4J/admin-ui).
