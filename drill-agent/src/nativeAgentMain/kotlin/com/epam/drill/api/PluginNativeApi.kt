@@ -541,12 +541,12 @@ fun getPlugin(id: CPointer<ByteVar>): NativePart<*>? {
 fun addPluginToRegistry(plugin: NativePart<*>) {
     println("[TEMP] Try to addNativePluginPart to registry")
     try {
-        val agentPluginPart: AgentPart<Any, Any>? = PluginManager[plugin.id.toKString()] as AgentPart<Any, Any>?
+        val agentPluginPart: AgentPart<Any, Any>? = PluginManager[plugin.id] as AgentPart<Any, Any>?
         if (agentPluginPart != null) {
             agentPluginPart.np = plugin as NativePart<Any>
             println("[TEMP] native part added.")
         } else {
-            println("[WARNING!!!!!!!] CANT FIND THE ${plugin.id.toKString()} plug in manager. ")
+            println("[WARNING!!!!!!!] CANT FIND THE ${plugin.id} plug in manager. ")
         }
 
     } catch (ex: Throwable) {

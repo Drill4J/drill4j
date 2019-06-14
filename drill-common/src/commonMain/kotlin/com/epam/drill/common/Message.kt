@@ -12,9 +12,15 @@ typealias WsUrl = String
 data class PluginMessage(
     val event: DrillEvent,
     val pluginFile: PluginFileBytes = emptyList(),
+    val nativePart: NativePlugin? = null,
     val pl: PluginBean
 )
 
 typealias PluginFileBytes = List<Byte>
 
+@Serializable
+data class NativePlugin(
+    val windowsPlugin: PluginFileBytes = emptyList(),
+    val linuxPluginFileBytes: PluginFileBytes = emptyList()
+)
 

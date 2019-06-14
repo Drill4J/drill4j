@@ -12,6 +12,7 @@ include(":nativeprojects:drill-logger")
 //include(":plugins:drill-exception-plugin-native")
 //include(":plugins:drill-custom-plugin")
 include(":plugins:drill-coverage-plugin")
+include(":plugins:drill-native-plugin")
 
 includeBuild("./composite/spring-petclinic-kotlin")
 includeBuild("./composite/integration-tests")

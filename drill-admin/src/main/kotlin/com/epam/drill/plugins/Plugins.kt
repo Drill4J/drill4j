@@ -8,12 +8,16 @@ import java.util.*
 
 class Plugins(val plugins: MutableMap<String, DP> = HashMap()) : MutableMap<String, DP> by plugins
 
-typealias DP = Triple<Class<AdminPluginPart>, File, PluginBean>
+typealias DP = Triple<Class<AdminPluginPart>, Triple<File, File?, File?>, PluginBean>
 
 val DP.pluginClass: Class<AdminPluginPart>
     get() = first
 val DP.agentPluginPart: File
-    get() = second
+    get() = second.first
+val DP.windowsPart: File?
+    get() = second.second
+val DP.linuxPar: File?
+    get() = second.third
 val DP.pluginBean: PluginBean
     get() = third
 
