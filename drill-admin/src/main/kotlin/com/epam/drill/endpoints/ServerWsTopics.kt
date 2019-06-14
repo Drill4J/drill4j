@@ -12,8 +12,11 @@ import com.epam.drill.common.MessageType
 import com.epam.drill.common.stringify
 import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
+import com.epam.drill.plugins.getAllPluginBeans
+import com.epam.drill.plugins.partOf
 import com.epam.drill.plugins.pluginBean
 import com.epam.drill.plugins.toAllPluginsWebSocket
+import com.epam.drill.plugins.toPluginWebSocket
 import com.epam.drill.router.WsRoutes
 import com.epam.drill.storage.add
 import com.epam.drill.storage.remove
@@ -96,6 +99,18 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
                     plugins.map { (_, dp) -> dp.pluginBean }
                         .toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.agent }.toMutableSet())
+                }
+
+                topic<WsRoutes.GetPluginInfo> { gpi, _ ->
+                    val installedPluginBeanIds = agentManager
+                        .getAllInstalledPluginBeanIds(gpi.agentId)
+                    plugins.getAllPluginBeans().map { plug ->
+                        val pluginWebSocket = plug.toPluginWebSocket()
+                        if (plug partOf installedPluginBeanIds) {
+                            pluginWebSocket.relation = "Installed"
+                        }
+                        pluginWebSocket
+                    }
                 }
             }
 
