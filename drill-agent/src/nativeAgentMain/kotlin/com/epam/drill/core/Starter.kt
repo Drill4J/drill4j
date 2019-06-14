@@ -41,8 +41,6 @@ import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
-import platform.windows.GetProcAddress
-import platform.windows.LoadLibrary
 import kotlin.native.concurrent.freeze
 
 

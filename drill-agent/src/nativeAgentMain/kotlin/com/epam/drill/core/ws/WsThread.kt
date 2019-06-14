@@ -129,7 +129,8 @@ suspend fun websocket(adminUrl: String) {
                         exec { agentConfig.needSync = false }
                         val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
                         if (!pluginsDir.exists()) pluginsDir.mkdir()
-                        val vfsFile = pluginsDir[plugMessage.pl.id]
+                        val id = plugMessage.pl.id
+                        val vfsFile = pluginsDir[id]
                         if (!vfsFile.exists()) vfsFile.mkdir()
                         val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
                         plugMessage.pluginFile.toByteArray().writeToFile(plugin)
@@ -139,15 +140,18 @@ suspend fun websocket(adminUrl: String) {
                                 plugMessage.nativePart!!.windowsPlugin.isNotEmpty() -> {
                                     val natPlugin: DrillPluginFile = vfsFile["native_plugin.dll"]
                                     plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
-                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(natPlugin.absolutePath)
+                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath)
                                     loadNativePlugin?.off()
                                     loadNativePlugin?.on()
                                     loadNativePlugin?.initPlugin()
                                 }
                                 plugMessage.nativePart!!.linuxPluginFileBytes.isNotEmpty() -> {
                                     val natPlugin: DrillPluginFile = vfsFile["native_plugin.so"]
-                                    plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
-                                    com.epam.drill.loadNativePlugin(natPlugin.absolutePath)
+                                    plugMessage.nativePart!!.linuxPluginFileBytes.toByteArray().writeToFile(natPlugin)
+                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath)
+                                    loadNativePlugin?.off()
+                                    loadNativePlugin?.on()
+                                    loadNativePlugin?.initPlugin()
                                 }
                                 else -> {
 
