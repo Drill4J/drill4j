@@ -47,7 +47,9 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
                         if (!loadedPlugins.contains(pluginBean.id)) {
                             val processAgentPart = processAgentPart(jar, tempDirectory)
-                            val dp = DP(processAdminPart, processAgentPart, pluginBean)
+                            val windows = processNativeWindowsAgentPart(jar, tempDirectory)
+                            val linux = processNativeLinuxAgentPart(jar, tempDirectory)
+                            val dp = DP(processAdminPart, Triple(processAgentPart, windows, linux), pluginBean)
                             plugins.plugins[pluginBean.id] = dp
                             logger.info { "plugin '${pluginBean.id}' was loaded successfully" }
                         }
@@ -75,6 +77,19 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
     private fun processAgentPart(jar: JarFile, tempDirectory: File): File {
         val agentPartJar: JarEntry = jar.getJarEntry("agent-part.jar")
+        return extractJarEntityToTempDir(jar, tempDirectory, agentPartJar)
+    }
+
+    private fun processNativeWindowsAgentPart(jar: JarFile, tempDirectory: File): File? {
+        val agentPartJar: JarEntry? = jar.getJarEntry("native_plugin.dll")
+        agentPartJar ?: return null
+        return extractJarEntityToTempDir(jar, tempDirectory, agentPartJar)
+    }
+
+
+    private fun processNativeLinuxAgentPart(jar: JarFile, tempDirectory: File): File? {
+        val agentPartJar: JarEntry? = jar.getJarEntry("libnative_plugin.so")
+        agentPartJar ?: return null
         return extractJarEntityToTempDir(jar, tempDirectory, agentPartJar)
     }
 

@@ -6,6 +6,8 @@ import com.epam.drill.api.enableJvmtiEventVmInit
 import com.epam.drill.common.AgentConfig
 import com.epam.drill.jvmapi.printAllowedCapabilities
 import com.epam.drill.logger.DLogger
+import com.epam.drill.plugin.api.processing.NativePart
+import com.epam.drill.plugin.api.processing.initPlugin
 import jvmapi.AddCapabilities
 import jvmapi.AddToSystemClassLoaderSearch
 import jvmapi.GetPotentialCapabilities
@@ -19,13 +21,28 @@ import jvmapi.gjavaVMGlob
 import jvmapi.jint
 import jvmapi.jvmtiEventCallbacks
 import jvmapi.saveVmToGlobal
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CArrayPointer
+import kotlinx.cinterop.CFunction
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.UShortVar
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.asStableRef
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.invoke
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.set
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import platform.posix.getpid
+import platform.windows.GetProcAddress
+import platform.windows.LoadLibrary
 import kotlin.native.concurrent.freeze
 
 

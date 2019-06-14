@@ -8,6 +8,7 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
 import kotlinx.serialization.KSerializer
+const val initPlugin = "initPlugin"
 
 actual abstract class NativePart<T> : Switchable, Lifecycle {
     var rawConfig: CPointer<ByteVar>? = null
@@ -25,7 +26,7 @@ actual abstract class NativePart<T> : Switchable, Lifecycle {
         destroyPlugin(unloadReason)
     }
 
-    abstract var id: CPointer<ByteVar>
+    abstract var id: String
 
     actual abstract val confSerializer: KSerializer<T>
 

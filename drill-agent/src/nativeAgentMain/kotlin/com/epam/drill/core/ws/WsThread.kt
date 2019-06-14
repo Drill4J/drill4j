@@ -134,6 +134,27 @@ suspend fun websocket(adminUrl: String) {
                         val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
                         plugMessage.pluginFile.toByteArray().writeToFile(plugin)
                         loadPlugin(plugin)
+                        if (plugMessage.nativePart != null) {
+                            when {
+                                plugMessage.nativePart!!.windowsPlugin.isNotEmpty() -> {
+                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.dll"]
+                                    plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
+                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(natPlugin.absolutePath)
+                                    loadNativePlugin?.off()
+                                    loadNativePlugin?.on()
+                                    loadNativePlugin?.initPlugin()
+                                }
+                                plugMessage.nativePart!!.linuxPluginFileBytes.isNotEmpty() -> {
+                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.so"]
+                                    plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
+                                    com.epam.drill.loadNativePlugin(natPlugin.absolutePath)
+                                }
+                                else -> {
+
+                                }
+                            }
+                        }
+
                     }
 
                 }
