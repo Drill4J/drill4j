@@ -2,16 +2,18 @@ package com.epam.drill.plugins
 
 
 import com.epam.drill.common.PluginBean
-import com.epam.drill.extractPluginBean
-import com.epam.drill.loadInRuntime
+import com.epam.drill.drillHomeDir
+import com.epam.drill.loadClassesFrom
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.retrieveApiClass
 import io.ktor.util.error
+import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
 import java.io.File
+import java.lang.System.getenv
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
@@ -20,39 +22,54 @@ private val logger = KotlinLogging.logger {}
 
 class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
     private val plugins: Plugins by kodein.instance()
-    private val fileList: List<File> =
-        listOf(File("../distr/adminStorage"), File(System.getenv("DRILL_HOME") + "/adminStorage"))
+    private val pluginPaths: List<File> =
+        listOf(
+            File("..", "distr").resolve("adminStorage"),
+            drillHomeDir.resolve("adminStorage")
+        ).map { it.canonicalFile }
 
     init {
         try {
-            fileList.forEach {
-                if (!it.exists()) {
-                    logger.debug { "didn't find plugin folder. Search directories: ${it.absolutePath}" }
-                } else {
-                    val files = it.listFiles() ?: arrayOf()
-                    if (files.isNotEmpty()) {
-                        logger.info {
-                            "${files.size} were found.\n" +
-                                    files.contentToString()
-                        }
-                    } else {
-                        logger.warn { "didn't find any plugins..." }
-                    }
-                    for (pluginDir in files) {
-                        val jar = JarFile(pluginDir)
-                        val tempDir = File("stuff", ".drill")
-                        val tempDirectory = createTempDirectory(tempDir, pluginDir.nameWithoutExtension)
-                        val (processAdminPart, pluginBean) = processAdminPart(jar, tempDirectory)
-                        val loadedPlugins = plugins.plugins.keys
-
-                        if (!loadedPlugins.contains(pluginBean.id)) {
-                            val processAgentPart = processAgentPart(jar, tempDirectory)
-                            val dp = DP(processAdminPart, processAgentPart, pluginBean)
-                            plugins.plugins[pluginBean.id] = dp
-                            logger.info { "plugin '${pluginBean.id}' was loaded successfully" }
+            logger.info { "Searching for plugins in paths $pluginPaths" }
+            val pluginsFiles = pluginPaths.filter { it.exists() }
+                .flatMap { it.listFiles().asIterable() }
+                .filter { it.isFile && it.extension.equals("jar", true) }
+                .map { it.canonicalFile }
+            if (pluginsFiles.isNotEmpty()) {
+                logger.info { "Plugin jars found: ${pluginsFiles.count()}." }
+                pluginsFiles.forEach { pluginFile ->
+                    logger.info { "Loading from $pluginFile." }
+                    JarFile(pluginFile).use { jar ->
+                        val configPath = "plugin_config.json"
+                        val configEntry = jar.getJarEntry(configPath)
+                        if (configEntry != null) {
+                            val configText = jar.getInputStream(configEntry).reader().readText()
+                            val config = Json.parse(PluginBean.serializer(), configText)
+                            val pluginId = config.id
+                            if (pluginId !in plugins) {
+                                val adminPartFile = jar.extractPluginEntry(pluginId, "admin-part.jar")
+                                val adminPartClass = JarFile(adminPartFile).use { adminJar ->
+                                    processAdminPart(adminPartFile, adminJar)
+                                }
+                                if (adminPartClass != null) {
+                                    val agentFile = jar.extractPluginEntry(pluginId, "agent-part.jar")
+                                    val dp = DP(adminPartClass, agentFile, config)
+                                    plugins[pluginId] = dp
+                                    logger.info { "Plugin '$pluginId' was loaded successfully." }
+                                } else {
+                                    logger.error { "Admin Plugin API class was not found for $pluginId" }
+                                }
+                            } else {
+                                logger.warn { "Plugin $pluginId has already been loaded. Skipping loading from $pluginFile." }
+                            }
+                        } else {
+                            logger.error { "Error loading plugin from $pluginFile - no $configPath!" }
                         }
                     }
                 }
+            } else {
+                logger.warn { "No plugins found!" }
+
             }
         } catch (ex: Exception) {
             logger.error(ex)
@@ -60,43 +77,29 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
     }
 
-    private fun processAdminPart(jar: JarFile, tempDirectory: File): Pair<Class<AdminPluginPart>, PluginBean> {
-        val adminPartJar: JarEntry = jar.getJarEntry("admin-part.jar")
-        val f = extractJarEntityToTempDir(jar, tempDirectory, adminPartJar)
-        val cl = ClassLoader.getSystemClassLoader()
-        loadInRuntime(f, cl)
-        val jarFile = JarFile(f)
-        val entrySet = jarFile.entries().iterator().asSequence().toSet()
-        val pluginApiClass = retrieveApiClass(AdminPluginPart::class.java, entrySet, cl)
-        val pluginBean = extractPluginBean(jarFile, tempDirectory)
+    private fun processAdminPart(
+        adminPartFile: File, adminJar: JarFile
+    ): Class<AdminPluginPart>? {
+        val sysClassLoader = ClassLoader.getSystemClassLoader()
+        sysClassLoader.loadClassesFrom(adminPartFile.toURI().toURL())
+        val entrySet = adminJar.entries().iterator().asSequence().toSet()
+        val pluginApiClass =
+            retrieveApiClass(AdminPluginPart::class.java, entrySet, sysClassLoader)
         @Suppress("UNCHECKED_CAST")
-        return pluginApiClass as Class<AdminPluginPart> to pluginBean
+        return pluginApiClass as Class<AdminPluginPart>?
     }
 
-    private fun processAgentPart(jar: JarFile, tempDirectory: File): File {
-        val agentPartJar: JarEntry = jar.getJarEntry("agent-part.jar")
-        return extractJarEntityToTempDir(jar, tempDirectory, agentPartJar)
-    }
+}
 
-
-    private fun extractJarEntityToTempDir(jar: JarFile, tempDirectory: File, jarEntry: JarEntry): File {
-        val file = File(tempDirectory, jarEntry.name)
-        if (file.createNewFile()) {
-//            log.log(Level.SEVERE, "New file {0} has created.", file);
+fun JarFile.extractPluginEntry(pluginId: String, entry: String): File {
+    val jarEntry: JarEntry = getJarEntry(entry)
+    return getInputStream(jarEntry).use { istream ->
+        val workDir = File(getenv("DRILL_HOME"), "work")
+        val pluginDir = workDir.resolve("plugins").resolve(pluginId)
+        pluginDir.mkdirs()
+        File(pluginDir, jarEntry.name).apply {
+            outputStream().use { ostream -> istream.copyTo(ostream) }
+            deleteOnExit()
         }
-        jar.getInputStream(jarEntry).use { input ->
-            file.outputStream().use { fileOut ->
-                input.copyTo(fileOut)
-            }
-        }
-        return file
-    }
-
-    private fun createTempDirectory(tempDir: File, id: String): File {
-        val temp = File(tempDir, id)
-        if (!(temp.mkdirs())) {
-//            throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
-        }
-        return temp
     }
 }
