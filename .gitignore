@@ -21,6 +21,5 @@
 /drill-agent/main.dll
 /drill-agent/libmain.so
 /drill-agent/libmain.dylib
-/drill-admin/stuff/
 /.gradle_admin/
 /.gradle_agent/

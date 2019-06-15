@@ -1,11 +1,11 @@
 package com.epam.drill
 
-import com.epam.drill.common.PluginBean
-import kotlinx.serialization.json.Json
-import java.io.File
+import mu.KotlinLogging
 import java.net.URL
 import java.util.jar.JarEntry
-import java.util.jar.JarFile
+
+
+private val logger = KotlinLogging.logger {}
 
 private fun getClassName(je: JarEntry): String {
     var className = je.name.substring(0, je.name.length - 6)
@@ -30,34 +30,14 @@ fun retrieveApiClass(targetClass: Class<*>, entrySet: Set<JarEntry>, cl: ClassLo
     return null
 }
 
-
-fun extractPluginBean(jarFile: JarFile, parCat: File): PluginBean {
-    val jarEntry: JarEntry = jarFile.getJarEntry("static/plugin_config.json")
-    val cs = File(parCat, jarEntry.name)
-    if (!cs.exists()) {
-        cs.parentFile.mkdirs()
-        cs.createNewFile()
-        jarFile.getInputStream(jarEntry).use { input ->
-            cs.outputStream().use { fileOut ->
-                input.copyTo(fileOut)
-            }
-        }
-    }
-    return Json.parse(PluginBean.serializer(), cs.readText())
-}
-
-
-fun loadInRuntime(f: File, classLoader: ClassLoader) {
+fun ClassLoader.loadClassesFrom(source: URL) {
     val parameters = arrayOf<Class<*>>(URL::class.java)
     try {
-        val method = classLoader.javaClass.superclass.getDeclaredMethod("addURL", *parameters)
+        val method = javaClass.superclass.getDeclaredMethod("addURL", *parameters)
         method.isAccessible = true
-        method.invoke(classLoader, f.toURI().toURL())
-        //fixme log
-//        logDebug("Result: plugin jar was loaded in Runtime")
-    } catch (t: Exception) {
-        //fixme log
-//        logError("Result: failed to load jar in runtime $t")
+        method.invoke(this, source)
+    } catch (e: Exception) {
+        logger.error(e) { "Error loading classes from $source" }
     }
 
 }
