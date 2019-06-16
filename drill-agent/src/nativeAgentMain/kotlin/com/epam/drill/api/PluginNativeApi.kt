@@ -2,10 +2,10 @@
 
 package com.epam.drill.api
 
-import com.epam.drill.core.messanger.MessageQueue
-import com.epam.drill.core.request.DrillRequest
+import com.epam.drill.core.messanger.sendMessage
 import com.epam.drill.jvmapi.JNI
 import com.epam.drill.jvmapi.jni
+import com.epam.drill.plugin.DrillRequest
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.NativePart
@@ -78,47 +78,9 @@ fun JNIEn(): JNI {
     return jni
 }
 
-//
-//@CName("GetClassSignature")
-//fun GetClassSignature(
-//    klass: jvmapi.jclass?,
-//    signature_ptr: kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CPointerVar<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVarOf<kotlin.Byte>>> */>?,
-//    generic_ptr: kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CPointerVar<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVarOf<kotlin.Byte>>> */>?
-//) {
-//    jvmapi.GetClassSignature(klass, signature_ptr, generic_ptr)
-//}//
-//@CName("GetMethodDeclaringClass")
-//fun GetMethodDeclaringClass(
-//    method: jvmapi.jmethodID? /* = kotlinx.cinterop.CPointer<cnames.structs._jmethodID>? */,
-//    declaring_class_ptr: kotlinx.cinterop.CValuesRef<jvmapi.jclassVar /* = kotlinx.cinterop.CPointerVarOf<jvmapi.jclass /* = kotlinx.cinterop.CPointer<cnames.structs._jobject> */> */>?
-//) {
-//    jvmapi.GetMethodDeclaringClass(method, declaring_class_ptr)
-//}
-
-//@CName("GetStackTrace")
-//fun GetStackTrace(
-//    thread: jvmapi.jthread? /* = kotlinx.cinterop.CPointer<cnames.structs._jobject>? */,
-//    start_depth: jvmapi.jint /* = kotlin.Int */,
-//    max_frame_count: jvmapi.jint /* = kotlin.Int */,
-//    frame_buffer: kotlinx.cinterop.CValuesRef<jvmapi.jvmtiFrameInfo /* = jvmapi._jvmtiFrameInfo */>?,
-//    count_ptr: kotlinx.cinterop.CValuesRef<jvmapi.jintVar /* = kotlinx.cinterop.IntVarOf<jvmapi.jint /* = kotlin.Int */> */>?
-//) {
-//    jvmapi.GetStackTrace(thread, start_depth, max_frame_count, frame_buffer, count_ptr)
-//}
-
-//@CName("GetLocalVariableTable")
-//fun GetLocalVariableTable(
-//    method: jvmapi.jmethodID? /* = kotlinx.cinterop.CPointer<cnames.structs._jmethodID>? */,
-//    entry_count_ptr: kotlinx.cinterop.CValuesRef<jvmapi.jintVar /* = kotlinx.cinterop.IntVarOf<jvmapi.jint /* = kotlin.Int */> */>?,
-//    table_ptr: kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CPointerVar<jvmapi.jvmtiLocalVariableEntry /* = jvmapi._jvmtiLocalVariableEntry */> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<jvmapi.jvmtiLocalVariableEntry /* = jvmapi._jvmtiLocalVariableEntry */>> */>?
-//) {
-//    jvmapi.GetLocalVariableTable(method, entry_count_ptr, table_ptr)
-//}
-
-
 @CName("sendToSocket")
-fun sendToSocket(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) {
-    MessageQueue.sendMessage(pluginId.toKString(), message.toKString())
+fun sendToSocket(pluginId: String, message: String) {
+    sendMessage(pluginId, message)
 }
 
 
@@ -152,7 +114,7 @@ fun jvmtiCallback(): jvmtiEventCallbacks? {
 
 @CName("SetEventCallbacksP")
 fun jvmti(
-    callbacks: kotlinx.cinterop.CValuesRef<jvmapi.jvmtiEventCallbacks>?,
+    callbacks: kotlinx.cinterop.CValuesRef<jvmtiEventCallbacks>?,
     size_of_callbacks: jvmapi.jint /* = kotlin.Int */
 ) {
     SetEventCallbacks(callbacks, size_of_callbacks)

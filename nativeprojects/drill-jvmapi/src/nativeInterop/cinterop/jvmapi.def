@@ -144,63 +144,66 @@ jvmtiEventCallbacks generateDefaultCallbacks() {
 
 
 //////////////////////////////////////JVMTI FUNCTIONS///////////////////////////////////////
+extern jvmtiError checkEx(jvmtiError errCode, char* fname);
+extern jvmtiEnv * jvmtii();
+
 jvmtiCapabilities GetPotentialCapabilities() {
   jvmtiCapabilities capabilities;
  (void)memset(&capabilities,0, sizeof(capabilities));
- (*(gdata->jvmti))->GetPotentialCapabilities(gdata->jvmti, &capabilities);
+ (*jvmtii())->GetPotentialCapabilities(jvmtii(), &capabilities);
   return capabilities;
 }
 
-extern jvmtiError checkEx(jvmtiError errCode, char* fname);
+
 
 jvmtiError Allocate(jlong size, unsigned char** mem_ptr) {
-    return checkEx((*(gdata->jvmti))->Allocate(gdata->jvmti, size, mem_ptr),"Allocate");
+    return checkEx((*jvmtii())->Allocate(jvmtii(), size, mem_ptr),"Allocate");
 }
 jvmtiError GetClassSignature(jclass klass,
           char** signature_ptr,
           char** generic_ptr) {
-  return checkEx((*(gdata->jvmti))->GetClassSignature(gdata->jvmti, klass, signature_ptr, generic_ptr),"GetClassSignature");
+  return checkEx((*jvmtii())->GetClassSignature(jvmtii(), klass, signature_ptr, generic_ptr),"GetClassSignature");
 }
 jvmtiError Deallocate(unsigned char* mem) {
-  return checkEx((*(gdata->jvmti))->Deallocate(gdata->jvmti, mem),"Deallocate");
+  return checkEx((*jvmtii())->Deallocate(jvmtii(), mem),"Deallocate");
 }
 jvmtiError GetThreadState(jthread thread,
           jint* thread_state_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadState(gdata->jvmti, thread, thread_state_ptr),"GetThreadState");
+  return checkEx((*jvmtii())->GetThreadState(jvmtii(), thread, thread_state_ptr),"GetThreadState");
 }
 jvmtiError GetCurrentThread(jthread* thread_ptr) {
-  return checkEx((*(gdata->jvmti))->GetCurrentThread(gdata->jvmti, thread_ptr),"GetCurrentThread");
+  return checkEx((*jvmtii())->GetCurrentThread(jvmtii(), thread_ptr),"GetCurrentThread");
 }
 jvmtiError GetAllThreads(jint* threads_count_ptr,
           jthread** threads_ptr) {
-  return checkEx((*(gdata->jvmti))->GetAllThreads(gdata->jvmti, threads_count_ptr, threads_ptr),"GetAllThreads");
+  return checkEx((*jvmtii())->GetAllThreads(jvmtii(), threads_count_ptr, threads_ptr),"GetAllThreads");
 }
 jvmtiError SuspendThread(jthread thread) {
-  return checkEx((*(gdata->jvmti))->SuspendThread(gdata->jvmti, thread),"SuspendThread");
+  return checkEx((*jvmtii())->SuspendThread(jvmtii(), thread),"SuspendThread");
 }
 jvmtiError SuspendThreadList(jint request_count,
           const jthread* request_list,
           jvmtiError* results) {
-  return checkEx((*(gdata->jvmti))->SuspendThreadList(gdata->jvmti, request_count, request_list, results),"SuspendThreadList");
+  return checkEx((*jvmtii())->SuspendThreadList(jvmtii(), request_count, request_list, results),"SuspendThreadList");
 }
 jvmtiError ResumeThread(jthread thread) {
-  return checkEx((*(gdata->jvmti))->ResumeThread(gdata->jvmti, thread),"ResumeThread");
+  return checkEx((*jvmtii())->ResumeThread(jvmtii(), thread),"ResumeThread");
 }
 jvmtiError ResumeThreadList(jint request_count,
           const jthread* request_list,
           jvmtiError* results) {
-  return checkEx((*(gdata->jvmti))->ResumeThreadList(gdata->jvmti, request_count, request_list, results),"ResumeThreadList");
+  return checkEx((*jvmtii())->ResumeThreadList(jvmtii(), request_count, request_list, results),"ResumeThreadList");
 }
 jvmtiError StopThread(jthread thread,
           jobject exception) {
-  return checkEx((*(gdata->jvmti))->StopThread(gdata->jvmti, thread, exception),"StopThread");
+  return checkEx((*jvmtii())->StopThread(jvmtii(), thread, exception),"StopThread");
 }
 jvmtiError InterruptThread(jthread thread) {
-  return checkEx((*(gdata->jvmti))->InterruptThread(gdata->jvmti, thread),"InterruptThread");
+  return checkEx((*jvmtii())->InterruptThread(jvmtii(), thread),"InterruptThread");
 }
 jvmtiError GetThreadInfo(jthread thread,
           jvmtiThreadInfo* info_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadInfo(gdata->jvmti, thread, info_ptr),"GetThreadInfo");
+  return checkEx((*jvmtii())->GetThreadInfo(jvmtii(), thread, info_ptr),"GetThreadInfo");
 }
 
 jint HJNI_CreateJavaVM(JavaVM **pvm, void **penv, void *args){
@@ -210,544 +213,544 @@ jint HJNI_CreateJavaVM(JavaVM **pvm, void **penv, void *args){
 jvmtiError GetOwnedMonitorInfo(jthread thread,
           jint* owned_monitor_count_ptr,
           jobject** owned_monitors_ptr) {
-  return checkEx((*(gdata->jvmti))->GetOwnedMonitorInfo(gdata->jvmti, thread, owned_monitor_count_ptr, owned_monitors_ptr),"GetOwnedMonitorInfo");
+  return checkEx((*jvmtii())->GetOwnedMonitorInfo(jvmtii(), thread, owned_monitor_count_ptr, owned_monitors_ptr),"GetOwnedMonitorInfo");
 }
 jvmtiError GetOwnedMonitorStackDepthInfo(jthread thread,
           jint* monitor_info_count_ptr,
           jvmtiMonitorStackDepthInfo** monitor_info_ptr) {
-  return checkEx((*(gdata->jvmti))->GetOwnedMonitorStackDepthInfo(gdata->jvmti, thread, monitor_info_count_ptr, monitor_info_ptr),"GetOwnedMonitorStackDepthInfo");
+  return checkEx((*jvmtii())->GetOwnedMonitorStackDepthInfo(jvmtii(), thread, monitor_info_count_ptr, monitor_info_ptr),"GetOwnedMonitorStackDepthInfo");
 }
 jvmtiError GetCurrentContendedMonitor(jthread thread,
           jobject* monitor_ptr) {
-  return checkEx((*(gdata->jvmti))->GetCurrentContendedMonitor(gdata->jvmti, thread, monitor_ptr),"GetCurrentContendedMonitor");
+  return checkEx((*jvmtii())->GetCurrentContendedMonitor(jvmtii(), thread, monitor_ptr),"GetCurrentContendedMonitor");
 }
 jvmtiError RunAgentThread(jthread thread,
           jvmtiStartFunction proc,
           const void* arg,
           jint priority) {
-  return checkEx((*(gdata->jvmti))->RunAgentThread(gdata->jvmti, thread, proc, arg, priority),"RunAgentThread");
+  return checkEx((*jvmtii())->RunAgentThread(jvmtii(), thread, proc, arg, priority),"RunAgentThread");
 }
 jvmtiError SetThreadLocalStorage(jthread thread,
           const void* data) {
-  return checkEx((*(gdata->jvmti))->SetThreadLocalStorage(gdata->jvmti, thread, data),"SetThreadLocalStorage");
+  return checkEx((*jvmtii())->SetThreadLocalStorage(jvmtii(), thread, data),"SetThreadLocalStorage");
 }
 jvmtiError GetThreadLocalStorage(jthread thread,
           void** data_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadLocalStorage(gdata->jvmti, thread, data_ptr),"GetThreadLocalStorage");
+  return checkEx((*jvmtii())->GetThreadLocalStorage(jvmtii(), thread, data_ptr),"GetThreadLocalStorage");
 }
 jvmtiError GetTopThreadGroups(jint* group_count_ptr,
           jthreadGroup** groups_ptr) {
-  return checkEx((*(gdata->jvmti))->GetTopThreadGroups(gdata->jvmti, group_count_ptr, groups_ptr),"GetTopThreadGroups");
+  return checkEx((*jvmtii())->GetTopThreadGroups(jvmtii(), group_count_ptr, groups_ptr),"GetTopThreadGroups");
 }
 jvmtiError GetThreadGroupInfo(jthreadGroup group,
           jvmtiThreadGroupInfo* info_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadGroupInfo(gdata->jvmti, group, info_ptr),"GetThreadGroupInfo");
+  return checkEx((*jvmtii())->GetThreadGroupInfo(jvmtii(), group, info_ptr),"GetThreadGroupInfo");
 }
 jvmtiError GetThreadGroupChildren(jthreadGroup group,
           jint* thread_count_ptr,
           jthread** threads_ptr,
           jint* group_count_ptr,
           jthreadGroup** groups_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadGroupChildren(gdata->jvmti, group, thread_count_ptr, threads_ptr, group_count_ptr, groups_ptr),"GetThreadGroupChildren");
+  return checkEx((*jvmtii())->GetThreadGroupChildren(jvmtii(), group, thread_count_ptr, threads_ptr, group_count_ptr, groups_ptr),"GetThreadGroupChildren");
 }
 jvmtiError GetStackTrace(jthread thread,
           jint start_depth,
           jint max_frame_count,
           jvmtiFrameInfo* frame_buffer,
           jint* count_ptr) {
-  return checkEx((*(gdata->jvmti))->GetStackTrace(gdata->jvmti, thread, start_depth, max_frame_count, frame_buffer, count_ptr),"GetStackTrace");
+  return checkEx((*jvmtii())->GetStackTrace(jvmtii(), thread, start_depth, max_frame_count, frame_buffer, count_ptr),"GetStackTrace");
 }
 jvmtiError GetAllStackTraces(jint max_frame_count,
           jvmtiStackInfo** stack_info_ptr,
           jint* thread_count_ptr) {
-  return checkEx((*(gdata->jvmti))->GetAllStackTraces(gdata->jvmti, max_frame_count, stack_info_ptr, thread_count_ptr),"GetAllStackTraces");
+  return checkEx((*jvmtii())->GetAllStackTraces(jvmtii(), max_frame_count, stack_info_ptr, thread_count_ptr),"GetAllStackTraces");
 }
 jvmtiError GetThreadListStackTraces(jint thread_count,
           const jthread* thread_list,
           jint max_frame_count,
           jvmtiStackInfo** stack_info_ptr) {
-  return checkEx((*(gdata->jvmti))->GetThreadListStackTraces(gdata->jvmti, thread_count, thread_list, max_frame_count, stack_info_ptr),"GetThreadListStackTraces");
+  return checkEx((*jvmtii())->GetThreadListStackTraces(jvmtii(), thread_count, thread_list, max_frame_count, stack_info_ptr),"GetThreadListStackTraces");
 }
 jvmtiError GetFrameCount(jthread thread,
           jint* count_ptr) {
-  return checkEx((*(gdata->jvmti))->GetFrameCount(gdata->jvmti, thread, count_ptr),"GetFrameCount");
+  return checkEx((*jvmtii())->GetFrameCount(jvmtii(), thread, count_ptr),"GetFrameCount");
 }
 jvmtiError PopFrame(jthread thread) {
-  return checkEx((*(gdata->jvmti))->PopFrame(gdata->jvmti, thread),"PopFrame");
+  return checkEx((*jvmtii())->PopFrame(jvmtii(), thread),"PopFrame");
 }
 jvmtiError GetFrameLocation(jthread thread,
           jint depth,
           jmethodID* method_ptr,
           jlocation* location_ptr) {
-  return checkEx((*(gdata->jvmti))->GetFrameLocation(gdata->jvmti, thread, depth, method_ptr, location_ptr),"GetFrameLocation");
+  return checkEx((*jvmtii())->GetFrameLocation(jvmtii(), thread, depth, method_ptr, location_ptr),"GetFrameLocation");
 }
 jvmtiError NotifyFramePop(jthread thread,
           jint depth) {
-  return checkEx((*(gdata->jvmti))->NotifyFramePop(gdata->jvmti, thread, depth),"NotifyFramePop");
+  return checkEx((*jvmtii())->NotifyFramePop(jvmtii(), thread, depth),"NotifyFramePop");
 }
 jvmtiError ForceEarlyReturnObject(jthread thread,
           jobject value) {
-  return checkEx((*(gdata->jvmti))->ForceEarlyReturnObject(gdata->jvmti, thread, value),"ForceEarlyReturnObject");
+  return checkEx((*jvmtii())->ForceEarlyReturnObject(jvmtii(), thread, value),"ForceEarlyReturnObject");
 }
 jvmtiError ForceEarlyReturnInt(jthread thread,
           jint value) {
-  return checkEx((*(gdata->jvmti))->ForceEarlyReturnInt(gdata->jvmti, thread, value),"ForceEarlyReturnInt");
+  return checkEx((*jvmtii())->ForceEarlyReturnInt(jvmtii(), thread, value),"ForceEarlyReturnInt");
 }
 jvmtiError ForceEarlyReturnLong(jthread thread,
           jlong value) {
-  return checkEx((*(gdata->jvmti))->ForceEarlyReturnLong(gdata->jvmti, thread, value),"ForceEarlyReturnLong");
+  return checkEx((*jvmtii())->ForceEarlyReturnLong(jvmtii(), thread, value),"ForceEarlyReturnLong");
 }
 jvmtiError ForceEarlyReturnFloat(jthread thread,
           jfloat value) {
-  return checkEx((*(gdata->jvmti))->ForceEarlyReturnFloat(gdata->jvmti, thread, value),"ForceEarlyReturnFloat");
+  return checkEx((*jvmtii())->ForceEarlyReturnFloat(jvmtii(), thread, value),"ForceEarlyReturnFloat");
 }
 jvmtiError ForceEarlyReturnDouble(jthread thread,
     jdouble value) {
-    return checkEx((*(gdata->jvmti))->ForceEarlyReturnDouble(gdata->jvmti, thread, value),"ForceEarlyReturnDouble");
+    return checkEx((*jvmtii())->ForceEarlyReturnDouble(jvmtii(), thread, value),"ForceEarlyReturnDouble");
 }
 jvmtiError ForceEarlyReturnVoid(jthread thread) {
-    return checkEx((*(gdata->jvmti))->ForceEarlyReturnVoid(gdata->jvmti, thread),"ForceEarlyReturnVoid");
+    return checkEx((*jvmtii())->ForceEarlyReturnVoid(jvmtii(), thread),"ForceEarlyReturnVoid");
 }
 jvmtiError FollowReferences(jint heap_filter,
 jclass klass,
 jobject initial_object,
 const jvmtiHeapCallbacks* callbacks,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->FollowReferences(gdata->jvmti, heap_filter, klass, initial_object, callbacks, user_data),"FollowReferences");
+    return checkEx((*jvmtii())->FollowReferences(jvmtii(), heap_filter, klass, initial_object, callbacks, user_data),"FollowReferences");
 }
 jvmtiError IterateThroughHeap(jint heap_filter,
 jclass klass,
 const jvmtiHeapCallbacks* callbacks,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->IterateThroughHeap(gdata->jvmti, heap_filter, klass, callbacks, user_data),"IterateThroughHeap");
+    return checkEx((*jvmtii())->IterateThroughHeap(jvmtii(), heap_filter, klass, callbacks, user_data),"IterateThroughHeap");
 }
 jvmtiError GetTag(jobject object,
 jlong* tag_ptr) {
-    return checkEx((*(gdata->jvmti))->GetTag(gdata->jvmti, object, tag_ptr),"GetTag");
+    return checkEx((*jvmtii())->GetTag(jvmtii(), object, tag_ptr),"GetTag");
 }
 jvmtiError SetTag(jobject object,
 jlong tag) {
-    return checkEx((*(gdata->jvmti))->SetTag(gdata->jvmti, object, tag),"SetTag");
+    return checkEx((*jvmtii())->SetTag(jvmtii(), object, tag),"SetTag");
 }
 jvmtiError GetObjectsWithTags(jint tag_count,
 const jlong* tags,
 jint* count_ptr,
 jobject** object_result_ptr,
 jlong** tag_result_ptr) {
-    return checkEx((*(gdata->jvmti))->GetObjectsWithTags(gdata->jvmti, tag_count, tags, count_ptr, object_result_ptr, tag_result_ptr),"GetObjectsWithTags");
+    return checkEx((*jvmtii())->GetObjectsWithTags(jvmtii(), tag_count, tags, count_ptr, object_result_ptr, tag_result_ptr),"GetObjectsWithTags");
 }
 jvmtiError ForceGarbageCollection() {
-    return checkEx((*(gdata->jvmti))->ForceGarbageCollection(jvmti()),"ForceGarbageCollection(jvmti");
+    return checkEx((*jvmtii())->ForceGarbageCollection(jvmti()),"ForceGarbageCollection(jvmti");
 }
 jvmtiError IterateOverObjectsReachableFromObject(jobject object,
 jvmtiObjectReferenceCallback object_reference_callback,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->IterateOverObjectsReachableFromObject(gdata->jvmti, object, object_reference_callback, user_data),"IterateOverObjectsReachableFromObject");
+    return checkEx((*jvmtii())->IterateOverObjectsReachableFromObject(jvmtii(), object, object_reference_callback, user_data),"IterateOverObjectsReachableFromObject");
 }
 jvmtiError IterateOverReachableObjects(jvmtiHeapRootCallback heap_root_callback,
 jvmtiStackReferenceCallback stack_ref_callback,
 jvmtiObjectReferenceCallback object_ref_callback,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->IterateOverReachableObjects(gdata->jvmti, heap_root_callback, stack_ref_callback, object_ref_callback, user_data),"IterateOverReachableObjects");
+    return checkEx((*jvmtii())->IterateOverReachableObjects(jvmtii(), heap_root_callback, stack_ref_callback, object_ref_callback, user_data),"IterateOverReachableObjects");
 }
 jvmtiError IterateOverHeap(jvmtiHeapObjectFilter object_filter,
 jvmtiHeapObjectCallback heap_object_callback,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->IterateOverHeap(gdata->jvmti, object_filter, heap_object_callback, user_data),"IterateOverHeap");
+    return checkEx((*jvmtii())->IterateOverHeap(jvmtii(), object_filter, heap_object_callback, user_data),"IterateOverHeap");
 }
 jvmtiError IterateOverInstancesOfClass(jclass klass,
 jvmtiHeapObjectFilter object_filter,
 jvmtiHeapObjectCallback heap_object_callback,
 const void* user_data) {
-    return checkEx((*(gdata->jvmti))->IterateOverInstancesOfClass(gdata->jvmti, klass, object_filter, heap_object_callback, user_data),"IterateOverInstancesOfClass");
+    return checkEx((*jvmtii())->IterateOverInstancesOfClass(jvmtii(), klass, object_filter, heap_object_callback, user_data),"IterateOverInstancesOfClass");
 }
 jvmtiError GetLocalObject(jthread thread,
 jint depth,
 jint slot,
 jobject* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalObject(gdata->jvmti, thread, depth, slot, value_ptr),"GetLocalObject");
+    return checkEx((*jvmtii())->GetLocalObject(jvmtii(), thread, depth, slot, value_ptr),"GetLocalObject");
 }
 jvmtiError GetLocalInstance(jthread thread,
 jint depth,
 jobject* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalInstance(gdata->jvmti, thread, depth, value_ptr),"GetLocalInstance");
+    return checkEx((*jvmtii())->GetLocalInstance(jvmtii(), thread, depth, value_ptr),"GetLocalInstance");
 }
 jvmtiError GetLocalInt(jthread thread,
 jint depth,
 jint slot,
 jint* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalInt(gdata->jvmti, thread, depth, slot, value_ptr),"GetLocalInt");
+    return checkEx((*jvmtii())->GetLocalInt(jvmtii(), thread, depth, slot, value_ptr),"GetLocalInt");
 }
 jvmtiError GetLocalLong(jthread thread,
 jint depth,
 jint slot,
 jlong* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalLong(gdata->jvmti, thread, depth, slot, value_ptr),"GetLocalLong");
+    return checkEx((*jvmtii())->GetLocalLong(jvmtii(), thread, depth, slot, value_ptr),"GetLocalLong");
 }
 jvmtiError GetLocalFloat(jthread thread,
 jint depth,
 jint slot,
 jfloat* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalFloat(gdata->jvmti, thread, depth, slot, value_ptr),"GetLocalFloat");
+    return checkEx((*jvmtii())->GetLocalFloat(jvmtii(), thread, depth, slot, value_ptr),"GetLocalFloat");
 }
 jvmtiError GetLocalDouble(jthread thread,
 jint depth,
 jint slot,
 jdouble* value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalDouble(gdata->jvmti, thread, depth, slot, value_ptr),"GetLocalDouble");
+    return checkEx((*jvmtii())->GetLocalDouble(jvmtii(), thread, depth, slot, value_ptr),"GetLocalDouble");
 }
 jvmtiError SetLocalObject(jthread thread,
 jint depth,
 jint slot,
 jobject value) {
-    return checkEx((*(gdata->jvmti))->SetLocalObject(gdata->jvmti, thread, depth, slot, value),"SetLocalObject");
+    return checkEx((*jvmtii())->SetLocalObject(jvmtii(), thread, depth, slot, value),"SetLocalObject");
 }
 jvmtiError SetLocalInt(jthread thread,
 jint depth,
 jint slot,
 jint value) {
-    return checkEx((*(gdata->jvmti))->SetLocalInt(gdata->jvmti, thread, depth, slot, value),"SetLocalInt");
+    return checkEx((*jvmtii())->SetLocalInt(jvmtii(), thread, depth, slot, value),"SetLocalInt");
 }
 jvmtiError SetLocalLong(jthread thread,
 jint depth,
 jint slot,
 jlong value) {
-    return checkEx((*(gdata->jvmti))->SetLocalLong(gdata->jvmti, thread, depth, slot, value),"SetLocalLong");
+    return checkEx((*jvmtii())->SetLocalLong(jvmtii(), thread, depth, slot, value),"SetLocalLong");
 }
 jvmtiError SetLocalFloat(jthread thread,
 jint depth,
 jint slot,
 jfloat value) {
-    return checkEx((*(gdata->jvmti))->SetLocalFloat(gdata->jvmti, thread, depth, slot, value),"SetLocalFloat");
+    return checkEx((*jvmtii())->SetLocalFloat(jvmtii(), thread, depth, slot, value),"SetLocalFloat");
 }
 jvmtiError SetLocalDouble(jthread thread,
 jint depth,
 jint slot,
 jdouble value) {
-    return checkEx((*(gdata->jvmti))->SetLocalDouble(gdata->jvmti, thread, depth, slot, value),"SetLocalDouble");
+    return checkEx((*jvmtii())->SetLocalDouble(jvmtii(), thread, depth, slot, value),"SetLocalDouble");
 }
 jvmtiError SetBreakpoint(jmethodID method,
 jlocation location) {
-    return checkEx((*(gdata->jvmti))->SetBreakpoint(gdata->jvmti, method, location),"SetBreakpoint");
+    return checkEx((*jvmtii())->SetBreakpoint(jvmtii(), method, location),"SetBreakpoint");
 }
 jvmtiError ClearBreakpoint(jmethodID method,
 jlocation location) {
-    return checkEx((*(gdata->jvmti))->ClearBreakpoint(gdata->jvmti, method, location),"ClearBreakpoint");
+    return checkEx((*jvmtii())->ClearBreakpoint(jvmtii(), method, location),"ClearBreakpoint");
 }
 jvmtiError SetFieldAccessWatch(jclass klass,
 jfieldID field) {
-    return checkEx((*(gdata->jvmti))->SetFieldAccessWatch(gdata->jvmti, klass, field),"SetFieldAccessWatch");
+    return checkEx((*jvmtii())->SetFieldAccessWatch(jvmtii(), klass, field),"SetFieldAccessWatch");
 }
 jvmtiError ClearFieldAccessWatch(jclass klass,
 jfieldID field) {
-    return checkEx((*(gdata->jvmti))->ClearFieldAccessWatch(gdata->jvmti, klass, field),"ClearFieldAccessWatch");
+    return checkEx((*jvmtii())->ClearFieldAccessWatch(jvmtii(), klass, field),"ClearFieldAccessWatch");
 }
 jvmtiError SetFieldModificationWatch(jclass klass,
 jfieldID field) {
-    return checkEx((*(gdata->jvmti))->SetFieldModificationWatch(gdata->jvmti, klass, field),"SetFieldModificationWatch");
+    return checkEx((*jvmtii())->SetFieldModificationWatch(jvmtii(), klass, field),"SetFieldModificationWatch");
 }
 jvmtiError ClearFieldModificationWatch(jclass klass,
 jfieldID field) {
-    return checkEx((*(gdata->jvmti))->ClearFieldModificationWatch(gdata->jvmti, klass, field),"ClearFieldModificationWatch");
+    return checkEx((*jvmtii())->ClearFieldModificationWatch(jvmtii(), klass, field),"ClearFieldModificationWatch");
 }
 jvmtiError GetLoadedClasses(jint* class_count_ptr,
 jclass** classes_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLoadedClasses(gdata->jvmti, class_count_ptr, classes_ptr),"GetLoadedClasses");
+    return checkEx((*jvmtii())->GetLoadedClasses(jvmtii(), class_count_ptr, classes_ptr),"GetLoadedClasses");
 }
 jvmtiError GetClassLoaderClasses(jobject initiating_loader,
 jint* class_count_ptr,
 jclass** classes_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassLoaderClasses(gdata->jvmti, initiating_loader, class_count_ptr, classes_ptr),"GetClassLoaderClasses");
+    return checkEx((*jvmtii())->GetClassLoaderClasses(jvmtii(), initiating_loader, class_count_ptr, classes_ptr),"GetClassLoaderClasses");
 }
 jvmtiError GetClassStatus(jclass klass,
 jint* status_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassStatus(gdata->jvmti, klass, status_ptr),"GetClassStatus");
+    return checkEx((*jvmtii())->GetClassStatus(jvmtii(), klass, status_ptr),"GetClassStatus");
 }
 jvmtiError GetSourceFileName(jclass klass,
 char** source_name_ptr) {
-    return checkEx((*(gdata->jvmti))->GetSourceFileName(gdata->jvmti, klass, source_name_ptr),"GetSourceFileName");
+    return checkEx((*jvmtii())->GetSourceFileName(jvmtii(), klass, source_name_ptr),"GetSourceFileName");
 }
 jvmtiError GetClassModifiers(jclass klass,
 jint* modifiers_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassModifiers(gdata->jvmti, klass, modifiers_ptr),"GetClassModifiers");
+    return checkEx((*jvmtii())->GetClassModifiers(jvmtii(), klass, modifiers_ptr),"GetClassModifiers");
 }
 jvmtiError GetClassMethods(jclass klass,
 jint* method_count_ptr,
 jmethodID** methods_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassMethods(gdata->jvmti, klass, method_count_ptr, methods_ptr),"GetClassMethods");
+    return checkEx((*jvmtii())->GetClassMethods(jvmtii(), klass, method_count_ptr, methods_ptr),"GetClassMethods");
 }
 jvmtiError GetClassFields(jclass klass,
 jint* field_count_ptr,
 jfieldID** fields_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassFields(gdata->jvmti, klass, field_count_ptr, fields_ptr),"GetClassFields");
+    return checkEx((*jvmtii())->GetClassFields(jvmtii(), klass, field_count_ptr, fields_ptr),"GetClassFields");
 }
 jvmtiError GetImplementedInterfaces(jclass klass,
 jint* interface_count_ptr,
 jclass** interfaces_ptr) {
-    return checkEx((*(gdata->jvmti))->GetImplementedInterfaces(gdata->jvmti, klass, interface_count_ptr, interfaces_ptr),"GetImplementedInterfaces");
+    return checkEx((*jvmtii())->GetImplementedInterfaces(jvmtii(), klass, interface_count_ptr, interfaces_ptr),"GetImplementedInterfaces");
 }
 jvmtiError GetClassVersionNumbers(jclass klass,
 jint* minor_version_ptr,
 jint* major_version_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassVersionNumbers(gdata->jvmti, klass, minor_version_ptr, major_version_ptr),"GetClassVersionNumbers");
+    return checkEx((*jvmtii())->GetClassVersionNumbers(jvmtii(), klass, minor_version_ptr, major_version_ptr),"GetClassVersionNumbers");
 }
 jvmtiError GetConstantPool(jclass klass,
 jint* constant_pool_count_ptr,
 jint* constant_pool_byte_count_ptr,
 unsigned char** constant_pool_bytes_ptr) {
-    return checkEx((*(gdata->jvmti))->GetConstantPool(gdata->jvmti, klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr),"GetConstantPool");
+    return checkEx((*jvmtii())->GetConstantPool(jvmtii(), klass, constant_pool_count_ptr, constant_pool_byte_count_ptr, constant_pool_bytes_ptr),"GetConstantPool");
 }
 jvmtiError IsInterface(jclass klass,
 jboolean* is_interface_ptr) {
-    return checkEx((*(gdata->jvmti))->IsInterface(gdata->jvmti, klass, is_interface_ptr),"IsInterface");
+    return checkEx((*jvmtii())->IsInterface(jvmtii(), klass, is_interface_ptr),"IsInterface");
 }
 jvmtiError IsArrayClass(jclass klass,
 jboolean* is_array_class_ptr) {
-    return checkEx((*(gdata->jvmti))->IsArrayClass(gdata->jvmti, klass, is_array_class_ptr),"IsArrayClass");
+    return checkEx((*jvmtii())->IsArrayClass(jvmtii(), klass, is_array_class_ptr),"IsArrayClass");
 }
 jvmtiError IsModifiableClass(jclass klass,
 jboolean* is_modifiable_class_ptr) {
-    return checkEx((*(gdata->jvmti))->IsModifiableClass(gdata->jvmti, klass, is_modifiable_class_ptr),"IsModifiableClass");
+    return checkEx((*jvmtii())->IsModifiableClass(jvmtii(), klass, is_modifiable_class_ptr),"IsModifiableClass");
 }
 jvmtiError GetClassLoader(jclass klass,
 jobject* classloader_ptr) {
-    return checkEx((*(gdata->jvmti))->GetClassLoader(gdata->jvmti, klass, classloader_ptr),"GetClassLoader");
+    return checkEx((*jvmtii())->GetClassLoader(jvmtii(), klass, classloader_ptr),"GetClassLoader");
 }
 jvmtiError GetSourceDebugExtension(jclass klass,
 char** source_debug_extension_ptr) {
-    return checkEx((*(gdata->jvmti))->GetSourceDebugExtension(gdata->jvmti, klass, source_debug_extension_ptr),"GetSourceDebugExtension");
+    return checkEx((*jvmtii())->GetSourceDebugExtension(jvmtii(), klass, source_debug_extension_ptr),"GetSourceDebugExtension");
 }
 jvmtiError RetransformClasses(jint class_count,
 const jclass* classes) {
-    return checkEx((*(gdata->jvmti))->RetransformClasses(gdata->jvmti, class_count, classes),"RetransformClasses");
+    return checkEx((*jvmtii())->RetransformClasses(jvmtii(), class_count, classes),"RetransformClasses");
 }
 jvmtiError RedefineClasses(jint class_count,
 const jvmtiClassDefinition* class_definitions) {
-    return checkEx((*(gdata->jvmti))->RedefineClasses(gdata->jvmti, class_count, class_definitions),"RedefineClasses");
+    return checkEx((*jvmtii())->RedefineClasses(jvmtii(), class_count, class_definitions),"RedefineClasses");
 }
 jvmtiError GetObjectSize(jobject object,
 jlong* size_ptr) {
-    return checkEx((*(gdata->jvmti))->GetObjectSize(gdata->jvmti, object, size_ptr),"GetObjectSize");
+    return checkEx((*jvmtii())->GetObjectSize(jvmtii(), object, size_ptr),"GetObjectSize");
 }
 jvmtiError GetObjectHashCode(jobject object,
 jint* hash_code_ptr) {
-    return checkEx((*(gdata->jvmti))->GetObjectHashCode(gdata->jvmti, object, hash_code_ptr),"GetObjectHashCode");
+    return checkEx((*jvmtii())->GetObjectHashCode(jvmtii(), object, hash_code_ptr),"GetObjectHashCode");
 }
 jvmtiError GetObjectMonitorUsage(jobject object,
 jvmtiMonitorUsage* info_ptr) {
-    return checkEx((*(gdata->jvmti))->GetObjectMonitorUsage(gdata->jvmti, object, info_ptr),"GetObjectMonitorUsage");
+    return checkEx((*jvmtii())->GetObjectMonitorUsage(jvmtii(), object, info_ptr),"GetObjectMonitorUsage");
 }
 jvmtiError GetFieldName(jclass klass,
 jfieldID field,
 char** name_ptr,
 char** signature_ptr,
 char** generic_ptr) {
-    return checkEx((*(gdata->jvmti))->GetFieldName(gdata->jvmti, klass, field, name_ptr, signature_ptr, generic_ptr),"GetFieldName");
+    return checkEx((*jvmtii())->GetFieldName(jvmtii(), klass, field, name_ptr, signature_ptr, generic_ptr),"GetFieldName");
 }
 jvmtiError GetFieldDeclaringClass(jclass klass,
 jfieldID field,
 jclass* declaring_class_ptr) {
-    return checkEx((*(gdata->jvmti))->GetFieldDeclaringClass(gdata->jvmti, klass, field, declaring_class_ptr),"GetFieldDeclaringClass");
+    return checkEx((*jvmtii())->GetFieldDeclaringClass(jvmtii(), klass, field, declaring_class_ptr),"GetFieldDeclaringClass");
 }
 jvmtiError GetFieldModifiers(jclass klass,
 jfieldID field,
 jint* modifiers_ptr) {
-    return checkEx((*(gdata->jvmti))->GetFieldModifiers(gdata->jvmti, klass, field, modifiers_ptr),"GetFieldModifiers");
+    return checkEx((*jvmtii())->GetFieldModifiers(jvmtii(), klass, field, modifiers_ptr),"GetFieldModifiers");
 }
 jvmtiError IsFieldSynthetic(jclass klass,
 jfieldID field,
 jboolean* is_synthetic_ptr) {
-    return checkEx((*(gdata->jvmti))->IsFieldSynthetic(gdata->jvmti, klass, field, is_synthetic_ptr),"IsFieldSynthetic");
+    return checkEx((*jvmtii())->IsFieldSynthetic(jvmtii(), klass, field, is_synthetic_ptr),"IsFieldSynthetic");
 }
 jvmtiError GetMethodName(jmethodID method,
 char** name_ptr,
 char** signature_ptr,
 char** generic_ptr) {
-    return checkEx((*(gdata->jvmti))->GetMethodName(gdata->jvmti, method, name_ptr, signature_ptr, generic_ptr),"GetMethodName");
+    return checkEx((*jvmtii())->GetMethodName(jvmtii(), method, name_ptr, signature_ptr, generic_ptr),"GetMethodName");
 }
 jvmtiError GetMethodDeclaringClass(jmethodID method,
 jclass* declaring_class_ptr) {
-    return checkEx((*(gdata->jvmti))->GetMethodDeclaringClass(gdata->jvmti, method, declaring_class_ptr),"GetMethodDeclaringClass");
+    return checkEx((*jvmtii())->GetMethodDeclaringClass(jvmtii(), method, declaring_class_ptr),"GetMethodDeclaringClass");
 }
 jvmtiError GetMethodModifiers(jmethodID method,
 jint* modifiers_ptr) {
-    return checkEx((*(gdata->jvmti))->GetMethodModifiers(gdata->jvmti, method, modifiers_ptr),"GetMethodModifiers");
+    return checkEx((*jvmtii())->GetMethodModifiers(jvmtii(), method, modifiers_ptr),"GetMethodModifiers");
 }
 jvmtiError GetMaxLocals(jmethodID method,
 jint* max_ptr) {
-    return checkEx((*(gdata->jvmti))->GetMaxLocals(gdata->jvmti, method, max_ptr),"GetMaxLocals");
+    return checkEx((*jvmtii())->GetMaxLocals(jvmtii(), method, max_ptr),"GetMaxLocals");
 }
 jvmtiError GetArgumentsSize(jmethodID method,
 jint* size_ptr) {
-    return checkEx((*(gdata->jvmti))->GetArgumentsSize(gdata->jvmti, method, size_ptr),"GetArgumentsSize");
+    return checkEx((*jvmtii())->GetArgumentsSize(jvmtii(), method, size_ptr),"GetArgumentsSize");
 }
 jvmtiError GetLineNumberTable(jmethodID method,
 jint* entry_count_ptr,
 jvmtiLineNumberEntry** table_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLineNumberTable(gdata->jvmti, method, entry_count_ptr, table_ptr),"GetLineNumberTable");
+    return checkEx((*jvmtii())->GetLineNumberTable(jvmtii(), method, entry_count_ptr, table_ptr),"GetLineNumberTable");
 }
 jvmtiError GetMethodLocation(jmethodID method,
 jlocation* start_location_ptr,
 jlocation* end_location_ptr) {
-    return checkEx((*(gdata->jvmti))->GetMethodLocation(gdata->jvmti, method, start_location_ptr, end_location_ptr),"GetMethodLocation");
+    return checkEx((*jvmtii())->GetMethodLocation(jvmtii(), method, start_location_ptr, end_location_ptr),"GetMethodLocation");
 }
 jvmtiError GetLocalVariableTable(jmethodID method,
 jint* entry_count_ptr,
 jvmtiLocalVariableEntry** table_ptr) {
-    return checkEx((*(gdata->jvmti))->GetLocalVariableTable(gdata->jvmti, method, entry_count_ptr, table_ptr),"GetLocalVariableTable");
+    return checkEx((*jvmtii())->GetLocalVariableTable(jvmtii(), method, entry_count_ptr, table_ptr),"GetLocalVariableTable");
 }
 jvmtiError GetBytecodes(jmethodID method,
 jint* bytecode_count_ptr,
 unsigned char** bytecodes_ptr) {
-    return checkEx((*(gdata->jvmti))->GetBytecodes(gdata->jvmti, method, bytecode_count_ptr, bytecodes_ptr),"GetBytecodes");
+    return checkEx((*jvmtii())->GetBytecodes(jvmtii(), method, bytecode_count_ptr, bytecodes_ptr),"GetBytecodes");
 }
 jvmtiError IsMethodNative(jmethodID method,
 jboolean* is_native_ptr) {
-    return checkEx((*(gdata->jvmti))->IsMethodNative(gdata->jvmti, method, is_native_ptr),"IsMethodNative");
+    return checkEx((*jvmtii())->IsMethodNative(jvmtii(), method, is_native_ptr),"IsMethodNative");
 }
 jvmtiError IsMethodSynthetic(jmethodID method,
 jboolean* is_synthetic_ptr) {
-    return checkEx((*(gdata->jvmti))->IsMethodSynthetic(gdata->jvmti, method, is_synthetic_ptr),"IsMethodSynthetic");
+    return checkEx((*jvmtii())->IsMethodSynthetic(jvmtii(), method, is_synthetic_ptr),"IsMethodSynthetic");
 }
 jvmtiError IsMethodObsolete(jmethodID method,
 jboolean* is_obsolete_ptr) {
-    return checkEx((*(gdata->jvmti))->IsMethodObsolete(gdata->jvmti, method, is_obsolete_ptr),"IsMethodObsolete");
+    return checkEx((*jvmtii())->IsMethodObsolete(jvmtii(), method, is_obsolete_ptr),"IsMethodObsolete");
 }
 jvmtiError SetNativeMethodPrefix(const char* prefix) {
-    return checkEx((*(gdata->jvmti))->SetNativeMethodPrefix(gdata->jvmti, prefix),"SetNativeMethodPrefix");
+    return checkEx((*jvmtii())->SetNativeMethodPrefix(jvmtii(), prefix),"SetNativeMethodPrefix");
 }
 jvmtiError SetNativeMethodPrefixes(jint prefix_count,
 char** prefixes) {
-    return checkEx((*(gdata->jvmti))->SetNativeMethodPrefixes(gdata->jvmti, prefix_count, prefixes),"SetNativeMethodPrefixes");
+    return checkEx((*jvmtii())->SetNativeMethodPrefixes(jvmtii(), prefix_count, prefixes),"SetNativeMethodPrefixes");
 }
 jvmtiError CreateRawMonitor(const char* name,
 jrawMonitorID* monitor_ptr) {
-    return checkEx((*(gdata->jvmti))->CreateRawMonitor(gdata->jvmti, name, monitor_ptr),"CreateRawMonitor");
+    return checkEx((*jvmtii())->CreateRawMonitor(jvmtii(), name, monitor_ptr),"CreateRawMonitor");
 }
 jvmtiError DestroyRawMonitor(jrawMonitorID monitor) {
-    return checkEx((*(gdata->jvmti))->DestroyRawMonitor(gdata->jvmti, monitor),"DestroyRawMonitor");
+    return checkEx((*jvmtii())->DestroyRawMonitor(jvmtii(), monitor),"DestroyRawMonitor");
 }
 jvmtiError RawMonitorEnter(jrawMonitorID monitor) {
-    return checkEx((*(gdata->jvmti))->RawMonitorEnter(gdata->jvmti, monitor),"RawMonitorEnter");
+    return checkEx((*jvmtii())->RawMonitorEnter(jvmtii(), monitor),"RawMonitorEnter");
 }
 jvmtiError RawMonitorExit(jrawMonitorID monitor) {
-    return checkEx((*(gdata->jvmti))->RawMonitorExit(gdata->jvmti, monitor),"RawMonitorExit");
+    return checkEx((*jvmtii())->RawMonitorExit(jvmtii(), monitor),"RawMonitorExit");
 }
 jvmtiError RawMonitorWait(jrawMonitorID monitor,
 jlong millis) {
-    return checkEx((*(gdata->jvmti))->RawMonitorWait(gdata->jvmti, monitor, millis),"RawMonitorWait");
+    return checkEx((*jvmtii())->RawMonitorWait(jvmtii(), monitor, millis),"RawMonitorWait");
 }
 jvmtiError RawMonitorNotify(jrawMonitorID monitor) {
-    return checkEx((*(gdata->jvmti))->RawMonitorNotify(gdata->jvmti, monitor),"RawMonitorNotify");
+    return checkEx((*jvmtii())->RawMonitorNotify(jvmtii(), monitor),"RawMonitorNotify");
 }
 jvmtiError RawMonitorNotifyAll(jrawMonitorID monitor) {
-    return checkEx((*(gdata->jvmti))->RawMonitorNotifyAll(gdata->jvmti, monitor),"RawMonitorNotifyAll");
+    return checkEx((*jvmtii())->RawMonitorNotifyAll(jvmtii(), monitor),"RawMonitorNotifyAll");
 }
 jvmtiError SetJNIFunctionTable(const jniNativeInterface* function_table) {
-    return checkEx((*(gdata->jvmti))->SetJNIFunctionTable(gdata->jvmti, function_table),"SetJNIFunctionTable");
+    return checkEx((*jvmtii())->SetJNIFunctionTable(jvmtii(), function_table),"SetJNIFunctionTable");
 }
 jvmtiError GetJNIFunctionTable(jniNativeInterface** function_table) {
-    return checkEx((*(gdata->jvmti))->GetJNIFunctionTable(gdata->jvmti, function_table),"GetJNIFunctionTable");
+    return checkEx((*jvmtii())->GetJNIFunctionTable(jvmtii(), function_table),"GetJNIFunctionTable");
 }
 jvmtiError SetEventCallbacks(const jvmtiEventCallbacks* callbacks,
 jint size_of_callbacks) {
-    return checkEx((*(gdata->jvmti))->SetEventCallbacks(gdata->jvmti, callbacks, size_of_callbacks),"SetEventCallbacks");
+    return checkEx((*jvmtii())->SetEventCallbacks(jvmtii(), callbacks, size_of_callbacks),"SetEventCallbacks");
 }
 jvmtiError SetEventNotificationMode(jvmtiEventMode mode,
 jvmtiEvent event_type,
 jthread event_thread,
 ...) {
-    return checkEx((*(gdata->jvmti))->SetEventNotificationMode(gdata->jvmti, mode, event_type, event_thread),"SetEventNotificationMode");
+    return checkEx((*jvmtii())->SetEventNotificationMode(jvmtii(), mode, event_type, event_thread),"SetEventNotificationMode");
 }
 jvmtiError GenerateEvents(jvmtiEvent event_type) {
-    return checkEx((*(gdata->jvmti))->GenerateEvents(gdata->jvmti, event_type),"GenerateEvents");
+    return checkEx((*jvmtii())->GenerateEvents(jvmtii(), event_type),"GenerateEvents");
 }
 jvmtiError GetExtensionFunctions(jint* extension_count_ptr,
 jvmtiExtensionFunctionInfo** extensions) {
-    return checkEx((*(gdata->jvmti))->GetExtensionFunctions(gdata->jvmti, extension_count_ptr, extensions),"GetExtensionFunctions");
+    return checkEx((*jvmtii())->GetExtensionFunctions(jvmtii(), extension_count_ptr, extensions),"GetExtensionFunctions");
 }
 jvmtiError GetExtensionEvents(jint* extension_count_ptr,
 jvmtiExtensionEventInfo** extensions) {
-    return checkEx((*(gdata->jvmti))->GetExtensionEvents(gdata->jvmti, extension_count_ptr, extensions),"GetExtensionEvents");
+    return checkEx((*jvmtii())->GetExtensionEvents(jvmtii(), extension_count_ptr, extensions),"GetExtensionEvents");
 }
 jvmtiError SetExtensionEventCallback(jint extension_event_index,
 jvmtiExtensionEvent callback) {
-    return checkEx((*(gdata->jvmti))->SetExtensionEventCallback(gdata->jvmti, extension_event_index, callback),"SetExtensionEventCallback");
+    return checkEx((*jvmtii())->SetExtensionEventCallback(jvmtii(), extension_event_index, callback),"SetExtensionEventCallback");
 }
 jvmtiError AddCapabilities(const jvmtiCapabilities* capabilities_ptr) {
-    return checkEx((*(gdata->jvmti))->AddCapabilities(gdata->jvmti, capabilities_ptr),"AddCapabilities");
+    return checkEx((*jvmtii())->AddCapabilities(jvmtii(), capabilities_ptr),"AddCapabilities");
 }
 jvmtiError RelinquishCapabilities(const jvmtiCapabilities* capabilities_ptr) {
-    return checkEx((*(gdata->jvmti))->RelinquishCapabilities(gdata->jvmti, capabilities_ptr),"RelinquishCapabilities");
+    return checkEx((*jvmtii())->RelinquishCapabilities(jvmtii(), capabilities_ptr),"RelinquishCapabilities");
 }
 jvmtiError GetCapabilities(jvmtiCapabilities* capabilities_ptr) {
-    return checkEx((*(gdata->jvmti))->GetCapabilities(gdata->jvmti, capabilities_ptr),"GetCapabilities");
+    return checkEx((*jvmtii())->GetCapabilities(jvmtii(), capabilities_ptr),"GetCapabilities");
 }
 jvmtiError GetCurrentThreadCpuTimerInfo(jvmtiTimerInfo* info_ptr) {
-    return checkEx((*(gdata->jvmti))->GetCurrentThreadCpuTimerInfo(gdata->jvmti, info_ptr),"GetCurrentThreadCpuTimerInfo");
+    return checkEx((*jvmtii())->GetCurrentThreadCpuTimerInfo(jvmtii(), info_ptr),"GetCurrentThreadCpuTimerInfo");
 }
 jvmtiError GetCurrentThreadCpuTime(jlong* nanos_ptr) {
-    return checkEx((*(gdata->jvmti))->GetCurrentThreadCpuTime(gdata->jvmti, nanos_ptr),"GetCurrentThreadCpuTime");
+    return checkEx((*jvmtii())->GetCurrentThreadCpuTime(jvmtii(), nanos_ptr),"GetCurrentThreadCpuTime");
 }
 jvmtiError GetThreadCpuTimerInfo(jvmtiTimerInfo* info_ptr) {
-    return checkEx((*(gdata->jvmti))->GetThreadCpuTimerInfo(gdata->jvmti, info_ptr),"GetThreadCpuTimerInfo");
+    return checkEx((*jvmtii())->GetThreadCpuTimerInfo(jvmtii(), info_ptr),"GetThreadCpuTimerInfo");
 }
 jvmtiError GetThreadCpuTime(jthread thread,
 jlong* nanos_ptr) {
-    return checkEx((*(gdata->jvmti))->GetThreadCpuTime(gdata->jvmti, thread, nanos_ptr),"GetThreadCpuTime");
+    return checkEx((*jvmtii())->GetThreadCpuTime(jvmtii(), thread, nanos_ptr),"GetThreadCpuTime");
 }
 jvmtiError GetTimerInfo(jvmtiTimerInfo* info_ptr) {
-    return checkEx((*(gdata->jvmti))->GetTimerInfo(gdata->jvmti, info_ptr),"GetTimerInfo");
+    return checkEx((*jvmtii())->GetTimerInfo(jvmtii(), info_ptr),"GetTimerInfo");
 }
 jvmtiError GetTime(jlong* nanos_ptr) {
-    return checkEx((*(gdata->jvmti))->GetTime(gdata->jvmti, nanos_ptr),"GetTime");
+    return checkEx((*jvmtii())->GetTime(jvmtii(), nanos_ptr),"GetTime");
 }
 jvmtiError GetAvailableProcessors(jint* processor_count_ptr) {
-    return checkEx((*(gdata->jvmti))->GetAvailableProcessors(gdata->jvmti, processor_count_ptr),"GetAvailableProcessors");
+    return checkEx((*jvmtii())->GetAvailableProcessors(jvmtii(), processor_count_ptr),"GetAvailableProcessors");
 }
 jvmtiError AddToBootstrapClassLoaderSearch(const char* segment) {
-    return checkEx((*(gdata->jvmti))->AddToBootstrapClassLoaderSearch(gdata->jvmti, segment),"AddToBootstrapClassLoaderSearch");
+    return checkEx((*jvmtii())->AddToBootstrapClassLoaderSearch(jvmtii(), segment),"AddToBootstrapClassLoaderSearch");
 }
 jvmtiError AddToSystemClassLoaderSearch(const char* segment) {
-    return checkEx((*(gdata->jvmti))->AddToSystemClassLoaderSearch(gdata->jvmti, segment),"AddToSystemClassLoaderSearch");
+    return checkEx((*jvmtii())->AddToSystemClassLoaderSearch(jvmtii(), segment),"AddToSystemClassLoaderSearch");
 }
 jvmtiError GetSystemProperties(jint* count_ptr,
 char*** property_ptr) {
-    return checkEx((*(gdata->jvmti))->GetSystemProperties(gdata->jvmti, count_ptr, property_ptr),"GetSystemProperties");
+    return checkEx((*jvmtii())->GetSystemProperties(jvmtii(), count_ptr, property_ptr),"GetSystemProperties");
 }
 jvmtiError GetSystemProperty(const char* property,
 char** value_ptr) {
-    return checkEx((*(gdata->jvmti))->GetSystemProperty(gdata->jvmti, property, value_ptr),"GetSystemProperty");
+    return checkEx((*jvmtii())->GetSystemProperty(jvmtii(), property, value_ptr),"GetSystemProperty");
 }
 jvmtiError SetSystemProperty(const char* property,
 const char* value) {
-    return checkEx((*(gdata->jvmti))->SetSystemProperty(gdata->jvmti, property, value),"SetSystemProperty");
+    return checkEx((*jvmtii())->SetSystemProperty(jvmtii(), property, value),"SetSystemProperty");
 }
 jvmtiError GetPhase(jvmtiPhase* phase_ptr) {
-    return checkEx((*(gdata->jvmti))->GetPhase(gdata->jvmti, phase_ptr),"GetPhase");
+    return checkEx((*jvmtii())->GetPhase(jvmtii(), phase_ptr),"GetPhase");
 }
 jvmtiError DisposeEnvironment() {
-    return checkEx((*(gdata->jvmti))->DisposeEnvironment(jvmti()),"DisposeEnvironment(jvmti");
+    return checkEx((*jvmtii())->DisposeEnvironment(jvmti()),"DisposeEnvironment(jvmti");
 }
 jvmtiError SetEnvironmentLocalStorage(const void* data) {
-    return checkEx((*(gdata->jvmti))->SetEnvironmentLocalStorage(gdata->jvmti, data),"SetEnvironmentLocalStorage");
+    return checkEx((*jvmtii())->SetEnvironmentLocalStorage(jvmtii(), data),"SetEnvironmentLocalStorage");
 }
 jvmtiError GetEnvironmentLocalStorage(void** data_ptr) {
-    return checkEx((*(gdata->jvmti))->GetEnvironmentLocalStorage(gdata->jvmti, data_ptr),"GetEnvironmentLocalStorage");
+    return checkEx((*jvmtii())->GetEnvironmentLocalStorage(jvmtii(), data_ptr),"GetEnvironmentLocalStorage");
 }
 jvmtiError GetVersionNumber(jint* version_ptr) {
-    return checkEx((*(gdata->jvmti))->GetVersionNumber(gdata->jvmti, version_ptr),"GetVersionNumber");
+    return checkEx((*jvmtii())->GetVersionNumber(jvmtii(), version_ptr),"GetVersionNumber");
 }
 jvmtiError GetErrorName(jvmtiError error,
 char** name_ptr) {
-    return checkEx((*(gdata->jvmti))->GetErrorName(gdata->jvmti, error, name_ptr),"GetErrorName");
+    return checkEx((*jvmtii())->GetErrorName(jvmtii(), error, name_ptr),"GetErrorName");
 }
 jvmtiError SetVerboseFlag(jvmtiVerboseFlag flag,
 jboolean value) {
-    return checkEx((*(gdata->jvmti))->SetVerboseFlag(gdata->jvmti, flag, value),"SetVerboseFlag");
+    return checkEx((*jvmtii())->SetVerboseFlag(jvmtii(), flag, value),"SetVerboseFlag");
 }
 jvmtiError GetJLocationFormat(jvmtiJlocationFormat* format_ptr) {
-    return checkEx((*(gdata->jvmti))->GetJLocationFormat(gdata->jvmti, format_ptr),"GetJLocationFormat");
+    return checkEx((*jvmtii())->GetJLocationFormat(jvmtii(), format_ptr),"GetJLocationFormat");
 }
 
 //////////////////////////////////////JNI FUNCTIONS///////////////////////////////////////

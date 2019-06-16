@@ -2,6 +2,10 @@ package com.epam.drill
 
 import com.epam.drill.plugin.api.processing.NativePart
 import com.epam.drill.plugin.api.processing.initPlugin
+import jvmapi.JavaVMVar
+import jvmapi.gdata
+import jvmapi.gjavaVMGlob
+import jvmapi.jvmtiEventCallbacks
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.CFunction
@@ -22,15 +26,32 @@ import platform.windows.GetProcAddress
 import platform.windows.LoadLibrary
 
 
-fun loadNativePlugin(pluginId: String, path: String) = memScoped {
+fun loadNativePlugin(
+    pluginId: String,
+    path: String,
+    sender: CPointer<CFunction<(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) -> Unit>>
+) = memScoped {
     var pluginInstance: NativePart<*>? = null
     val allocArray = path.replace("/", "\\").toLPCWSTR(this)
     val hModule = LoadLibrary!!(allocArray.pointed.ptr)
-    println(hModule)
     if (hModule != null) {
         val initPlugin = GetProcAddress(hModule, initPlugin)
-        pluginInstance = initPlugin?.reinterpret<CFunction<(CPointer<ByteVar>) -> COpaquePointer>>()
-            ?.invoke(pluginId.cstr.getPointer(this))?.asStableRef<NativePart<*>>()?.get()
+
+        val callbacks: jvmtiEventCallbacks? = gjavaVMGlob?.pointed?.callbackss
+        val reinterpret =
+            initPlugin?.reinterpret<CFunction<(CPointer<ByteVar>, CPointer<jvmapi.jvmtiEnvVar>?, CPointer<JavaVMVar>?, CPointer<jvmtiEventCallbacks>?, CPointer<CFunction<(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) -> Unit>>) -> COpaquePointer>>()
+        val id = pluginId.cstr.getPointer(this)
+        val jvmti = gdata?.pointed?.jvmti
+        val jvm = gjavaVMGlob?.pointed?.jvm
+        val clb = callbacks?.ptr
+        pluginInstance =
+            reinterpret?.invoke(
+                id,
+                jvmti,
+                jvm,
+                clb,
+                sender
+            )?.asStableRef<NativePart<*>>()?.get()
     }
     pluginInstance
 }

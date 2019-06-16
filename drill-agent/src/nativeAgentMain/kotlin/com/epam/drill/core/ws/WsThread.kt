@@ -14,11 +14,13 @@ import com.epam.drill.core.concurrency.LockFreeMPSCQueue
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.exceptions.WsClosedException
 import com.epam.drill.core.exec
+import com.epam.drill.core.messanger.sendNativeMessage
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.logger.DLogger
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.net.ws.WebSocketClient
+import kotlinx.cinterop.staticCFunction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -136,27 +138,26 @@ suspend fun websocket(adminUrl: String) {
                         plugMessage.pluginFile.toByteArray().writeToFile(plugin)
                         loadPlugin(plugin)
                         if (plugMessage.nativePart != null) {
-                            when {
+                            val natPlugin = when {
                                 plugMessage.nativePart!!.windowsPlugin.isNotEmpty() -> {
                                     val natPlugin: DrillPluginFile = vfsFile["native_plugin.dll"]
                                     plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
-                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath)
-                                    loadNativePlugin?.off()
-                                    loadNativePlugin?.on()
-                                    loadNativePlugin?.initPlugin()
+                                    natPlugin
+
                                 }
                                 plugMessage.nativePart!!.linuxPluginFileBytes.isNotEmpty() -> {
                                     val natPlugin: DrillPluginFile = vfsFile["native_plugin.so"]
                                     plugMessage.nativePart!!.linuxPluginFileBytes.toByteArray().writeToFile(natPlugin)
-                                    val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath)
-                                    loadNativePlugin?.off()
-                                    loadNativePlugin?.on()
-                                    loadNativePlugin?.initPlugin()
+                                    natPlugin
                                 }
                                 else -> {
-
+                                    throw RuntimeException()
                                 }
                             }
+
+                            val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath, staticCFunction(::sendNativeMessage) )
+                            loadNativePlugin?.initPlugin()
+                            loadNativePlugin?.on()
                         }
 
                     }
@@ -186,6 +187,7 @@ suspend fun websocket(adminUrl: String) {
                 }.result
                 if (execute != null) {
                     wsClient.send(execute)
+                    println("Finally sent")
 //                    sendWorker.execute(TransferMode.UNSAFE, {}) {
 //                        guaranteeQueue.removeFirstOrNull()
 //                    }.result

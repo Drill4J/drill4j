@@ -19,12 +19,12 @@ import jvmapi.jintVar
 import jvmapi.jobject
 import jvmapi.jobjectArray
 import jvmapi.jstring
+import jvmapi.jvmtiEnvVar
 import jvmapi.jvmtiError
-import kotlinx.cinterop.Arena
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
@@ -33,6 +33,11 @@ import kotlinx.cinterop.value
 @CName("currentEnvs")
 fun currentEnvs(): JNIEnvPointer {
     return com.epam.drill.jvmapi.currentEnvs()
+}
+
+@CName("jvmtii")
+fun jvmtii(): CPointer<jvmtiEnvVar>? {
+    return com.epam.drill.jvmapi.jvmtii()
 }
 
 @ExperimentalUnsignedTypes
@@ -44,7 +49,7 @@ fun checkEx(errCode: jvmtiError, funName: String): jvmtiError {
 @Suppress("UNUSED_PARAMETER")
 @CName("Java_com_epam_drill_plugin_api_processing_Sender_sendMessage")
 fun sendFromJava(env: JNIEnv, thiz: jobject, pluginId: jstring, message: jstring) {
-    sendToSocket(pluginId.toKString()!!.cstr.getPointer(Arena()), message.toKString()!!.cstr.getPointer(Arena()))
+    sendToSocket(pluginId.toKString()!!, message.toKString()!!)
 }
 
 
