@@ -127,7 +127,7 @@ val errorMapping = mapOf(
 )
 
 
-fun jstring?.toKString() = jvmapi.GetStringUTFChars(this, null)?.toKString()
+fun jstring?.toKString() = GetStringUTFChars(this, null)?.toKString()
 
 fun jmethodID.getName(): String? = memScoped {
     val methodName = alloc<CPointerVar<ByteVar>>()

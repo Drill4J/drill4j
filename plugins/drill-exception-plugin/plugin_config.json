@@ -1,0 +1,9 @@
+{
+  "id": "exception-plugin",
+  "name": "Exception Native Plugin",
+  "description": "This is the awesome native plugin",
+  "type": "Developers",
+  "family": "GENERIC",
+  "enabled": true,
+  "config": "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+}

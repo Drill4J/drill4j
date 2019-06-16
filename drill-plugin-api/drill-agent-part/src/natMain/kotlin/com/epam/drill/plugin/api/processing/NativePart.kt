@@ -8,6 +8,7 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
 import kotlinx.serialization.KSerializer
+
 const val initPlugin = "initPlugin"
 
 actual abstract class NativePart<T> : Switchable, Lifecycle {
