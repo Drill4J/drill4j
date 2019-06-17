@@ -14,11 +14,13 @@ import com.epam.drill.core.concurrency.LockFreeMPSCQueue
 import com.epam.drill.core.drillInstallationDir
 import com.epam.drill.core.exceptions.WsClosedException
 import com.epam.drill.core.exec
+import com.epam.drill.core.messanger.sendNativeMessage
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.logger.DLogger
 import com.soywiz.korio.file.std.localVfs
 import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.net.ws.WebSocketClient
+import kotlinx.cinterop.staticCFunction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -120,21 +122,52 @@ suspend fun websocket(adminUrl: String) {
     }
     wsClient.onBinaryMessage.add {
         val load = Cbor.load(PluginMessage.serializer(), it)
+        if (exec { pstorage[load.pl.id] } != null) return@add
         when {
             load.event == DrillEvent.LOAD_PLUGIN -> {
                 val pluginId = load.pl.id
                 exec { pl[pluginId] = load.pl }
                 loader.execute(TransferMode.UNSAFE, { load }) { plugMessage ->
+                    println("try to load ${plugMessage.pl.id} plugin")
                     runBlocking {
                         exec { agentConfig.needSync = false }
                         val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
                         if (!pluginsDir.exists()) pluginsDir.mkdir()
-                        val vfsFile = pluginsDir[plugMessage.pl.id]
+                        val id = plugMessage.pl.id
+                        val vfsFile = pluginsDir[id]
                         if (!vfsFile.exists()) vfsFile.mkdir()
                         val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
                         plugMessage.pluginFile.toByteArray().writeToFile(plugin)
                         loadPlugin(plugin)
+                        if (plugMessage.nativePart != null) {
+                            val natPlugin = when {
+                                plugMessage.nativePart!!.windowsPlugin.isNotEmpty() -> {
+                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.dll"]
+                                    plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
+                                    natPlugin
+
+                                }
+                                plugMessage.nativePart!!.linuxPluginFileBytes.isNotEmpty() -> {
+                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.so"]
+                                    plugMessage.nativePart!!.linuxPluginFileBytes.toByteArray().writeToFile(natPlugin)
+                                    natPlugin
+                                }
+                                else -> {
+                                    throw RuntimeException()
+                                }
+                            }
+
+                            val loadNativePlugin = com.epam.drill.loadNativePlugin(
+                                id,
+                                natPlugin.absolutePath,
+                                staticCFunction(::sendNativeMessage)
+                            )
+                            loadNativePlugin?.initPlugin()
+                            loadNativePlugin?.on()
+                        }
+
                     }
+                    println("${plugMessage.pl.id} plugin loaded")
 
                 }
             }

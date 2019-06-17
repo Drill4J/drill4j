@@ -1,4 +1,5 @@
 import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.mainCompilation
 import com.epam.drill.build.serializationRuntimeVersion
 
 plugins {
@@ -19,6 +20,12 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation(project(":drill-common"))
+            }
+        }
+        named("natMain") {
+            dependencies {
+                implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:1.2.0")
             }
         }
     }

@@ -7,6 +7,7 @@ import com.epam.drill.common.AgentStatus
 import com.epam.drill.common.DrillEvent
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.common.NativePlugin
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginMessage
 import com.epam.drill.common.merge
@@ -16,11 +17,14 @@ import com.epam.drill.common.toPluginBean
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
+import com.epam.drill.plugins.linuxPar
 import com.epam.drill.plugins.pluginBean
+import com.epam.drill.plugins.windowsPart
 import com.epam.drill.service.asyncTransaction
 import com.epam.drill.storage.AgentStorage
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.cio.websocket.Frame
+import kotlinx.coroutines.delay
 import kotlinx.serialization.cbor.Cbor
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.SizedCollection
@@ -172,11 +176,18 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     PluginMessage(
                         DrillEvent.LOAD_PLUGIN,
                         agentPluginPart.readBytes().toList(),
+                        if (plugins[pluginId]?.windowsPart != null || plugins[pluginId]?.linuxPar != null)
+                            NativePlugin(
+                                plugins[pluginId]?.windowsPart?.readBytes()?.toList() ?: emptyList(),
+                                plugins[pluginId]?.linuxPar?.readBytes()?.toList() ?: emptyList()
+                            ) else null,
                         pb
                     )
 
                 session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
             }
+            //fixme raw hack for pluginLoading.
+            delay(10000)
         }
 
 

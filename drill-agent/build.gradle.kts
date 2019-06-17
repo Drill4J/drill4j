@@ -8,6 +8,7 @@ import com.epam.drill.build.serializationRuntimeVersion
 import com.epam.drill.build.staticLibraryExtension
 import com.epam.drill.build.staticLibraryPrefix
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
@@ -39,6 +40,12 @@ kotlin {
                 drillInternal.apply {
                 }
             }
+        }
+
+        when {
+            Os.isFamily(Os.FAMILY_UNIX) -> linuxX64("linuxPart")
+            Os.isFamily(Os.FAMILY_WINDOWS) -> mingwX64("windowsPart")
+            else -> throw RuntimeException("is not supported yet")
         }
         jvm("javaAgent")
     }
@@ -82,6 +89,19 @@ kotlin {
             }
         }
 
+        when {
+            Os.isFamily(Os.FAMILY_UNIX) -> {
+                @Suppress("UNUSED_VARIABLE") val nativeAgentMain by getting {
+                    dependsOn(getByName("linuxPartMain"))
+                }
+            }
+            Os.isFamily(Os.FAMILY_WINDOWS) -> {
+                @Suppress("UNUSED_VARIABLE") val nativeAgentMain by getting {
+                    dependsOn(getByName("windowsPartMain"))
+                }
+            }
+            else -> throw RuntimeException("is not supported yet")
+        }
 
         named("nativeAgentMain") {
             dependencies {
@@ -98,6 +118,7 @@ kotlin {
             }
         }
     }
+
 }
 
 
@@ -130,10 +151,6 @@ tasks {
             copy {
                 from(file("$binary"))
                 into(file("../distr"))
-            }
-            copy {
-                from(file("$binary"))
-                into(file("../plugins/drill-exception-plugin-native/drill-api/$preset"))
             }
         }
     }

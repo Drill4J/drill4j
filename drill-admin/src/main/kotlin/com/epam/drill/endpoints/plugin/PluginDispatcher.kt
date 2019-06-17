@@ -61,10 +61,10 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         pluginClass: Class<AdminPluginPart>,
         pluginId: String
     ): AdminPluginPart {
-        return agentEntry?.instance ?: run {
+        return agentEntry?.instance!![pluginId] ?: run {
             val constructor = pluginClass.getConstructor(WsService::class.java, String::class.java)
             val plugin = constructor.newInstance(wsService, pluginId)
-            agentEntry?.instance = plugin
+            agentEntry.instance[pluginId] = plugin
             plugin
         }
     }
@@ -95,7 +95,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                                 )
                             )
                         )
-                    call.respond(HttpStatusCode.OK ,"")
+                    call.respond(HttpStatusCode.OK, "")
                 }
             }
 
