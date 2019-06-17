@@ -96,12 +96,10 @@ tasks {
     val adminPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("admin-part.jar")
-//        from(adminDeps.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("agent-part.jar")
-//        from(agentDeps.flattenJars())
     }
 
     val distJar by registering(Jar::class) {
