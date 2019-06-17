@@ -2,6 +2,7 @@ package com.epam.drill.endpoints.agent
 
 
 import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
+import com.epam.drill.agentmanager.hasValidParameters
 import com.epam.drill.common.AgentBuildVersionJson
 import com.epam.drill.common.AgentStatus
 import com.epam.drill.endpoints.AgentManager
@@ -33,8 +34,12 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                     val agentId = ll.agentId
                     if (agentManager.agentSession(agentId) != null) {
                         val au = call.parse(AgentInfoWebSocketSingle.serializer())
-                        agentManager.updateAgent(agentId, au)
-                        call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
+                        if (au.hasValidParameters()) {
+                            agentManager.updateAgent(agentId, au)
+                            call.respond(HttpStatusCode.OK, "agent '$agentId' was updated")
+                        } else {
+                            call.respond(HttpStatusCode.BadRequest, "invalid parameters")
+                        }
                     } else {
                         call.respond(HttpStatusCode.BadRequest, "agent '$agentId' not found")
                     }

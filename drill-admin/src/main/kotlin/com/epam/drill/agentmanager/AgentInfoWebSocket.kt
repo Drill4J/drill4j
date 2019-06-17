@@ -39,9 +39,15 @@ class AgentInfoWebSocketSingle(
     val ipAddress: String = "",
     val activePluginsCount: Int = 0,
     val pluginsCount: Int = 0,
-    val rawPluginsName: MutableSet<PluginWebSocket> = mutableSetOf(),
+    val plugins: MutableSet<PluginWebSocket> = mutableSetOf(),
     val buildVersions: MutableSet<AgentBuildVersionJson> = mutableSetOf()
 )
+
+fun AgentInfoWebSocketSingle.hasValidParameters() =
+    """[A-z0-9\s.-_#]{3,32}""".toRegex().matches(name) &&
+            """[A-z0-9\s.,-_#()]{3,256}""".toRegex().matches(description) &&
+            """[A-z0-9\s.-_#]{3,32}""".toRegex().matches(buildAlias)
+
 
 fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     id = id,
@@ -55,7 +61,7 @@ fun AgentInfo.toAgentInfoWebSocket() = AgentInfoWebSocketSingle(
     ipAddress = ipAddress,
     activePluginsCount = plugins.activePluginsCount(),
     pluginsCount = plugins.size,
-    rawPluginsName = plugins.toPluginsWebSocket(),
+    plugins = plugins.toPluginsWebSocket(),
     buildVersions = this.buildVersions
 )
 
