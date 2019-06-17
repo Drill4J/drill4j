@@ -94,7 +94,7 @@ class ExceptionNativePlugin constructor(override var id: String) : NativePart<Co
                         occurredTime = "10.10.12"
                     )
                 )
-                send(id.cstr.getPointer(Arena()), exceptionData.cstr.getPointer(Arena()))
+                pluginApi { sender }(id.cstr.getPointer(Arena()), exceptionData.cstr.getPointer(Arena()))
 
             }
         } catch (ex: Throwable) {

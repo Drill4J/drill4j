@@ -96,17 +96,11 @@ tasks {
     val adminPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("admin-part.jar")
-        from(pluginConfigJson) {
-            into("static")
-        }
 //        from(adminDeps.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("agent-part.jar")
-        from(pluginConfigJson) {
-            into("static")
-        }
 //        from(agentDeps.flattenJars())
     }
 
@@ -119,7 +113,7 @@ tasks {
                     "native-plugin",
                     NativeBuildType.DEBUG
                 )?.outputFile
-            from(adminPartJar, agentPartJar, binary)
+            from(adminPartJar, agentPartJar, binary, pluginConfigJson)
 
         }
     }

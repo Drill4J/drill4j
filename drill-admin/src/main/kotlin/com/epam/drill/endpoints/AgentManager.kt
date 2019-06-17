@@ -24,6 +24,7 @@ import com.epam.drill.service.asyncTransaction
 import com.epam.drill.storage.AgentStorage
 import io.ktor.http.cio.websocket.DefaultWebSocketSession
 import io.ktor.http.cio.websocket.Frame
+import kotlinx.coroutines.delay
 import kotlinx.serialization.cbor.Cbor
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.SizedCollection
@@ -175,15 +176,18 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     PluginMessage(
                         DrillEvent.LOAD_PLUGIN,
                         agentPluginPart.readBytes().toList(),
-                        NativePlugin(
-                            plugins[pluginId]?.windowsPart?.readBytes()?.toList() ?: emptyList(),
-                            plugins[pluginId]?.linuxPar?.readBytes()?.toList() ?: emptyList()
-                        ),
+                        if (plugins[pluginId]?.windowsPart != null || plugins[pluginId]?.linuxPar != null)
+                            NativePlugin(
+                                plugins[pluginId]?.windowsPart?.readBytes()?.toList() ?: emptyList(),
+                                plugins[pluginId]?.linuxPar?.readBytes()?.toList() ?: emptyList()
+                            ) else null,
                         pb
                     )
 
                 session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
             }
+            //fixme raw hack for pluginLoading.
+            delay(10000)
         }
 
 

@@ -48,16 +48,26 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
                             val pluginId = config.id
                             if (pluginId !in plugins) {
                                 val adminPartFile = jar.extractPluginEntry(pluginId, "admin-part.jar")
-                                val adminPartClass = JarFile(adminPartFile).use { adminJar ->
-                                    processAdminPart(adminPartFile, adminJar)
-                                }
-                                if (adminPartClass != null) {
-                                    val agentFile = jar.extractPluginEntry(pluginId, "agent-part.jar")
-                                    val dp = DP(adminPartClass, agentFile, config)
-                                    plugins[pluginId] = dp
-                                    logger.info { "Plugin '$pluginId' was loaded successfully." }
-                                } else {
-                                    logger.error { "Admin Plugin API class was not found for $pluginId" }
+                                val agentFile = jar.extractPluginEntry(pluginId, "agent-part.jar")
+                                if (adminPartFile != null && agentFile != null) {
+                                    val adminPartClass = JarFile(adminPartFile).use { adminJar ->
+                                        processAdminPart(adminPartFile, adminJar)
+                                    }
+                                    if (adminPartClass != null) {
+                                        val dp = DP(
+                                            adminPartClass,
+                                            AgentPartFiles(
+                                                agentFile,
+                                                jar.extractPluginEntry(pluginId, "native_plugin.dll"),
+                                                jar.extractPluginEntry(pluginId, "libnative_plugin.so")
+                                            ),
+                                            config
+                                        )
+                                        plugins[pluginId] = dp
+                                        logger.info { "Plugin '$pluginId' was loaded successfully." }
+                                    } else {
+                                        logger.error { "Admin Plugin API class was not found for $pluginId" }
+                                    }
                                 }
                             } else {
                                 logger.warn { "Plugin $pluginId has already been loaded. Skipping loading from $pluginFile." }
@@ -91,8 +101,8 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
 }
 
-fun JarFile.extractPluginEntry(pluginId: String, entry: String): File {
-    val jarEntry: JarEntry = getJarEntry(entry)
+fun JarFile.extractPluginEntry(pluginId: String, entry: String): File? {
+    val jarEntry: JarEntry = getJarEntry(entry) ?: return null
     return getInputStream(jarEntry).use { istream ->
         val workDir = File(getenv("DRILL_HOME"), "work")
         val pluginDir = workDir.resolve("plugins").resolve(pluginId)

@@ -152,10 +152,6 @@ tasks {
                 from(file("$binary"))
                 into(file("../distr"))
             }
-            copy {
-                from(file("$binary"))
-                into(file("../plugins/drill-exception-plugin-native/drill-api/$preset"))
-            }
         }
     }
     register("buildAgent") {

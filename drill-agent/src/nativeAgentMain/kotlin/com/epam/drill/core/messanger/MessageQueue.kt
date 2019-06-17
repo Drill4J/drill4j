@@ -16,6 +16,7 @@ fun sendNativeMessage(pluginId: CPointer<ByteVar>, content: CPointer<ByteVar>) {
 }
 
 fun sendMessage(pluginId: String, content: String) {
+    val drillRequest = drillRequest()
     val message =
 
         Message.serializer() stringify Message(
@@ -25,7 +26,7 @@ fun sendMessage(pluginId: String, content: String) {
             MessageWrapper.serializer() stringify
                     MessageWrapper(
                         pluginId, DrillMessage(
-                            drillRequest()?.drillSessionId ?: "", content
+                            drillRequest?.drillSessionId ?: "", content
                         )
                     )
         )

@@ -122,11 +122,13 @@ suspend fun websocket(adminUrl: String) {
     }
     wsClient.onBinaryMessage.add {
         val load = Cbor.load(PluginMessage.serializer(), it)
+        if (exec { pstorage[load.pl.id] } != null) return@add
         when {
             load.event == DrillEvent.LOAD_PLUGIN -> {
                 val pluginId = load.pl.id
                 exec { pl[pluginId] = load.pl }
                 loader.execute(TransferMode.UNSAFE, { load }) { plugMessage ->
+                    println("try to load ${plugMessage.pl.id} plugin")
                     runBlocking {
                         exec { agentConfig.needSync = false }
                         val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
@@ -155,12 +157,17 @@ suspend fun websocket(adminUrl: String) {
                                 }
                             }
 
-                            val loadNativePlugin = com.epam.drill.loadNativePlugin(id, natPlugin.absolutePath, staticCFunction(::sendNativeMessage) )
+                            val loadNativePlugin = com.epam.drill.loadNativePlugin(
+                                id,
+                                natPlugin.absolutePath,
+                                staticCFunction(::sendNativeMessage)
+                            )
                             loadNativePlugin?.initPlugin()
                             loadNativePlugin?.on()
                         }
 
                     }
+                    println("${plugMessage.pl.id} plugin loaded")
 
                 }
             }
@@ -187,7 +194,6 @@ suspend fun websocket(adminUrl: String) {
                 }.result
                 if (execute != null) {
                     wsClient.send(execute)
-                    println("Finally sent")
 //                    sendWorker.execute(TransferMode.UNSAFE, {}) {
 //                        guaranteeQueue.removeFirstOrNull()
 //                    }.result

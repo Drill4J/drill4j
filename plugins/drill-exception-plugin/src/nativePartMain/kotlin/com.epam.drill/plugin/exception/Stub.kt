@@ -81,9 +81,6 @@ fun jvmtii(): CPointer<jvmtiEnvVar>? {
     return pluginApi { jvmti }
 }
 
-@ThreadLocal
-val send = pluginApi { sender }
-
 
 @SharedImmutable
 val js = Json()

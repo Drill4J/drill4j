@@ -8,18 +8,21 @@ import java.util.*
 
 class Plugins(val plugins: MutableMap<String, DP> = HashMap()) : MutableMap<String, DP> by plugins
 
-typealias DP = Triple<Class<AdminPluginPart>, Triple<File, File?, File?>, PluginBean>
+typealias DP = Triple<Class<AdminPluginPart>, AgentPartFiles, PluginBean>
 
 val DP.pluginClass: Class<AdminPluginPart>
     get() = first
 val DP.agentPluginPart: File
-    get() = second.first
+    get() = second.jar
 val DP.windowsPart: File?
-    get() = second.second
+    get() = second.windowsPart
 val DP.linuxPar: File?
-    get() = second.third
+    get() = second.linuxPart
 val DP.pluginBean: PluginBean
     get() = third
+
+
+data class AgentPartFiles(val jar: File, val windowsPart: File?, val linuxPart: File?)
 
 fun Plugins.getAllPluginBeans() = plugins.values.map { it.pluginBean }
 

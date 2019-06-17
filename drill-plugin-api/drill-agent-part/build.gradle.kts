@@ -10,16 +10,7 @@ plugins {
 kotlin {
     targets {
         jvm("drillAgentPart")
-        createNativeTargetForCurrentOs("nat") {
-            mainCompilation {
-                binaries {
-                    sharedLib(
-                        namePrefix = "drill-native-plugin-api",
-                        buildTypes = setOf(DEBUG)
-                    )
-                }
-            }
-        }
+        createNativeTargetForCurrentOs("nat")
     }
 
     sourceSets {
@@ -31,8 +22,8 @@ kotlin {
                 implementation(project(":drill-common"))
             }
         }
-        named("natMain"){
-            dependencies{
+        named("natMain") {
+            dependencies {
                 implementation(project(":nativeprojects:drill-jvmapi"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:1.2.0")
             }
