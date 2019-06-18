@@ -84,5 +84,5 @@ data class AgentRegistrationInfo(
     val name: String,
     val description: String,
     val buildAlias: String,
-    val group: String
+    val group: String? = ""
 )
