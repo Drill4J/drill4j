@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.coverage
+package com.epam.drill.plugins.exception
 
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.plugin.api.end.AdminPluginPart

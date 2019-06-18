@@ -1,4 +1,4 @@
-package com.epam.drill.plugins.coverage
+package com.epam.drill.plugins.exception
 
 import com.epam.drill.common.parse
 import com.epam.drill.plugin.api.processing.AgentPart
@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Suppress("unused")
 class JavaPartOfNativePlguin constructor(
     override val id: String
-) : AgentPart<CoverConfig, Action>() {
+) : AgentPart<ExceptionConfig, Action>() {
 
 
     override fun doRawAction(action: String) {
@@ -39,12 +39,13 @@ class JavaPartOfNativePlguin constructor(
     }
 
 
-    override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
+    override var confSerializer: kotlinx.serialization.KSerializer<ExceptionConfig> = ExceptionConfig.serializer()
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
 }
 
+
 @Serializable
-data class CoverConfig(val s: String = "")
+data class ExceptionConfig(val blackList: List<String> = emptyList())
 
 @Serializable
 data class Action(val s: String = "")
