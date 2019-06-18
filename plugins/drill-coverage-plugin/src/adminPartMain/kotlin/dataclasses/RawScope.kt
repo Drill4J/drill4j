@@ -2,7 +2,7 @@ package com.epam.drill.plugins.coverage.dataclasses
 
 import com.epam.drill.plugins.coverage.ExDataTemp
 
-class RawScope(
+data class RawScope(
     val id: String,
     val name: String? = null,
     val buildVersion: String? = null,

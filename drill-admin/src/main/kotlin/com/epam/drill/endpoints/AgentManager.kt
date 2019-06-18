@@ -138,11 +138,11 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                     this.enabled = plugin.enabled
                     this.config = plugin.config
                 }
-                val rawPluginNames = agentInfoDb.plugins.toList()
-                val existingPluginBeanDb = rawPluginNames.find { it.pluginId == pluginId }
+                val plugins = agentInfoDb.plugins.toList()
+                val existingPluginBeanDb = plugins.find { it.pluginId == pluginId }
                 if (existingPluginBeanDb == null) {
                     val newPluginBeanDb = PluginBeanDb.new(fillPluginBeanDb)
-                    agentInfoDb.plugins = SizedCollection(rawPluginNames + newPluginBeanDb)
+                    agentInfoDb.plugins = SizedCollection(plugins + newPluginBeanDb)
                     newPluginBeanDb
                 } else {
                     existingPluginBeanDb.apply(fillPluginBeanDb)

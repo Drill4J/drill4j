@@ -99,10 +99,10 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 val probesForMerge = classesData.execData.stop()
 
                 //Test area---------------------------------------------------------------------------------------------
-                val scopeName = agentInfo.scopeName
+                val scopeName = agentInfo.scopeName?:"defaultScope"
                 val storageKey = agentInfo.buildVersion + scopeName
                 val newScopeSession =
-                    getScopeSession(agentInfo.buildVersion, scopeName!!, probesForMerge, TestType.MANUAL)
+                    getScopeSession(agentInfo.buildVersion, scopeName, probesForMerge, TestType.MANUAL)
                 var scope = ws.retrieveData(storageKey)
                 if (scope == null) scope = RawScope(
                     "$agentInfo.buildVersion:$scopeName",
