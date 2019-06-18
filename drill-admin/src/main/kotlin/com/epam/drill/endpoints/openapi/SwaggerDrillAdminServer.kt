@@ -15,7 +15,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
-import io.ktor.locations.patch
 import io.ktor.locations.post
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -44,29 +43,10 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         app.routing {
             registerAgent()
             registerDrillAdmin()
-//            if (app.environment.config.property("ktor.dev").getString().toBoolean()) {
-//                registerDevDrillAdmin()
-//            }
         }
     }
 
     private fun Routing.registerAgent() {
-        authenticate {
-            patch<Routes.Api.Agent.Agent> { config ->
-                agentManager.agentSession(config.agentId)?.send(
-                    Frame.Text(
-                        Message.serializer() stringify
-                                Message(
-                                    MessageType.MESSAGE,
-                                    "/agent/updateAgentConfig",
-                                    call.receive()
-                                )
-                    )
-                )
-
-                call.respond { if (agentManager[config.agentId] != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
-            }
-        }
 
         authenticate {
             post<Routes.Api.Agent.UnloadPlugin> { up ->
@@ -114,7 +94,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                             ))
                         )
                     )
-                call.respond { HttpStatusCode.OK }
+                call.respond(HttpStatusCode.OK, "toggle")
             }
         }
 

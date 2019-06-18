@@ -78,7 +78,8 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                     agentManager.agentSession(ll.agentId)
                         ?.send(PluginBean.serializer().agentWsMessage("/plugins/updatePluginConfig", pb))
                     val pluginBean = agentManager[ll.agentId]?.plugins?.first { it.id == pluginId }
-                    call.respond { if (pluginBean != null) HttpStatusCode.OK else HttpStatusCode.NotFound }
+                    if (pluginBean != null) call.respond(HttpStatusCode.OK, "")
+                    else call.respond(HttpStatusCode.NotFound, "")
                 }
             }
             authenticate {
@@ -142,7 +143,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                                         )
                             )
                         )
-                    call.respond { HttpStatusCode.OK }
+                    call.respond(HttpStatusCode.OK, "OK")
                 }
             }
             authenticate {
