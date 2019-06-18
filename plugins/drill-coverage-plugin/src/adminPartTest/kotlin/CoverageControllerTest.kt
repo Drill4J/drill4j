@@ -14,6 +14,8 @@ import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.list
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -151,6 +153,7 @@ class CoverageControllerTest {
 class WsServiceStub : WsService {
 
     val sent = mutableListOf<Pair<String, Any>>()
+    private val pluginDataStorage: ConcurrentMap<String, Any> = ConcurrentHashMap()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
@@ -162,7 +165,11 @@ class WsServiceStub : WsService {
 
     override fun getPlWsSession() = setOf<String>()
 
-    override fun storeData(agentId: String, obj: Any) {}
+    override fun storeData(key: String, obj: Any) {
+        pluginDataStorage[key] = obj
+    }
+
+    override fun retrieveData(key: String) = pluginDataStorage[key]
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {}
 }

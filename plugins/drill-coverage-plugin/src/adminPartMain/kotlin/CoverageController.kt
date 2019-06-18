@@ -7,7 +7,11 @@ import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
+import com.epam.drill.plugins.coverage.dataclasses.RawClassData
+import com.epam.drill.plugins.coverage.dataclasses.RawScope
+import com.epam.drill.plugins.coverage.dataclasses.RawTest
 import com.epam.drill.plugins.coverage.dataclasses.TestType
+import com.epam.drill.plugins.coverage.dataclasses.merge
 import kotlinx.serialization.list
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
@@ -92,7 +96,24 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
-                val probes = classesData.execData.stop()
+                val probesForMerge = classesData.execData.stop()
+
+                //Test area---------------------------------------------------------------------------------------------
+                val scopeName = agentInfo.scopeName
+                val storageKey = agentInfo.buildVersion + scopeName
+                val newScopeSession =
+                    getScopeSession(agentInfo.buildVersion, scopeName!!, probesForMerge, TestType.MANUAL)
+                var scope = ws.retrieveData(storageKey)
+                if (scope == null) scope = RawScope(
+                    "$agentInfo.buildVersion:$scopeName",
+                    scopeName,
+                    agentInfo.buildVersion
+                )
+                val probes = (scope as RawScope).merge(newScopeSession)
+                ws.storeData(storageKey, scope)
+                //------------------------------------------------------------------------------------------------------
+
+
                 val assocTestsMap = probes.flatMap { exData ->
                     val probeArray = exData.probes.toBooleanArray()
                     val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
@@ -215,40 +236,42 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     "/tests-usages",
                     TestUsagesInfo.serializer().list stringify testUsages
                 )
-                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion, "testScope", probes))
             }
         }
         return ""
     }
 
-    private fun getScope(buildVersion: String, scopeName: String, probes: Collection<ExDataTemp>): Scope {
-        val testsData = hashMapOf<String, MutableList<ClassData>>()
+    private fun getScopeSession(
+        buildVersion: String, scopeName: String,
+        probes: Collection<ExDataTemp>, type: TestType
+    ): RawScope {
+        val scopeId = "$buildVersion:$scopeName"
+        val scopeTests = mutableMapOf<String, RawTest>()
         probes.forEach { execData ->
-            val classData = ClassData(
+            val testId = "$scopeId:${execData.testName}:${type.str}"
+            val typedTestName = "$execData.testName:$type.type"
+            val classData = RawClassData(
                 execData.id,
                 execData.className,
                 execData.probes
             )
-            execData.testName?.let { testName ->
-                val dataList = testsData[testName]
-                if (dataList.isNullOrEmpty()) {
-                    testsData[testName] = mutableListOf(classData)
-                } else dataList.add(classData)
+            var existingTest = scopeTests[typedTestName]
+            if (existingTest == null) {
+                scopeTests[typedTestName] = RawTest(
+                    testId,
+                    typedTestName,
+                    execData.testName,
+                    type
+                )
+                existingTest = scopeTests[typedTestName]
             }
+            existingTest!!.data.add(classData)
         }
-        val tests = testsData.map { (testName, classData) ->
-            Test(
-                "$buildVersion:$scopeName:$testName",
-                testName,
-                TestType.MANUAL.type,
-                classData
-            )
-        }
-        return Scope(
-            "$buildVersion:$scopeName",
+        return RawScope(
+            scopeId,
             scopeName,
             buildVersion,
-            tests
+            scopeTests
         )
     }
 

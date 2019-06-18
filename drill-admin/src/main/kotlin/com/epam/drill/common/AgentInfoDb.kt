@@ -18,6 +18,7 @@ object AgentInfos : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
     val name = varchar("name", length = 50)
     val groupName = varchar("group_name", length = 50).nullable()
+    val scopeName = varchar("scope_name", length = 50).nullable()
     val description = varchar("description", length = 50)
     var status = enumeration("status", AgentStatus::class)
     val adminUrl = varchar("admin_url", length = 50)
@@ -49,6 +50,7 @@ class AgentInfoDb(id: EntityID<String>) : Entity<String>(id) {
 
     var name by AgentInfos.name
     var groupName by AgentInfos.groupName
+    var scopeName by AgentInfos.scopeName
     var description by AgentInfos.description
     var status by AgentInfos.status
     var adminUrl by AgentInfos.adminUrl
@@ -93,6 +95,7 @@ fun AgentInfoDb.toAgentInfo() =
         name = this.name,
         status = this.status,
         groupName = this.groupName,
+        scopeName = this.scopeName,
         description = this.description,
         buildVersion = this.buildVersion,
         buildAlias = this.buildAlias,

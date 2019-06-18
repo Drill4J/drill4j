@@ -8,6 +8,7 @@ data class AgentInfo(
     var name: String,
     var status: AgentStatus,
     var groupName: String? = "",
+    var scopeName: String?,
     var description: String,
     var buildVersion: String,
     var buildAlias: String,
