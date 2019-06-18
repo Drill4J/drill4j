@@ -2,7 +2,6 @@ import com.epam.drill.build.createNativeTargetForCurrentOs
 import com.epam.drill.build.jvmCoroutinesVersion
 import com.epam.drill.build.korioVersion
 import com.epam.drill.build.mainCompilation
-import com.epam.drill.build.preset
 import com.epam.drill.build.serializationNativeVersion
 import com.epam.drill.build.serializationRuntimeVersion
 import com.epam.drill.build.staticLibraryExtension
@@ -40,6 +39,7 @@ kotlin {
                 }
             }
         }
+
         jvm("javaAgent")
     }
 
@@ -95,9 +95,11 @@ kotlin {
                 implementation(project(":nativeprojects:drill-kni"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
                 implementation(project(":drill-common"))
+                implementation(project(":platformDependent"))
             }
         }
     }
+
 }
 
 
@@ -130,10 +132,6 @@ tasks {
             copy {
                 from(file("$binary"))
                 into(file("../distr"))
-            }
-            copy {
-                from(file("$binary"))
-                into(file("../plugins/drill-exception-plugin-native/drill-api/$preset"))
             }
         }
     }

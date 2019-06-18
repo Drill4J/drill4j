@@ -1,8 +1,0 @@
-{
-  "id": "custom",
-  "name": "AwesomeCustomPlugin",
-  "description": "This is the awesome custom plugin",
-  "type": "Custom",
-  "enabled": true,
-  "config": "{\n    \"message\": \"hello from default plugin config... This is 'plugin_config.json file\",\n    \"delayTime\": 15000\n  }"
-}

@@ -9,6 +9,11 @@ fun currentEnvs(): JNIEnvPointer {
     return env
 }
 
+@CName("jvmtii")
+fun jvmtii(): CPointer<jvmtiEnvVar>? {
+    return gdata?.pointed?.jvmti
+}
+
 fun AttachNativeThreadToJvm() {
     currentEnvs()
 }

@@ -1,8 +1,9 @@
 package com.epam.drill.core.methodbind
 
 import com.epam.drill.core.exec
-import com.epam.drill.core.request.parseHttpRequest
-import com.epam.drill.core.request.toDrillRequest
+import com.epam.drill.plugin.parseHttpRequest
+import com.epam.drill.plugin.toDrillRequest
+
 import jvmapi.JNIEnvVar
 import jvmapi.SetThreadLocalStorage
 import jvmapi.jint

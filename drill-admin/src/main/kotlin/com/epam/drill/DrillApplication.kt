@@ -48,7 +48,13 @@ import org.kodein.di.Kodein
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
 import org.kodein.di.generic.singleton
+import java.io.File
 import java.time.Duration
+
+
+val drillHomeDir = File(System.getenv("DRILL_HOME") ?: "")
+
+val drillWorkDir = drillHomeDir.resolve("work")
 
 val storage = Kodein.Module(name = "agentStorage") {
     bind<DataSourceRegistry>() with eagerSingleton { DataSourceRegistry() }

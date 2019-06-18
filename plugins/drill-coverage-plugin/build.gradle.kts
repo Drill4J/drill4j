@@ -75,23 +75,18 @@ tasks {
     val adminPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("admin-part.jar")
-        from(pluginConfigJson) {
-            into("static")
-        }
         from(adminDeps.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("agent-part.jar")
-        from(pluginConfigJson) {
-            into("static")
-        }
         from(agentDeps.flattenJars())
     }
 
     val distJar by registering(Jar::class) {
         group = "build"
         from(adminPartJar, agentPartJar)
+        from(pluginConfigJson)
     }
 
     register<Copy>("buildCoveragePluginDev") {

@@ -117,6 +117,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                 call.respond { HttpStatusCode.OK }
             }
         }
+
     }
 
     /**
