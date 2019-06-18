@@ -67,10 +67,10 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             agentInfoDb.toAgentInfo()
         } else {
             AgentInfoDb.new(agentId) {
-                name = "-"
+                name = ""
                 status = AgentStatus.NOT_REGISTERED
-                groupName = "-"
-                description = "-"
+                groupName = ""
+                description = ""
                 this.buildVersion = pBuildVersion
                 buildAlias = INITIAL_BUILD_ALIAS
                 adminUrl = ""
