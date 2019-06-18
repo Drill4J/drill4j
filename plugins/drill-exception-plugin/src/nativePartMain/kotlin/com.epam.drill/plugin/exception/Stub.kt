@@ -44,7 +44,7 @@ fun initPlugin(
     jvm: CPointer<JavaVMVar>?,
     clb: CPointer<jvmtiEventCallbacks>?,
     sender: CPointer<CFunction<(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) -> Unit>>
-): NativePart<CoverConfig> {
+): NativePart<ExceptionConfig> {
     val exceptionNativePlugin = ExceptionNativePlugin(pluginId)
     natContex.execute(
         TransferMode.UNSAFE,

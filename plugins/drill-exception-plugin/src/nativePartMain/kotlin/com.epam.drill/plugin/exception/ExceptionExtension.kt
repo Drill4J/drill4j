@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.exception
 
 import com.epam.drill.jvmapi.toKString
-import jvmapi.CallObjectMethodV
+import jvmapi.CallObjectMethod
 import jvmapi.FindClass
 import jvmapi.GetClassSignature
 import jvmapi.GetLineNumberTable
@@ -35,7 +35,7 @@ import kotlinx.cinterop.value
 fun jthrowable.getMessage() = memScoped {
     val throwableClass = FindClass("java/lang/Throwable")
     val methodID = GetMethodID(throwableClass, "getMessage", "()Ljava/lang/String;")
-    val message: jstring? = CallObjectMethodV(this@getMessage, methodID, null)
+    val message: jstring? = CallObjectMethod(this@getMessage, methodID)
     message?.toKString()
 }
 

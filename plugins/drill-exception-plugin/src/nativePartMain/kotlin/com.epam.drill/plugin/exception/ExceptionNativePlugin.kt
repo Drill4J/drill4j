@@ -32,7 +32,7 @@ import kotlinx.serialization.Serializable
 
 
 @Suppress("unused")
-class ExceptionNativePlugin constructor(override var id: String) : NativePart<CoverConfig>() {
+class ExceptionNativePlugin constructor(override var id: String) : NativePart<ExceptionConfig>() {
 
     override fun on() {
         SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, null)
@@ -103,8 +103,8 @@ class ExceptionNativePlugin constructor(override var id: String) : NativePart<Co
     }
 
 
-    override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
+    override var confSerializer: kotlinx.serialization.KSerializer<ExceptionConfig> = ExceptionConfig.serializer()
 }
 
 @Serializable
-data class CoverConfig(val s: String = "")
+data class ExceptionConfig(val blackList: List<String> = emptyList())

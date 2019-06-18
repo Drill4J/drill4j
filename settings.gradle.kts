@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 rootProject.name = "drill4j"
 include(":drill-agent")
 include(":drill-common")
@@ -6,6 +8,14 @@ include(":drill-plugin-api:drill-admin-part")
 include(":drill-plugin-api:drill-agent-part")
 include(":nativeprojects:drill-jvmapi")
 include(":nativeprojects:drill-kni")
+
+if (Os.isFamily(Os.FAMILY_UNIX)) {
+    include("platformDependent")
+    project(":platformDependent").projectDir = file("nativeprojects/drill-linux")
+} else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    include("platformDependent")
+    project(":platformDependent").projectDir = file("nativeprojects/drill-win")
+}
 include(":nativeprojects:drill-logger")
 
 /**plugin's projects*/
