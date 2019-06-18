@@ -9,3 +9,9 @@ class AgentEntry(
     val agentSession: DefaultWebSocketSession,
     var instance: MutableMap<String, AdminPluginPart> = mutableMapOf()
 )
+
+fun AgentEntry(ae: AgentEntry, agInfo: AgentInfo): AgentEntry = AgentEntry(
+    agInfo,
+    ae.agentSession,
+    ae.instance
+)
