@@ -37,3 +37,7 @@ fun String.textFrame() = Frame.Text(this)
 data class DrillWsSession(var url: String? = null, val sourceSession: DefaultWebSocketServerSession) :
     DefaultWebSocketServerSession by sourceSession
 
+fun <E> MutableSet<E>.replaceAll(set: MutableSet<E>) {
+    this.clear()
+    this.addAll(set)
+}

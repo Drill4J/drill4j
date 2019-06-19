@@ -95,12 +95,14 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             agentInfoDb?.merge(au)
         }
         val byId = get(agentId)
+
         byId?.apply {
             name = au.name
             groupName = au.group
             description = au.description
             buildVersion = au.buildVersion
-            buildAlias = au.buildAlias
+            buildAlias = au.buildVersions.firstOrNull { it.id == au.buildVersion }?.name!!
+            buildVersions.replaceAll(au.buildVersions)
             status = au.status
         }
         agentStorage.update()
