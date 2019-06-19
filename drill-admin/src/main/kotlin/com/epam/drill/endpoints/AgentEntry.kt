@@ -10,7 +10,7 @@ class AgentEntry(
     var instance: MutableMap<String, AdminPluginPart> = mutableMapOf()
 )
 
-fun AgentEntry(ae: AgentEntry, agInfo: AgentInfo): AgentEntry = AgentEntry(
+fun agentEntry(ae: AgentEntry, agInfo: AgentInfo): AgentEntry = AgentEntry(
     agInfo,
     ae.agentSession,
     ae.instance
