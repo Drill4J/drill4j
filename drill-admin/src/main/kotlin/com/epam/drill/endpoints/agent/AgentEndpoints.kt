@@ -58,7 +58,7 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                             description = regInfo.description,
                             buildVersion = bv,
                             buildAlias = alias,
-                            buildVersions = agInfo.buildVersions
+                            buildVersions = agInfo.buildVersions.toHashSet()
                         ).apply {
                             val oldVersion = buildVersions.find { it.id == bv }
                             if (oldVersion != null) {
