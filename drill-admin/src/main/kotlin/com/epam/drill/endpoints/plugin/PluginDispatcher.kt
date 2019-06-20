@@ -4,6 +4,8 @@ package com.epam.drill.endpoints.plugin
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
+import com.epam.drill.common.MessageWithId
+
 import com.epam.drill.common.PluginBean
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
@@ -49,7 +51,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             val dp: DP = plugins.plugins[pluginId] ?: return
             val pluginClass = dp.pluginClass
             val agentEntry = agentManager.full(agentInfo.id)
-            val plugin: AdminPluginPart = fillPluginInstance(agentEntry, pluginClass, pluginId)
+            val plugin: AdminPluginPart<*> = fillPluginInstance(agentEntry, pluginClass, pluginId)
             plugin.processData(agentInfo, message.drillMessage)
         } catch (ee: Exception) {
             ee.printStackTrace()
@@ -58,9 +60,9 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
     private fun fillPluginInstance(
         agentEntry: AgentEntry?,
-        pluginClass: Class<AdminPluginPart>,
+        pluginClass: Class<AdminPluginPart<*>>,
         pluginId: String
-    ): AdminPluginPart {
+    ): AdminPluginPart<*> {
         return agentEntry?.instance!![pluginId] ?: run {
             val constructor = pluginClass.getConstructor(WsService::class.java, String::class.java)
             val plugin = constructor.newInstance(wsService, pluginId)
@@ -84,22 +86,47 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
             authenticate {
                 post<Routes.Api.Agent.PluginAction> { ll ->
-                    val message = call.receive<String>()
+                    val action = call.receive<String>()
 
-                    agentManager.agentSession(ll.agentId)
-                        ?.send(
-                            Frame.Text(
-                                Message.serializer() stringify Message(
-                                    MessageType.MESSAGE,
-                                    "/plugins/action",
-                                    message
-                                )
+                    val dp: DP? = plugins.plugins[ll.pluginId]
+                    val agentInfo = agentManager[ll.agentId]
+                    when {
+                        (dp == null) -> {
+                            call.respond(
+                                HttpStatusCode.NotFound,
+                                "plugin with id ${ll.pluginId} not found"
                             )
-                        )
-                    call.respond(HttpStatusCode.OK, "")
+                        }
+                        (agentInfo == null) -> {
+                            call.respond(
+                                HttpStatusCode.NotFound,
+                                "agent with id ${ll.agentId} not found"
+                            )
+                        }
+                        else -> {
+                            val message = MessageWithId.serializer() stringify
+                                    MessageWithId(ll.pluginId, action)
+                            agentManager.agentSession(ll.agentId)
+                                ?.send(
+                                    Frame.Text(
+                                        Message.serializer() stringify Message(
+                                            MessageType.MESSAGE,
+                                            "/plugins/action",
+                                            message
+                                        )
+                                    )
+                                )
+
+                            val agentEntry = agentManager.full(ll.agentId)
+                            val plugin: AdminPluginPart<*> = fillPluginInstance(
+                                agentEntry, dp.pluginClass, ll.pluginId
+                            )
+                            val response = plugin.doRawAction(agentInfo, action)
+                            call.respond(HttpStatusCode.OK, response)
+                        }
+                    }
                 }
             }
-
 
             authenticate {
                 post<Routes.Api.Agent.AddNewPlugin> { ll ->

@@ -7,8 +7,9 @@ import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.DrillMessage
-import com.epam.drill.plugins.coverage.dataclasses.TestType
 import kotlinx.serialization.list
+import kotlinx.serialization.serializer
+import kotlinx.serialization.set
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.IBundleCoverage
@@ -20,9 +21,38 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 @Suppress("unused")
-class CoverageController(private val ws: WsService, id: String) : AdminPluginPart(ws, id) {
-
+class CoverageController(private val ws: WsService, id: String) : AdminPluginPart<Action>(ws, id) {
     internal val agentStates = ConcurrentHashMap<String, AgentState>()
+    override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
+    private var scope: String = ""
+
+    override suspend fun doRawAction(agentInfo: AgentInfo, action: String) = doAction(
+        agentInfo, actionSerializer parse action
+    )
+
+
+    override suspend fun doAction(agentInfo: AgentInfo, action: Action) {
+        when (action.type) {
+            ActionType.CREATE_SCOPE -> {
+                scope = action.payload.scopeName
+                val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
+                val scopesUncasted = ws.retrieveData(storageKey)
+                @Suppress("UNCHECKED_CAST")
+                val scopes =
+                    if (scopesUncasted == null) mutableSetOf()
+                    else scopesUncasted as MutableSet<String>
+                scopes.add(scope)
+                ws.storeData(storageKey, scopes)
+                updateScope(agentInfo, scope)
+                updateScopesSet(agentInfo, scopes)
+            }
+            ActionType.DROP_SCOPE -> {
+                scope = ""
+            }
+            else -> {
+            }
+        }
+    }
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
         val agentState = agentStates.compute(agentInfo.id) { _, state ->
@@ -92,8 +122,17 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
                 // Get new probes from message and populate dataStore with them
                 //also fill up assoc tests
-                val probes = classesData.execData.stop()
-                val assocTestsMap = probes.flatMap { exData ->
+                val probesForMerge = classesData.execData.stop()
+                val storageKey = "${agentInfo.id}-${agentInfo.buildVersion}-$scope"
+                val scopeProbesUncasted = ws.retrieveData(storageKey)
+                @Suppress("UNCHECKED_CAST")
+                val scopeProbes =
+                    if (scopeProbesUncasted == null) mutableSetOf()
+                    else scopeProbesUncasted as MutableSet<ExDataTemp>
+                scopeProbes.addAll(probesForMerge)
+                ws.storeData(storageKey, scopeProbes)
+
+                val assocTestsMap = scopeProbes.flatMap { exData ->
                     val probeArray = exData.probes.toBooleanArray()
                     val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
                     dataStore.put(executionData)
@@ -208,48 +247,16 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                     "/coverage-by-packages",
                     JavaPackageCoverage.serializer().list stringify packageCoverage
                 )
-                val testRelatedBundles = testUsageBundles(initialClassBytes, probes)
+                val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
                 val testUsages = testUsages(testRelatedBundles)
                 ws.convertAndSend(
                     agentInfo,
                     "/tests-usages",
                     TestUsagesInfo.serializer().list stringify testUsages
                 )
-                ws.storeData(agentInfo.id, getScope(agentInfo.buildVersion, "testScope", probes))
             }
         }
         return ""
-    }
-
-    private fun getScope(buildVersion: String, scopeName: String, probes: Collection<ExDataTemp>): Scope {
-        val testsData = hashMapOf<String, MutableList<ClassData>>()
-        probes.forEach { execData ->
-            val classData = ClassData(
-                execData.id,
-                execData.className,
-                execData.probes
-            )
-            execData.testName?.let { testName ->
-                val dataList = testsData[testName]
-                if (dataList.isNullOrEmpty()) {
-                    testsData[testName] = mutableListOf(classData)
-                } else dataList.add(classData)
-            }
-        }
-        val tests = testsData.map { (testName, classData) ->
-            Test(
-                "$buildVersion:$scopeName:$testName",
-                testName,
-                TestType.MANUAL.type,
-                classData
-            )
-        }
-        return Scope(
-            "$buildVersion:$scopeName",
-            scopeName,
-            buildVersion,
-            tests
-        )
     }
 
     private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
@@ -257,6 +264,22 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             agentInfo,
             "/collection-state",
             GatheringState.serializer() stringify GatheringState(state)
+        )
+    }
+
+    private suspend fun updateScope(agentInfo: AgentInfo, scope: String) {
+        ws.convertAndSend(
+            agentInfo,
+            "/active-scope",
+            scope
+        )
+    }
+
+    private suspend fun updateScopesSet(agentInfo: AgentInfo, scopes: Set<String>) {
+        ws.convertAndSend(
+            agentInfo,
+            "/scopes",
+            String.serializer().set stringify scopes
         )
     }
 

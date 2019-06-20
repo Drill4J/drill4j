@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
-
+    private val pluginStorage: MutableMap<String, Any> = mutableMapOf()
     private val app: Application by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
@@ -60,9 +60,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         }
     }
 
-    override fun storeData(agentId: String, obj: Any) {
-        //do nothing.
+    override fun storeData(key: String, obj: Any) {
+        pluginStorage[key] = obj
     }
+
+    override fun retrieveData(key: String) = pluginStorage[key]
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

@@ -1,6 +1,7 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.DrillPluginFile
+import com.epam.drill.common.MessageWithId
 import com.epam.drill.common.PluginBean
 import com.epam.drill.common.parse
 import com.epam.drill.core.drillInstallationDir
@@ -58,11 +59,11 @@ fun topicRegister() =
                 topicLogger.warn { "Plugin ${config.id} not loaded to agent" }
 
         }
-        topic("/plugins/action").rawMessage { action ->
-            topicLogger.warn { "actionPluign event: message is $action " }
-            //fixme thi hardcode
-            val agentPluginPart = PluginManager["coverage"]
-            agentPluginPart?.doRawAction(action)
+
+        topic("/plugins/action").withGenericTopic(MessageWithId.serializer()) { m ->
+            topicLogger.warn { "actionPluign event: message is ${m.message} " }
+            val agentPluginPart = PluginManager[m.id]
+            agentPluginPart?.doRawAction(m.message)
 
         }
 
@@ -133,7 +134,6 @@ object WsRouter {
             return infoTopic
         }
 
-
     }
 
     operator fun get(topic: String): Topic? {
@@ -173,7 +173,11 @@ class GenericTopic<T>(
     }
 }
 
-class InfoTopic(override val destination: String, val block: suspend (String) -> Unit) : Topic(destination)
+class InfoTopic(
+    override val destination: String,
+    val block: suspend (String) -> Unit
+) : Topic(destination)
+
 
 open class FileTopic(
     override val destination: String,

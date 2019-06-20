@@ -10,14 +10,15 @@ data class CoverConfig(
 
 @kotlinx.serialization.Serializable
 data class CoverageAction(
-    val sessionId: String
+    val sessionId: String,
+    val scopeName: String = ""
 )
 
 @kotlinx.serialization.Serializable
 data class Action(val type: ActionType, val payload: CoverageAction)
 
 enum class ActionType {
-    START, STOP, CANCEL
+    START, STOP, CANCEL, CREATE_SCOPE, DROP_SCOPE
 }
 
 @kotlinx.serialization.Serializable
