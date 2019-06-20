@@ -32,6 +32,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
 
     override suspend fun doAction(agentInfo: AgentInfo, action: Action) {
+        val agentState = getAgentStateBy(agentInfo)
         when (action.type) {
             ActionType.CREATE_SCOPE -> {
                 scope = action.payload.scopeName
@@ -45,9 +46,11 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 ws.storeData(storageKey, scopes)
                 updateScope(agentInfo, scope)
                 updateScopesSet(agentInfo, scopes)
+                calculateCoverageData(agentInfo, agentState)
             }
             ActionType.DROP_SCOPE -> {
                 scope = ""
+                calculateCoverageData(agentInfo, agentState)
             }
             else -> {
             }
@@ -55,16 +58,19 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
     }
 
     override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
-        val agentState = agentStates.compute(agentInfo.id) { _, state ->
+        val agentState = getAgentStateBy(agentInfo)
+        val content = dm.content
+        val message = CoverageMessage.serializer() parse content!!
+        return processData(agentState, message)
+    }
+
+    private fun getAgentStateBy(agentInfo: AgentInfo) =
+        agentStates.compute(agentInfo.id) { _, state ->
             when (state?.agentInfo) {
                 agentInfo -> state
                 else -> AgentState(agentInfo, state)
             }
         }!!
-        val content = dm.content
-        val message = CoverageMessage.serializer() parse content!!
-        return processData(agentState, message)
-    }
 
     @Suppress("MemberVisibilityCanBePrivate")// debug problem with private modifier
     suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
@@ -111,152 +117,159 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 }
             }
             CoverageEventType.SESSION_FINISHED -> {
-                updateGatheringState(agentInfo, false)
-                // Analyze all existing classes
-                val classesData = agentState.classesData()
-                val initialClassBytes = classesData.classesBytes
-
-                val coverageBuilder = CoverageBuilder()
-                val dataStore = ExecutionDataStore()
-                val analyzer = Analyzer(dataStore, coverageBuilder)
-
-                // Get new probes from message and populate dataStore with them
-                //also fill up assoc tests
-                val probesForMerge = classesData.execData.stop()
-                val storageKey = "${agentInfo.id}-${agentInfo.buildVersion}-$scope"
-                val scopeProbesUncasted = ws.retrieveData(storageKey)
-                @Suppress("UNCHECKED_CAST")
-                val scopeProbes =
-                    if (scopeProbesUncasted == null) mutableSetOf()
-                    else scopeProbesUncasted as MutableSet<ExDataTemp>
-                scopeProbes.addAll(probesForMerge)
-                ws.storeData(storageKey, scopeProbes)
-
-                val assocTestsMap = scopeProbes.flatMap { exData ->
-                    val probeArray = exData.probes.toBooleanArray()
-                    val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
-                    dataStore.put(executionData)
-                    when (exData.testName) {
-                        null -> emptyList()
-                        else -> collectAssocTestPairs(
-                            initialClassBytes,
-                            ExecutionData(exData.id, exData.className, probeArray.copyOf()),
-                            exData.testName
-                        )
-                    }
-                }.groupBy({ it.first }) { it.second } //group by test names
-                    .mapValues { (_, tests) -> tests.distinct() }
-                val assocTests = assocTestsMap.map { (key, tests) ->
-                    AssociatedTests(
-                        id = key.id,
-                        packageName = key.packageName,
-                        className = key.className,
-                        methodName = key.methodName,
-                        tests = tests
-                    )
-                }
-                if (assocTests.isNotEmpty()) {
-                    println("Assoc tests - ids count: ${assocTests.count()}")
-                    ws.convertAndSend(
-                        agentInfo,
-                        "/associated-tests",
-                        AssociatedTests.serializer().list stringify assocTests
-                    )
-                }
-
-
-                initialClassBytes.forEach { (name, bytes) ->
-                    analyzer.analyzeClass(bytes, name)
-                }
-
-                // TODO possible to store existing bundles to work with obsolete coverage results
-                val bundleCoverage = coverageBuilder.getBundle("all")
-
-                val totalCoveragePercent = bundleCoverage.coverage
-                // change arrow indicator (increase, decrease)
-                val arrow = if (totalCoveragePercent != null) {
-                    val prevCoverage = classesData.execData.coverage ?: 0.0
-                    classesData.execData.coverage = totalCoveragePercent
-                    val diff = totalCoveragePercent - prevCoverage
-                    when {
-                        abs(diff) < 1E-7 -> null
-                        diff > 0.0 -> ArrowType.INCREASE
-                        else -> ArrowType.DECREASE
-                    }
-                } else null
-
-                classesData.execData.coverage = totalCoveragePercent
-
-
-                val classesCount = bundleCoverage.classCounter.totalCount
-                val methodsCount = bundleCoverage.methodCounter.totalCount
-                val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
-
-                val coverageBlock = CoverageBlock(
-                    coverage = totalCoveragePercent,
-                    classesCount = classesCount,
-                    methodsCount = methodsCount,
-                    uncoveredMethodsCount = uncoveredMethodsCount,
-                    arrow = arrow
-                )
-                println(coverageBlock)
-                ws.convertAndSend(
-                    agentInfo,
-                    "/coverage",
-                    CoverageBlock.serializer() stringify coverageBlock
-                )
-
-                val newMethods = classesData.newMethods
-                val (newCoverageBlock, newMethodsCoverages) = if (newMethods.isNotEmpty()) {
-                    println("New methods count: ${newMethods.count()}")
-                    val newMethodSet = newMethods.toSet()
-                    val newMethodsCoverages = bundleCoverage.packages
-                        .flatMap { it.classes }
-                        .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
-                        .filter { it.first in newMethodSet }
-                    val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
-                    val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
-                    //bytecode instruction coverage
-                    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
-
-                    val coverages = newMethodsCoverages.map { (jm, mc) -> mc.simpleMethodCoverage(jm.ownerClass) }
-                    NewCoverageBlock(
-                        methodsCount = newMethodsCoverages.count(),
-                        methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
-                        coverage = newCoverage
-                    ) to coverages
-                } else NewCoverageBlock() to emptyList()
-                println(newCoverageBlock)
-
-                // TODO extend destination with plugin id
-                ws.convertAndSend(
-                    agentInfo,
-                    "/coverage-new",
-                    NewCoverageBlock.serializer() stringify newCoverageBlock
-                )
-
-                ws.convertAndSend(
-                    agentInfo,
-                    "/new-methods",
-                    SimpleJavaMethodCoverage.serializer().list stringify newMethodsCoverages
-                )
-
-                val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
-                ws.convertAndSend(
-                    agentInfo,
-                    "/coverage-by-packages",
-                    JavaPackageCoverage.serializer().list stringify packageCoverage
-                )
-                val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
-                val testUsages = testUsages(testRelatedBundles)
-                ws.convertAndSend(
-                    agentInfo,
-                    "/tests-usages",
-                    TestUsagesInfo.serializer().list stringify testUsages
-                )
+                calculateCoverageData(agentInfo, agentState)
             }
         }
         return ""
+    }
+
+    private suspend fun CoverageController.calculateCoverageData(
+        agentInfo: AgentInfo,
+        agentState: AgentState
+    ) {
+        updateGatheringState(agentInfo, false)
+        // Analyze all existing classes
+        val classesData = agentState.classesData()
+        val initialClassBytes = classesData.classesBytes
+
+        val coverageBuilder = CoverageBuilder()
+        val dataStore = ExecutionDataStore()
+        val analyzer = Analyzer(dataStore, coverageBuilder)
+
+        // Get new probes from message and populate dataStore with them
+        //also fill up assoc tests
+        val probesForMerge = classesData.execData.stop()
+        val storageKey = "${agentInfo.id}-${agentInfo.buildVersion}-$scope"
+        val scopeProbesUncasted = ws.retrieveData(storageKey)
+        @Suppress("UNCHECKED_CAST")
+        val scopeProbes =
+            if (scopeProbesUncasted == null) mutableSetOf()
+            else scopeProbesUncasted as MutableSet<ExDataTemp>
+        scopeProbes.addAll(probesForMerge)
+        ws.storeData(storageKey, scopeProbes)
+
+        val assocTestsMap = scopeProbes.flatMap { exData ->
+            val probeArray = exData.probes.toBooleanArray()
+            val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
+            dataStore.put(executionData)
+            when (exData.testName) {
+                null -> emptyList()
+                else -> collectAssocTestPairs(
+                    initialClassBytes,
+                    ExecutionData(exData.id, exData.className, probeArray.copyOf()),
+                    exData.testName
+                )
+            }
+        }.groupBy({ it.first }) { it.second } //group by test names
+            .mapValues { (_, tests) -> tests.distinct() }
+        val assocTests = assocTestsMap.map { (key, tests) ->
+            AssociatedTests(
+                id = key.id,
+                packageName = key.packageName,
+                className = key.className,
+                methodName = key.methodName,
+                tests = tests
+            )
+        }
+        if (assocTests.isNotEmpty()) {
+            println("Assoc tests - ids count: ${assocTests.count()}")
+            ws.convertAndSend(
+                agentInfo,
+                "/associated-tests",
+                AssociatedTests.serializer().list stringify assocTests
+            )
+        }
+
+
+        initialClassBytes.forEach { (name, bytes) ->
+            analyzer.analyzeClass(bytes, name)
+        }
+
+        // TODO possible to store existing bundles to work with obsolete coverage results
+        val bundleCoverage = coverageBuilder.getBundle("all")
+
+        val totalCoveragePercent = bundleCoverage.coverage
+        // change arrow indicator (increase, decrease)
+        val arrow = if (totalCoveragePercent != null) {
+            val prevCoverage = classesData.execData.coverage ?: 0.0
+            classesData.execData.coverage = totalCoveragePercent
+            val diff = totalCoveragePercent - prevCoverage
+            when {
+                abs(diff) < 1E-7 -> null
+                diff > 0.0 -> ArrowType.INCREASE
+                else -> ArrowType.DECREASE
+            }
+        } else null
+
+        classesData.execData.coverage = totalCoveragePercent
+
+
+        val classesCount = bundleCoverage.classCounter.totalCount
+        val methodsCount = bundleCoverage.methodCounter.totalCount
+        val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
+
+        val coverageBlock = CoverageBlock(
+            coverage = totalCoveragePercent,
+            classesCount = classesCount,
+            methodsCount = methodsCount,
+            uncoveredMethodsCount = uncoveredMethodsCount,
+            arrow = arrow
+        )
+        println(coverageBlock)
+        ws.convertAndSend(
+            agentInfo,
+            "/coverage",
+            CoverageBlock.serializer() stringify coverageBlock
+        )
+
+        val newMethods = classesData.newMethods
+        val (newCoverageBlock, newMethodsCoverages) = if (newMethods.isNotEmpty()) {
+            println("New methods count: ${newMethods.count()}")
+            val newMethodSet = newMethods.toSet()
+            val newMethodsCoverages = bundleCoverage.packages
+                .flatMap { it.classes }
+                .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
+                .filter { it.first in newMethodSet }
+            val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
+            val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
+            //bytecode instruction coverage
+            val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
+
+            val coverages = newMethodsCoverages.map { (jm, mc) -> mc.simpleMethodCoverage(jm.ownerClass) }
+            NewCoverageBlock(
+                methodsCount = newMethodsCoverages.count(),
+                methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
+                coverage = newCoverage
+            ) to coverages
+        } else NewCoverageBlock() to emptyList()
+        println(newCoverageBlock)
+
+        // TODO extend destination with plugin id
+        ws.convertAndSend(
+            agentInfo,
+            "/coverage-new",
+            NewCoverageBlock.serializer() stringify newCoverageBlock
+        )
+
+        ws.convertAndSend(
+            agentInfo,
+            "/new-methods",
+            SimpleJavaMethodCoverage.serializer().list stringify newMethodsCoverages
+        )
+
+        val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
+        ws.convertAndSend(
+            agentInfo,
+            "/coverage-by-packages",
+            JavaPackageCoverage.serializer().list stringify packageCoverage
+        )
+        val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
+        val testUsages = testUsages(testRelatedBundles)
+        ws.convertAndSend(
+            agentInfo,
+            "/tests-usages",
+            TestUsagesInfo.serializer().list stringify testUsages
+        )
     }
 
     private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
