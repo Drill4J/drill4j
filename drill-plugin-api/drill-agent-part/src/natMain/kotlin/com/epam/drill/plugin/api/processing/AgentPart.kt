@@ -38,5 +38,6 @@ actual abstract class AgentPart<T, A> : DrillPlugin(), Switchable, Lifecycle {
     }
 
     actual abstract fun doRawAction(action: String)
+    actual var enabled: Boolean = false
 
 }

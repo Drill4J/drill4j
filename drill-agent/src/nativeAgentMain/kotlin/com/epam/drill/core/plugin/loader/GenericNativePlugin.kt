@@ -48,9 +48,20 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
     override suspend fun isEnabled() = pluginConfigById(id).enabled
 
     override suspend fun setEnabled(value: Boolean) {
+        javaEnabled(value)
         if (value) on() else off()
         val pluginConfigById = pluginConfigById(id)
         pluginConfigById.enabled = value
+
+    }
+
+    private fun javaEnabled(value: Boolean) {
+        CallVoidMethodA(
+            userPlugin,
+            GetMethodID(pluginApiClass, "setEnabled", "(Z)V"),
+            nativeHeap.allocArray(1.toLong()) {
+                z = if (value) 1.toUByte() else 0.toUByte()
+            })
     }
 
     val userPlugin: jobject? by lazy {
@@ -68,7 +79,7 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
         pluginApiClass = pf.retrievePluginApiClass()
         pluginConfig = pf.pluginConfig()
         updateRawConfig(pluginConfig)
-//        natPluginLogger.warn { "config updated: ${pf.rawPluginConfig()}" }
+        javaEnabled(pluginConfig.enabled)
         fullLoad(pf)
     }
 

@@ -57,4 +57,6 @@ actual abstract class AgentPart<T, A> : DrillPlugin(), Switchable, Lifecycle {
     actual fun rawConfig(): String {
         return confSerializer stringify config!!
     }
+
+    actual var enabled: Boolean = false
 }

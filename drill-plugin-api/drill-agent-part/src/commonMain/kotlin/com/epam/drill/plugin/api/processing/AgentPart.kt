@@ -6,6 +6,7 @@ import kotlinx.serialization.KSerializer
 
 expect abstract class AgentPart<T, A>() : DrillPlugin, Switchable, Lifecycle {
     var np: NativePart<T>?
+    var enabled: Boolean
 
     abstract var confSerializer: KSerializer<T>
 

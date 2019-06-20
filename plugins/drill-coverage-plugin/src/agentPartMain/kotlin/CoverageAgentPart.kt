@@ -37,28 +37,6 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     override fun on() {
-
-    }
-
-    override fun off() {
-
-    }
-
-    override fun destroyPlugin(unloadReason: UnloadReason) {
-
-    }
-
-    override fun retransform() {
-        val filter = DrillRequest.GetAllLoadedClasses().filter { it.`package` != null }.filter { cla ->
-            config.pathPrefixes.any {
-                cla.`package`.name //fix from Spring Boot Executable jar
-                    .replace(".", "/").startsWith(it)
-            }
-        }
-        DrillRequest.RetransformClasses(filter.toTypedArray())
-    }
-
-    override fun initPlugin() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
         val classPath1 = ClassPath()
         val scanItPlease = classPath1.scanItPlease(ClassLoader.getSystemClassLoader())
@@ -87,6 +65,35 @@ class CoveragePlugin @JvmOverloads constructor(
         sendMessage(CoverageEventType.INITIALIZED, initializedStr)
         println(initializedStr)
         println("Loaded ${loadedClasses.count()} classes")
+        retransform()
+
+    }
+
+    override fun off() {
+        retransform()
+    }
+
+    override fun destroyPlugin(unloadReason: UnloadReason) {
+
+    }
+
+    override fun retransform() {
+        val filter = DrillRequest.GetAllLoadedClasses().filter { it.`package` != null }.filter { cla ->
+            config.pathPrefixes.any {
+                cla.`package`.name //fix from Spring Boot Executable jar
+                    .replace(".", "/").startsWith(it)
+            }
+        }
+        filter.forEach {
+            DrillRequest.RetransformClasses(arrayOf(it))
+        }
+
+
+        println("${filter.size} classes were retransformed")
+    }
+
+    override fun initPlugin() {
+
     }
 
 
@@ -127,8 +134,11 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
+        if (!enabled) return null
         return loadedClassesRef.get()[className]?.let { classId ->
-            instrumenter(className, classId, initialBytes)
+            val instrumenter1 = instrumenter(className, classId, initialBytes)
+            println("$className instrumented")
+            instrumenter1
         }
     }
 

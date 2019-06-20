@@ -26,7 +26,8 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
                     }
 
                 }
-                nativePluginController.retransform()
+                if (pluginConfig.enabled)
+                    nativePluginController.retransform()
             }
             Family.GENERIC -> {
                 GenericNativePlugin(pluginFile).apply {
