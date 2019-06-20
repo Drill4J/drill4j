@@ -10,10 +10,10 @@ import com.epam.drill.common.MessageType
 import com.epam.drill.common.NativePlugin
 import com.epam.drill.common.PluginBeanDb
 import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.merge
 import com.epam.drill.common.stringify
 import com.epam.drill.common.toAgentInfo
 import com.epam.drill.common.toPluginBean
+import com.epam.drill.common.update
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -89,14 +89,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
 
     suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
-        asyncTransaction {
-            val agentInfoDb = AgentInfoDb.findById(agentId)
-            addLogger(StdOutSqlLogger)
-            agentInfoDb?.merge(au)
-        }
-        val byId = get(agentId)
-
-        byId?.apply {
+        get(agentId)?.apply {
             name = au.name
             groupName = au.group
             description = au.description
@@ -104,10 +97,17 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             buildAlias = au.buildVersions.firstOrNull { it.id == au.buildVersion }?.name!!
             buildVersions.replaceAll(au.buildVersions)
             status = au.status
+            update(this@AgentManager)
         }
-        agentStorage.update()
-        agentStorage.singleUpdate(agentId)
 
+    }
+
+    suspend fun update() {
+        agentStorage.update()
+    }
+
+    suspend fun singleUpdate(agentId: String) {
+        agentStorage.singleUpdate(agentId)
     }
 
     suspend fun put(agentInfo: AgentInfo, session: DefaultWebSocketSession) {
@@ -164,6 +164,9 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
     }
 
     suspend fun updateAgentConfig(agentInfo: AgentInfo) {
+
+        val enabled = agentInfo.status == AgentStatus.READY
+
         val session = agentSession(agentInfo.id)
         session!!.send(
             Frame.Text(
@@ -183,7 +186,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                                 plugins[pluginId]?.windowsPart?.readBytes()?.toList() ?: emptyList(),
                                 plugins[pluginId]?.linuxPar?.readBytes()?.toList() ?: emptyList()
                             ) else null,
-                        pb
+                        pb.copy().apply { this.enabled = pb.enabled && enabled }
                     )
 
                 session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))

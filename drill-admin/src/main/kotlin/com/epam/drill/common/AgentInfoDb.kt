@@ -1,17 +1,19 @@
 package com.epam.drill.common
 
-import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
 import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.dataclasses.AgentBuildVersions
 import com.epam.drill.dataclasses.toAgentBuildVersionJson
+import com.epam.drill.endpoints.AgentManager
+import com.epam.drill.service.asyncTransaction
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.Table
-import java.util.UUID
+import java.util.*
 
 
 object AgentInfos : IdTable<String>() {
@@ -101,24 +103,6 @@ fun AgentInfoDb.toAgentInfo() =
         buildVersions = this.buildVersions.map { it.toAgentBuildVersionJson() }.toMutableSet()
     )
 
-fun AgentInfoDb.merge(au: AgentInfoWebSocketSingle) {
-    this.name = au.name
-    this.groupName = au.group
-    this.description = au.description
-    this.buildVersion = au.buildVersion
-    this.buildAlias = au.buildAlias
-    this.status = au.status
-    au.buildVersions.forEach { (k, v) ->
-        this.buildVersions.forEach {
-            if (it.buildVersion == k) {
-                it.name = v
-            }
-
-        }
-
-    }
-}
-
 fun PluginBeanDb.toPluginBean() =
     PluginBean(
         id = this.pluginId,
@@ -129,3 +113,46 @@ fun PluginBeanDb.toPluginBean() =
         enabled = this.enabled,
         config = this.config
     )
+
+suspend fun AgentInfo.update(agentManager: AgentManager) {
+    val ai = this
+    asyncTransaction {
+        AgentInfoDb.findById(this@update.id)?.apply {
+            name = ai.name
+            groupName = ai.groupName
+            description = ai.description
+            status = ai.status
+            adminUrl = ai.adminUrl
+            buildVersion = ai.buildVersion
+            buildAlias = ai.buildAlias
+            plugins = SizedCollection(ai.plugins.map { plugin ->
+                PluginBeanDb.find { PluginBeans.pluginId eq plugin.id }.firstOrNull()?.fill(plugin)
+                    ?: PluginBeanDb.new {
+                        fill(plugin)
+                    }
+            })
+
+            buildVersions = SizedCollection(ai.buildVersions.map { bv ->
+                AgentBuildVersion.find { AgentBuildVersions.buildVersion eq bv.id }.firstOrNull()
+                    ?.fill(bv) ?: AgentBuildVersion.new { fill(bv) }
+            })
+        }
+    }
+    agentManager.update()
+    agentManager.singleUpdate(this.id)
+}
+
+fun PluginBeanDb.fill(plugin: PluginBean) = this.apply {
+    this.pluginId = plugin.id
+    this.name = plugin.name
+    this.description = plugin.description
+    this.type = plugin.type
+    this.family = plugin.family
+    this.enabled = plugin.enabled
+    this.config = plugin.config
+}
+
+fun AgentBuildVersion.fill(plugin: AgentBuildVersionJson) = this.apply {
+    this.buildVersion = plugin.id
+    this.name = plugin.name
+}

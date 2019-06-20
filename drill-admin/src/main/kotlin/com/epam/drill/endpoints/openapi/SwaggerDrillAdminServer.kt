@@ -1,8 +1,10 @@
 package com.epam.drill.endpoints.openapi
 
+import com.epam.drill.common.AgentStatus
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.stringify
+import com.epam.drill.common.update
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
@@ -84,17 +86,32 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
 
         authenticate {
             post<Routes.Api.Agent.AgentToggleStandby> { agent ->
-                agentManager.agentSession(agent.agentId)
-                    ?.send(
-                        Frame.Text(
-                            (Message.serializer() stringify Message(
-                                MessageType.MESSAGE,
-                                "agent/toggleStandBy",
-                                agent.agentId
-                            ))
-                        )
-                    )
-                call.respond(HttpStatusCode.OK, "toggle")
+                val agentId = agent.agentId
+                agentManager[agentId]?.let { agentInfo ->
+                    agentInfo.status = when (agentInfo.status) {
+                        AgentStatus.DISABLED -> AgentStatus.READY
+                        AgentStatus.READY -> AgentStatus.DISABLED
+                        else -> {
+                            return@let
+                        }
+                    }
+
+                    val agentSession = agentManager.agentSession(agentId)
+                    agentInfo.plugins.forEach {
+                        if (it.enabled) {
+                            agentSession?.send(
+                                Frame.Text(
+                                    Message.serializer() stringify
+                                            Message(MessageType.MESSAGE, "/plugins/togglePlugin", it.id)
+                                )
+                            )
+                        }
+                    }
+                    agentInfo.update(agentManager)
+
+
+                    call.respond(HttpStatusCode.OK, "toggled")
+                }
             }
         }
 
