@@ -89,14 +89,14 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
     private fun processAdminPart(
         adminPartFile: File, adminJar: JarFile
-    ): Class<AdminPluginPart>? {
+    ): Class<AdminPluginPart<*>>? {
         val sysClassLoader = ClassLoader.getSystemClassLoader()
         sysClassLoader.loadClassesFrom(adminPartFile.toURI().toURL())
         val entrySet = adminJar.entries().iterator().asSequence().toSet()
         val pluginApiClass =
             retrieveApiClass(AdminPluginPart::class.java, entrySet, sysClassLoader)
         @Suppress("UNCHECKED_CAST")
-        return pluginApiClass as Class<AdminPluginPart>?
+        return pluginApiClass as Class<AdminPluginPart<*>>?
     }
 
 }

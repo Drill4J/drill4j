@@ -7,5 +7,5 @@ import io.ktor.http.cio.websocket.DefaultWebSocketSession
 class AgentEntry(
     val agent: AgentInfo,
     val agentSession: DefaultWebSocketSession,
-    var instance: MutableMap<String, AdminPluginPart> = mutableMapOf()
+    var instance: MutableMap<String, AdminPluginPart<*>> = mutableMapOf()
 )

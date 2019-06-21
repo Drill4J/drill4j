@@ -129,6 +129,8 @@ class CoveragePlugin @JvmOverloads constructor(
                 instrContext.cancel(sessionId)
                 sendMessage(CoverageEventType.SESSION_CANCELLED, sessionId)
             }
+            else -> {
+            }
         }
 
     }

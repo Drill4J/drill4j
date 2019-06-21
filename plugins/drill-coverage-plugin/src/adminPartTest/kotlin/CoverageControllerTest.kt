@@ -150,6 +150,7 @@ class CoverageControllerTest {
 
 class WsServiceStub : WsService {
 
+    private val pluginStorage: MutableMap<String, Any> = mutableMapOf()
     val sent = mutableListOf<Pair<String, Any>>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
@@ -162,7 +163,12 @@ class WsServiceStub : WsService {
 
     override fun getPlWsSession() = setOf<String>()
 
-    override fun storeData(agentId: String, obj: Any) {}
+    override fun storeData(key: String, obj: Any) {
+        pluginStorage[key] = obj
+    }
+
+    override fun retrieveData(key: String) = pluginStorage[key]
+
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {}
 }
