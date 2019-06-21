@@ -26,11 +26,6 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
     private var scope: String = ""
 
-    override suspend fun doRawAction(agentInfo: AgentInfo, action: String) = doAction(
-        agentInfo, actionSerializer parse action
-    )
-
-
     override suspend fun doAction(agentInfo: AgentInfo, action: Action) {
         val agentState = getAgentStateBy(agentInfo)
         when (action.type) {

@@ -1,7 +1,7 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.DrillPluginFile
-import com.epam.drill.common.MessageWithId
+import com.epam.drill.common.PluginAction
 import com.epam.drill.common.PluginBean
 import com.epam.drill.common.parse
 import com.epam.drill.core.drillInstallationDir
@@ -60,7 +60,7 @@ fun topicRegister() =
 
         }
 
-        topic("/plugins/action").withGenericTopic(MessageWithId.serializer()) { m ->
+        topic("/plugins/action").withGenericTopic(PluginAction.serializer()) { m ->
             topicLogger.warn { "actionPluign event: message is ${m.message} " }
             val agentPluginPart = PluginManager[m.id]
             agentPluginPart?.doRawAction(m.message)

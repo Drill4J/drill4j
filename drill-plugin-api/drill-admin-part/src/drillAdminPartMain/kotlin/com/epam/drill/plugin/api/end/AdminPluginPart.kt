@@ -1,6 +1,7 @@
 package com.epam.drill.plugin.api.end
 
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.common.parse
 import com.epam.drill.plugin.api.DrillPlugin
 import com.epam.drill.plugin.api.message.DrillMessage
 
@@ -11,5 +12,7 @@ abstract class AdminPluginPart<A>(val sender: WsService, override val id: String
 
     abstract suspend fun doAction(agentInfo: AgentInfo, action: A)
 
-    abstract suspend fun doRawAction(agentInfo: AgentInfo, action: String)
+    suspend fun doRawAction(agentInfo: AgentInfo, action: String) = doAction(
+        agentInfo, actionSerializer parse action
+    )
 }

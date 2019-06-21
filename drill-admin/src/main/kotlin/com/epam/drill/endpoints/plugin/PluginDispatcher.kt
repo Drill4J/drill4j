@@ -1,11 +1,9 @@
 package com.epam.drill.endpoints.plugin
 
-
 import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
-import com.epam.drill.common.MessageWithId
-
+import com.epam.drill.common.PluginAction
 import com.epam.drill.common.PluginBean
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
@@ -85,28 +83,19 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 }
             }
             authenticate {
-                post<Routes.Api.Agent.PluginAction> { ll ->
+                post<Routes.Api.Agent.DispatchPluginAction> { ll ->
                     val action = call.receive<String>()
-
-                    val dp: DP? = plugins.plugins[ll.pluginId]
+                    val agentId = ll.agentId
+                    val pluginId = ll.pluginId
+                    val dp: DP? = plugins.plugins[pluginId]
                     val agentInfo = agentManager[ll.agentId]
-                    when {
-                        (dp == null) -> {
-                            call.respond(
-                                HttpStatusCode.NotFound,
-                                "plugin with id ${ll.pluginId} not found"
-                            )
-                        }
-                        (agentInfo == null) -> {
-                            call.respond(
-                                HttpStatusCode.NotFound,
-                                "agent with id ${ll.agentId} not found"
-                            )
-                        }
+                    val (statusCode, response) = when {
+                        (dp == null) -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
+                        (agentInfo == null) -> HttpStatusCode.NotFound to "agent with id $agentId not found"
                         else -> {
-                            val message = MessageWithId.serializer() stringify
-                                    MessageWithId(ll.pluginId, action)
-                            agentManager.agentSession(ll.agentId)
+                            val message = PluginAction.serializer() stringify
+                                    PluginAction(pluginId, action)
+                            agentManager.agentSession(agentId)
                                 ?.send(
                                     Frame.Text(
                                         Message.serializer() stringify Message(
@@ -116,15 +105,15 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                                         )
                                     )
                                 )
-
-                            val agentEntry = agentManager.full(ll.agentId)
+                            val agentEntry = agentManager.full(agentId)
                             val plugin: AdminPluginPart<*> = fillPluginInstance(
-                                agentEntry, dp.pluginClass, ll.pluginId
+                                agentEntry, dp.pluginClass, pluginId
                             )
                             plugin.doRawAction(agentInfo, action)
-                            call.respond(HttpStatusCode.OK)
+                            HttpStatusCode.OK to ""
                         }
                     }
+                    call.respond(statusCode, response)
                 }
             }
 
