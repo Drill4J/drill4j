@@ -66,6 +66,9 @@ jib {
     from {
         image = "gcr.io/distroless/java:8"
     }
+    to {
+        tags = mutableSetOf("latest")
+    }
     container {
         ports = listOf("8090", "5006")
         mainClass = appMainClassName
