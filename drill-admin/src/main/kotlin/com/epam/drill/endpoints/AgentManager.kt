@@ -55,6 +55,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                                     buildVersion = pBuildVersion
                                     name = ""
                                 })
+                        agentInfoDb.buildVersion = pBuildVersion
+                        agentInfoDb.buildAlias = ""
                     }
                 }
                 AgentStatus.NOT_REGISTERED -> {
