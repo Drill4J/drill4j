@@ -37,7 +37,7 @@ val wsLogger
     get() = DLogger("DrillWebsocket")
 
 @SharedImmutable
-val wsThread = Worker.start(true)
+private val wsThread = Worker.start(true)
 
 @SharedImmutable
 val sendWorker = Worker.start(true)

@@ -1,0 +1,2 @@
+headers = rdkafka.h
+linkerOpts.mingw = -llibrdkafka

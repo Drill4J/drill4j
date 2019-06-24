@@ -57,6 +57,7 @@ dependencies {
     implementation("org.postgresql:postgresql:9.4-1200-jdbc41")
     implementation("com.zaxxer:HikariCP:2.7.8")
     implementation("com.hazelcast:hazelcast:3.12")
+    implementation("io.github.embeddedkafka:embedded-kafka_2.12:+")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.testcontainers:testcontainers:1.11.1")
 

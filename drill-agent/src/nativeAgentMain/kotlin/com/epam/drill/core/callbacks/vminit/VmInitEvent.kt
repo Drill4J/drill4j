@@ -4,6 +4,7 @@ package com.epam.drill.core.callbacks.vminit
 
 import com.epam.drill.core.exec
 import com.epam.drill.core.ws.startWs
+import com.epam.drill.core.wsk.startKfk
 import com.epam.drill.logger.DLogger
 import com.epam.drill.logger.Logger
 import jvmapi.CallIntMethod
@@ -35,6 +36,7 @@ fun jvmtiEventVMInitEvent(env: CPointer<jvmtiEnvVar>?, jniEnv: CPointer<JNIEnvVa
     val buildVersion = CallIntMethod(initializer, calculateBuild)
     exec { agentConfig.buildVersion = buildVersion.toString() }
 
-    startWs()
+//    startWs()
+    startKfk()
 }
 

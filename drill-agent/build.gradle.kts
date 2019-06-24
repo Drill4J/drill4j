@@ -23,7 +23,7 @@ repositories {
     maven(url = "https://kotlin.bintray.com/kotlinx")
     maven(url = "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/")
 }
-
+val root = rootProject.rootDir
 kotlin {
     targets {
         createNativeTargetForCurrentOs("nativeAgent") {
@@ -32,10 +32,17 @@ kotlin {
                     sharedLib(
                         namePrefix = "drill-agent",
                         buildTypes = setOf(DEBUG)
-                    )
+                    ) {
+                        linkerOpts("-L${root.resolve("rdkafka-distr")}")
+                    }
                 }
                 val drillInternal by cinterops.creating
                 drillInternal.apply {
+                    includeDirs("${root.resolve("rdkafka-distr")}")
+                }
+              val sockets by cinterops.creating
+                sockets.apply {
+                    includeDirs("${root.resolve("rdkafka-distr")}")
                 }
             }
         }
@@ -91,9 +98,11 @@ kotlin {
                     else -> implementation("com.soywiz:korio-linuxx64:$korioVersion")
                 }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation(project(":nativeprojects:drill-kafka"))
                 implementation(project(":drill-common"))
                 implementation(project(":platformDependent"))
             }
@@ -147,6 +156,7 @@ tasks {
             copy {
                 println(file("subdep/$staticLibraryName").exists())
                 binary.linkerOpts.add("subdep/$staticLibraryName")
+                binary.linkerOpts.add("-L${root.resolve("rdkafka-distr")}")
                 from(staticLibraryName)
                 into(file("build/bin/nativeAgent/testDebugExecutable"))
             }

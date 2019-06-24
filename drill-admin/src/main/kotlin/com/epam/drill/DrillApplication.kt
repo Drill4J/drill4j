@@ -44,6 +44,8 @@ import io.ktor.response.respond
 import io.ktor.routing.routing
 import io.ktor.websocket.WebSockets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import net.manub.embeddedkafka.EmbeddedKafka
+import net.manub.embeddedkafka.EmbeddedKafkaConfig
 import org.kodein.di.Kodein
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.eagerSingleton
@@ -156,6 +158,10 @@ var kodeinConfig: Kodein.MainBuilder.() -> Unit = {
 @KtorExperimentalLocationsAPI
 @ExperimentalCoroutinesApi
 fun Application.module(): Kodein {
+    val config = EmbeddedKafkaConfig.defaultConfig()
+    println(config.kafkaPort())
+    println(config.zooKeeperPort())
+    EmbeddedKafka.start(config)
     return kodeinApplication {
         installation()
         routing {
