@@ -50,11 +50,13 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             when (agentInfoDb.status) {
                 AgentStatus.READY -> {
                     agentInfoDb.buildVersions.find { it.buildVersion == pBuildVersion } ?: run {
-                        agentInfoDb.buildVersions =
-                            SizedCollection(AgentBuildVersion.new {
-                                this.buildVersion = pBuildVersion
-                                this.name = ""
-                            })
+                        val res = mutableSetOf<AgentBuildVersion>()
+                        agentInfoDb.buildVersions.forEach { res.add(it) }
+                        res.add(AgentBuildVersion.new {
+                            buildVersion = pBuildVersion
+                            name = ""
+                        })
+                        agentInfoDb.buildVersions = SizedCollection(res)
                     }
                 }
                 AgentStatus.NOT_REGISTERED -> {
@@ -78,10 +80,10 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
             }.apply {
                 this.buildVersions =
-                    SizedCollection(AgentBuildVersion.new {
-                        this.buildVersion = pBuildVersion
-                        this.name = INITIAL_BUILD_ALIAS
-                    })
+                        SizedCollection(AgentBuildVersion.new {
+                            this.buildVersion = pBuildVersion
+                            this.name = INITIAL_BUILD_ALIAS
+                        })
             }.toAgentInfo()
         }
 
