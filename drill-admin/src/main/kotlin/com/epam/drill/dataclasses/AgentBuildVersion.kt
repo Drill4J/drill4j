@@ -7,7 +7,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
 
 object AgentBuildVersions : IntIdTable() {
-    val buildVersion = varchar("build_version", length = 100).uniqueIndex()
+    val buildVersion = varchar("build_version", length = 100)
     val name = varchar("name", length = 100)
 }
 
