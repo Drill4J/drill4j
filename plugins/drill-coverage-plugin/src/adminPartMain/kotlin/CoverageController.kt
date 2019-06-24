@@ -31,16 +31,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         when (action.type) {
             ActionType.CREATE_SCOPE -> {
                 scope = action.payload.scopeName
-                val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
-                val scopesUncasted = ws.retrieveData(storageKey)
-                @Suppress("UNCHECKED_CAST")
-                val scopes =
-                    if (scopesUncasted == null) mutableSetOf()
-                    else scopesUncasted as MutableSet<String>
-                scopes.add(scope)
-                ws.storeData(storageKey, scopes)
-                updateScope(agentInfo, scope)
-                updateScopesSet(agentInfo, scopes)
+                updateScopeData(agentInfo)
                 calculateCoverageData(agentInfo, agentState)
             }
             ActionType.DROP_SCOPE -> {
@@ -72,6 +63,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         val agentInfo = agentState.agentInfo
         when (parse.type) {
             CoverageEventType.INIT -> {
+                updateScopeData(agentInfo)
                 val initInfo = InitInfo.serializer() parse parse.data
                 agentState.init(initInfo)
                 println(initInfo.message) //log init message
@@ -265,6 +257,19 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             "/tests-usages",
             TestUsagesInfo.serializer().list stringify testUsages
         )
+    }
+
+    suspend fun updateScopeData(agentInfo: AgentInfo){
+        val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
+        val scopesUncasted = ws.retrieveData(storageKey)
+        @Suppress("UNCHECKED_CAST")
+        val scopes =
+            if (scopesUncasted == null) mutableSetOf()
+            else scopesUncasted as MutableSet<String>
+        scopes.add(scope)
+        ws.storeData(storageKey, scopes)
+        updateScope(agentInfo, scope)
+        updateScopesSet(agentInfo, scopes)
     }
 
     private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
