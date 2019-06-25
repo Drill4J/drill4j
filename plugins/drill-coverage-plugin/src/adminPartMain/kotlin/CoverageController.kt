@@ -20,9 +20,10 @@ import org.jacoco.core.data.ExecutionDataStore
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
+internal val agentStates = ConcurrentHashMap<String, AgentState>()
+
 @Suppress("unused")
 class CoverageController(private val ws: WsService, id: String) : AdminPluginPart<Action>(ws, id) {
-    internal val agentStates = ConcurrentHashMap<String, AgentState>()
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
     private var scope: String = ""
 
@@ -38,8 +39,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 scope = ""
                 calculateCoverageData(agentInfo, agentState)
             }
-            else -> {
-            }
+            else -> Unit
         }
     }
 
