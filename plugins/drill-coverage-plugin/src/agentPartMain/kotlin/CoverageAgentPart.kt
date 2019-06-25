@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
-
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
 
@@ -114,7 +113,8 @@ class CoveragePlugin @JvmOverloads constructor(
                             id = datum.id,
                             className = datum.name,
                             probes = datum.probes.toList(),
-                            testName = datum.testName
+                            testName = datum.testName,
+                            testType = TestType.convert(datum.testType ?: "")
                         )
                     }
                     //send data in chunk of 10

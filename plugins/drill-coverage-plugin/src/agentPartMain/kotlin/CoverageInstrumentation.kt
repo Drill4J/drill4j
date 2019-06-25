@@ -29,7 +29,8 @@ class ExecDatum(
     val id: Long,
     val name: String,
     val probes: BooleanArray,
-    val testName: String? = null
+    val testName: String? = null,
+    val testType: String? = null
 )
 
 interface SessionProbeArrayProvider : ProbeArrayProvider {
@@ -60,7 +61,8 @@ class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
             id = id,
             name = name,
             probes = BooleanArray(probeCount),
-            testName = testName
+            testName = testName,
+            testType = instrContext["drill-test-type"]
         )
     }.probes
 

@@ -45,5 +45,22 @@ data class ExDataTemp(
     val id: Long,
     val className: String,
     val probes: List<Boolean>,
-    val testName: String? = null
+    val testName: String? = null,
+    val testType: TestType
 )
+
+enum class TestType {
+    AUTO,
+    MANUAL,
+    PERFORMANCE,
+    UNDEFINED;
+
+    companion object {
+        fun convert(input: String) =
+            try {
+                TestType.valueOf(input)
+            } catch (e: IllegalArgumentException) {
+                UNDEFINED
+            }
+    }
+}
