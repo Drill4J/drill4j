@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  drill-admin:
+    environment:
+      - DB_DRIVER=postgresql
+      - POSTGRES_HOST=postgresdb
+      - POSTGRES_PORT=5432
+    depends_on:
+      - postgresdb
+
+  postgresdb:
+    image:
+      postgres:11.3
+    restart:
+      always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=drill_base
+    networks:
+      - drill4j-dev-network
