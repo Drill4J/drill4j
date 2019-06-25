@@ -110,7 +110,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         return ""
     }
 
-    private suspend fun CoverageController.calculateCoverageData(
+    suspend fun calculateCoverageData(
         agentInfo: AgentInfo,
         agentState: AgentState
     ) {

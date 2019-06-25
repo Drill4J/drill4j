@@ -12,6 +12,9 @@ data class DrillRequest(
 typealias RawHttpRequest = String
 
 const val COOKIE_HEADER_NAME = "cookie"
+const val DRILL_ADDITIONAL_CONFIG = "drill-additional-config"
+const val HOST = "host"
+const val DRILL_SESSION_ID = "drill-session-id"
 
 fun parseHttpRequest(request: RawHttpRequest): HttpRequest {
     val reader = request.lineSequence()
@@ -60,9 +63,9 @@ fun HttpRequest.toRawRequestString() =
 fun HttpRequest.toDrillRequest(): DrillRequest {
     val optimizedHeaders = this.headers.mapKeys { it.key.toLowerCase() }
     return DrillRequest(
-        optimizedHeaders["drill-session-id"] ?: this.cookies["drill-session-id"],
-        this.headers["host"],
-        this.headers["drill-additional-config"],
+        optimizedHeaders[DRILL_SESSION_ID] ?: this.cookies[DRILL_SESSION_ID],
+        this.headers[HOST],
+        this.headers[DRILL_ADDITIONAL_CONFIG],
         optimizedHeaders
     )
 }

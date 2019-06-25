@@ -45,5 +45,20 @@ data class ExDataTemp(
     val id: Long,
     val className: String,
     val probes: List<Boolean>,
-    val testName: String? = null
+    val testName: String? = null,
+    val testType: TestType
 )
+
+enum class TestType {
+    AUTO,
+    MANUAL,
+    PERFORMANCE,
+    UNDEFINED;
+
+    companion object {
+        operator fun get(input: String?) = when (input) {
+            null -> UNDEFINED
+            else -> values().firstOrNull { it.name == input } ?: UNDEFINED
+        }
+    }
+}
