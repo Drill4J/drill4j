@@ -25,6 +25,9 @@ typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
  */
 typealias DrillInstrumenter = (String, Long, ByteArray) -> ByteArray
 
+const val DRILL_TEST_TYPE = "drill-test-type"
+const val DRIlL_TEST_NAME = "drill-test-name"
+
 class ExecDatum(
     val id: Long,
     val name: String,
@@ -62,7 +65,7 @@ class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
             name = name,
             probes = BooleanArray(probeCount),
             testName = testName,
-            testType = instrContext["drill-test-type"]
+            testType = instrContext[DRILL_TEST_TYPE]
         )
     }.probes
 
@@ -81,7 +84,7 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         val sessionId = instrContext()
         val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
         return if (sessionRuntime != null) {
-            val testName = instrContext["drill-test-name"]
+            val testName = instrContext[DRIlL_TEST_NAME]
             val runtime = if (testName != null) sessionRuntime[testName] else sessionRuntime
             runtime(id, name, probeCount)
         } else BooleanArray(probeCount)
