@@ -1,5 +1,7 @@
 package com.epam.drill.plugins.coverage
 
+import kotlinx.serialization.Serializable
+
 
 @kotlinx.serialization.Serializable
 data class CoverConfig(
@@ -18,7 +20,7 @@ data class CoverageAction(
 data class Action(val type: ActionType, val payload: CoverageAction)
 
 enum class ActionType {
-    START, STOP, CANCEL, CREATE_SCOPE, DROP_SCOPE
+    START, STOP, CANCEL, CREATE_SCOPE, CLOSE_SCOPE, DROP_SCOPE, MANAGE_SCOPE
 }
 
 @kotlinx.serialization.Serializable
@@ -62,3 +64,15 @@ enum class TestType {
         }
     }
 }
+
+data class Scope(
+    val name: String,
+    val probes: MutableSet<ExDataTemp> = mutableSetOf(),
+    var accounted: Boolean = true
+)
+
+@Serializable
+data class ActiveScope(
+    val name: String,
+    val accounted: Boolean
+)

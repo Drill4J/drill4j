@@ -7,5 +7,6 @@ interface WsService {
     fun getPlWsSession(): Set<String>
     fun storeData(key: String, obj: Any)
     fun retrieveData(key: String): Any?
+    fun retrieveKeysByPrefix(prefix: String): List<String>
     fun getEntityBy(agentId: String, clazz: Class<Any>)
 }

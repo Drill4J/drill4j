@@ -37,6 +37,17 @@ data class AgentInfo(
     }
 }
 
+fun emptyAgentInfo() = AgentInfo(
+    "",
+    "",
+    AgentStatus.DISABLED,
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+)
 
 @Serializable
 data class AgentBuildVersionJson(val id: String, var name: String)

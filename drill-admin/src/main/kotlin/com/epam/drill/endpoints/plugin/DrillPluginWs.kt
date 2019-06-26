@@ -66,6 +66,9 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
     override fun retrieveData(key: String) = pluginStorage[key]
 
+    override fun retrieveKeysByPrefix(prefix: String): List<String> =
+        pluginStorage.keys.filter { it.startsWith(prefix) }
+
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
