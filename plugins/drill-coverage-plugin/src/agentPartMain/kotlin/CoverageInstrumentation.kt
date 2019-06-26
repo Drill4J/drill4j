@@ -50,14 +50,16 @@ interface InstrContext : () -> String? {
  * A container for session runtime data and optionally runtime data of tests
  * TODO ad hoc implementation, rewrite to something more descent
  */
-class ExecRuntime(val testName: String? = null) : ProbeArrayProvider {
+class ExecRuntime(
+    private val instrContext: InstrContext,
+    val testName: String? = null) : ProbeArrayProvider {
 
     val execData = ConcurrentHashMap<Long, ExecDatum>()
 
     val testRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
     operator fun get(testName: String): ExecRuntime =
-        testRuntimes.getOrPut(testName) { ExecRuntime(testName) }
+        testRuntimes.getOrPut(testName) { ExecRuntime(instrContext, testName) }
 
     override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
         ExecDatum(
@@ -91,7 +93,7 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
     }
 
     override fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = ExecRuntime()
+        sessionRuntimes[sessionId] = ExecRuntime(instrContext)
     }
 
     override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()

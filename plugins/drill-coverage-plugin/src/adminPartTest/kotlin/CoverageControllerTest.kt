@@ -37,7 +37,7 @@ class CoverageControllerTest {
 
     @Test
     fun `should have empty state before init`() {
-        assertTrue { coverageController.agentStates.isEmpty() }
+        assertTrue { agentStates.isEmpty() }
     }
 
     @Test
@@ -47,8 +47,8 @@ class CoverageControllerTest {
 
         sendMessage(message)
 
-        assertEquals(1, coverageController.agentStates.count())
-        val agentData = coverageController.agentStates[agentInfo.id]?.dataRef?.get()
+        assertEquals(1, agentStates.count())
+        val agentData = agentStates[agentInfo.id]?.dataRef?.get()
         assertTrue { agentData is ClassDataBuilder && agentData.count == initInfo.classesCount }
     }
 
@@ -60,7 +60,7 @@ class CoverageControllerTest {
         sendInit(dummyClass)
         sendClass(dummyClass)
 
-        coverageController.agentStates[agentInfo.id]!!.run {
+        agentStates[agentInfo.id]!!.run {
             val agentData = dataRef.get() as ClassDataBuilder
             val (name, bytes) = agentData.classData.poll()!!
             assertEquals(dummyClass.path, name)
