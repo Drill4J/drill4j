@@ -116,13 +116,18 @@ tasks {
         }
     }
 
-    register<Copy>("buildNativePluginDev") {
+    val buildToDistr by registering(Copy::class) {
         group = "app"
         dependsOn("build")
         from(distJar) {
             into("adminStorage")
         }
+        destinationDir = project.rootProject.file("distr")
+    }
 
-        destinationDir = file("../../distr")
+    //TODO Remove after changes in CI/CD
+    register<Copy>("buildNativePluginDev") {
+        group = "app"
+        dependsOn(buildToDistr)
     }
 }
