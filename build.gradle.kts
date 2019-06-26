@@ -14,7 +14,16 @@ tasks {
         dependsOn(gradle.includedBuild("integration-tests").task(":test"))
         group = "application"
     }
+
+    val cleanDistr by registering(Delete::class) {
+        delete("distr")
+    }
+    
+    named("clean") {
+        dependsOn(cleanDistr)
+    }
 }
+
 allprojects {
     tasks.withType<KotlinCompile> {
         kotlinOptions.allWarningsAsErrors = true
