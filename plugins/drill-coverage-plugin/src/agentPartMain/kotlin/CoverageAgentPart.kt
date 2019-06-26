@@ -31,20 +31,15 @@ class CoveragePlugin @JvmOverloads constructor(
 
     private val loadedClassesRef = AtomicReference<Map<String, Long?>>(emptyMap())
 
-    override fun doRawAction(action: String) {
-        doAction(actionSerializer parse action)
-    }
-
     override fun on() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
-        val classPath1 = ClassPath()
-        val scanItPlease = classPath1.scanItPlease(ClassLoader.getSystemClassLoader())
-        val filter = scanItPlease.filter { (k, _) ->
-            config.pathPrefixes.any {
-                k.removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
-                    .removeSuffix(".class").startsWith(it)
+        val scanItPlease = ClassPath().scanItPlease(ClassLoader.getSystemClassLoader())
+        val filter = scanItPlease
+            .filter { (classPath, _) ->
+                isTopLevelClass(classPath) && config.pathPrefixes.any { packageName ->
+                    isAllowedClass(classPath, packageName)
+                }
             }
-        }
 
         val initInfo = InitInfo(filter.count(), initializingMessage)
         sendMessage(CoverageEventType.INIT, InitInfo.serializer() stringify initInfo)
@@ -72,23 +67,29 @@ class CoveragePlugin @JvmOverloads constructor(
         retransform()
     }
 
+    override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
+        if (!enabled) return null
+        return loadedClassesRef.get()[className]?.let { classId ->
+            instrumenter(className, classId, initialBytes)
+        }
+    }
+
     override fun destroyPlugin(unloadReason: UnloadReason) {
 
     }
 
     override fun retransform() {
-        val filter = DrillRequest.GetAllLoadedClasses().filter { it.`package` != null }.filter { cla ->
-            config.pathPrefixes.any {
-                cla.`package`.name //fix from Spring Boot Executable jar
-                    .replace(".", "/").startsWith(it)
+        val filter = DrillRequest.GetAllLoadedClasses()
+            .filter { cl -> cl.`package` != null && isTopLevelClass(cl.name) } // only top level classes
+            .filter { cla ->
+                val bytecodePackageView = cla.`package`.name.replace(".", "/")
+                config.pathPrefixes.any { packageName ->
+                    isAllowedClass(bytecodePackageView, packageName)
+                }
             }
-        }
-        filter.forEach {
-            DrillRequest.RetransformClasses(arrayOf(it))
-        }
+        DrillRequest.RetransformClasses(filter.toTypedArray())
 
-
-        println("${filter.size} classes were retransformed")
+        println("${filter.size} classes were re-transformed")
     }
 
     override fun initPlugin() {
@@ -134,13 +135,8 @@ class CoveragePlugin @JvmOverloads constructor(
 
     }
 
-    override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
-        if (!enabled) return null
-        return loadedClassesRef.get()[className]?.let { classId ->
-            val instrumenter1 = instrumenter(className, classId, initialBytes)
-            println("$className instrumented")
-            instrumenter1
-        }
+    override fun doRawAction(action: String) {
+        doAction(actionSerializer parse action)
     }
 
     private fun sendClass(classBytes: ClassBytes) {

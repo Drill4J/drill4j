@@ -19,15 +19,13 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
         val pluginConfig = pluginFile.pluginConfig()
         when (pluginConfig.family) {
             Family.INSTRUMENTATION -> {
-                val nativePluginController = InstrumentationNativePlugin(pluginFile).apply {
+                InstrumentationNativePlugin(pluginFile).apply {
                     connect()
                     exec {
                         pstorage[this@apply.id] = this@apply
                     }
 
                 }
-                if (pluginConfig.enabled)
-                    nativePluginController.retransform()
             }
             Family.GENERIC -> {
                 GenericNativePlugin(pluginFile).apply {
