@@ -89,12 +89,16 @@ tasks {
         from(pluginConfigJson)
     }
 
-    register<Copy>("buildCoveragePluginDev") {
+    val buildToDistr by registering(Copy::class) {
         group = "app"
         from(distJar) {
             into("adminStorage")
         }
+        destinationDir = project.rootProject.file("distr")
+    }
 
-        destinationDir = file("../../distr")
+    register<Copy>("buildCoveragePluginDev") {
+        group = "app"
+        dependsOn(buildToDistr)
     }
 }
