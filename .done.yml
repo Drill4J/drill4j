@@ -1,0 +1,8 @@
+pipeline:
+  build:
+    image: gradle:5.4.1-jdk8
+    environment:
+      KONAN_DATA_DIR: /home/gradle/.gradle/konan
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+    commands:
+      - gradle build check
