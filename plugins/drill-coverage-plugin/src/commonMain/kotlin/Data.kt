@@ -20,7 +20,7 @@ data class CoverageAction(
 data class Action(val type: ActionType, val payload: CoverageAction)
 
 enum class ActionType {
-    START, STOP, CANCEL, CREATE_SCOPE, CLOSE_SCOPE, DROP_SCOPE, MANAGE_SCOPE
+    START, STOP, CANCEL, CREATE_SCOPE, CLOSE_SCOPE, DROP_SCOPE, TOGGLE_SCOPE, CHANGE_SCOPE
 }
 
 @kotlinx.serialization.Serializable
@@ -72,7 +72,16 @@ data class Scope(
 )
 
 @Serializable
-data class ActiveScope(
-    val name: String,
-    val accounted: Boolean
+data class ScopeInfo(
+    var name: String,
+    var accounted: Boolean,
+    var coverage: Double? = null,
+    var infosByTestType: List<InfoByTestType> = emptyList()
+)
+
+@Serializable
+data class InfoByTestType(
+    val type: TestType,
+    val coverage: Double?,
+    val assocTests: Int
 )
