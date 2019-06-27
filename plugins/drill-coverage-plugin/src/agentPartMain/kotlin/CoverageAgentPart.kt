@@ -13,7 +13,7 @@ import kotlinx.serialization.list
 import org.jacoco.core.internal.data.CRC64
 import java.util.concurrent.atomic.AtomicReference
 
-val instrContext = object : InstrContext {
+private val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }

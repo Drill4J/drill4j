@@ -51,15 +51,18 @@ interface InstrContext : () -> String? {
  * TODO ad hoc implementation, rewrite to something more descent
  */
 class ExecRuntime(
-    private val instrContext: InstrContext,
-    val testName: String? = null) : ProbeArrayProvider {
+    val testName: String? = null,
+    val testType: String? = null
+) : ProbeArrayProvider {
 
     val execData = ConcurrentHashMap<Long, ExecDatum>()
 
     val testRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
-    operator fun get(testName: String): ExecRuntime =
-        testRuntimes.getOrPut(testName) { ExecRuntime(instrContext, testName) }
+    fun with(testName: String?, testType: String?): ExecRuntime = when(testName) {
+        null -> this
+        else -> testRuntimes.getOrPut(testName) { ExecRuntime(testName, testType) }
+    }
 
     override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
         ExecDatum(
@@ -67,7 +70,7 @@ class ExecRuntime(
             name = name,
             probes = BooleanArray(probeCount),
             testName = testName,
-            testType = instrContext[DRILL_TEST_TYPE]
+            testType = testType
         )
     }.probes
 
@@ -87,13 +90,14 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
         return if (sessionRuntime != null) {
             val testName = instrContext[DRIlL_TEST_NAME]
-            val runtime = if (testName != null) sessionRuntime[testName] else sessionRuntime
+            val testType = instrContext[DRILL_TEST_TYPE]
+            val runtime =  sessionRuntime.with(testName, testType)
             runtime(id, name, probeCount)
         } else BooleanArray(probeCount)
     }
 
     override fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = ExecRuntime(instrContext)
+        sessionRuntimes[sessionId] = ExecRuntime()
     }
 
     override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
