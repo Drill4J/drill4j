@@ -5,4 +5,4 @@ pipeline:
       KONAN_DATA_DIR: /home/gradle/.gradle/konan
       GRADLE_OPTS: -Dorg.gradle.daemon=false
     commands:
-      - gradle build check
+      - gradle build check buildCoveragePluginDev runIntegrationTests

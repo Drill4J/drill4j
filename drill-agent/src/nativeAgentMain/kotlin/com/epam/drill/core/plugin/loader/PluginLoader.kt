@@ -7,6 +7,13 @@ import com.epam.drill.core.exec
 import com.epam.drill.jvmapi.AttachNativeThreadToJvm
 import com.epam.drill.logger.DLogger
 import com.epam.drill.pluginConfig
+import jvmapi.GetMethodID
+import jvmapi.NewGlobalRef
+import jvmapi.NewObjectA
+import jvmapi.NewStringUTF
+import jvmapi.jobject
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.nativeHeap
 
 val plLogger
     get() = DLogger("plLogger")
@@ -17,19 +24,27 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
     pluginFile.addPluginsToSystemClassLoader()
     try {
         val pluginConfig = pluginFile.pluginConfig()
+        val pluginApiClass = pluginFile.retrievePluginApiClass()
+        val userPlugin: jobject =
+            NewGlobalRef(
+                NewObjectA(
+                    pluginApiClass,
+                    GetMethodID(pluginApiClass, "<init>", "(Ljava/lang/String;)V"),
+                    nativeHeap.allocArray(1.toLong()) {
+                        l = NewStringUTF(pluginConfig.id)
+                    })
+            )!!
+
         when (pluginConfig.family) {
             Family.INSTRUMENTATION -> {
-                InstrumentationNativePlugin(pluginFile).apply {
-                    connect()
-                    exec {
-                        pstorage[this@apply.id] = this@apply
-                    }
-                    retransform()
+                val inst = InstrumentationNativePlugin(pluginApiClass, userPlugin, pluginConfig)
+                exec {
+                    pstorage[pluginConfig.id] = inst
                 }
+                inst.retransform()
             }
             Family.GENERIC -> {
-                GenericNativePlugin(pluginFile).apply {
-                    connect()
+                GenericNativePlugin(pluginApiClass, userPlugin, pluginConfig).apply {
                     exec {
                         pstorage[this@apply.id] = this@apply
                     }
@@ -40,7 +55,7 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
         when (ex) {
             is PluginLoadException ->
                 plLogger.warn { "Can't load the plugin file ${pluginFile.absolutePath}. Error: ${ex.message}" }
-            else -> plLogger.error { "something terrible happened at the time of processing of ${pluginFile.absolutePath} jar... Error: ${ex.message}" }
+            else -> plLogger.error { "something terrible happened at the time of processing of ${pluginFile.absolutePath} jar... Error: ${ex.message} ${ex.printStackTrace()}" }
         }
     }
 }

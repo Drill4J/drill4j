@@ -1,26 +1,19 @@
 package com.epam.drill.core.plugin.loader
 
-import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.PluginBean
 import com.epam.drill.core.plugin.pluginConfigById
-import com.epam.drill.hasNativePart
 import com.epam.drill.jvmapi.jniName
 import com.epam.drill.jvmapi.jniParamName
 import com.epam.drill.logger.DLogger
-import com.epam.drill.nativePart
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.PluginRepresenter
 import com.epam.drill.plugin.api.processing.UnloadReason
-import com.epam.drill.pluginConfig
-import com.epam.drill.pluginId
 import jvmapi.CallVoidMethod
 import jvmapi.CallVoidMethodA
 import jvmapi.FindClass
 import jvmapi.GetMethodID
 import jvmapi.GetStaticFieldID
 import jvmapi.GetStaticObjectField
-import jvmapi.NewGlobalRef
-import jvmapi.NewObjectA
 import jvmapi.NewStringUTF
 import jvmapi.jclass
 import jvmapi.jobject
@@ -28,8 +21,20 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.nativeHeap
 
-@ExperimentalUnsignedTypes
-open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresenter() {
+@Suppress("LeakingThis")
+open class GenericNativePlugin(
+    val pluginApiClass: jclass,
+    val userPlugin: jobject,
+    pluginConfig: PluginBean
+) : PluginRepresenter() {
+
+    init {
+        updateRawConfig(pluginConfig)
+        javaEnabled(pluginConfig.enabled)
+        val agentIsEnabled = true
+        load(pluginConfig.enabled && agentIsEnabled)
+    }
+
     override fun doRawAction(action: String) {
         CallVoidMethod(
             userPlugin,
@@ -41,9 +46,7 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
     private val natPluginLogger
         get() = DLogger("NativePluginController")
 
-    lateinit var pluginApiClass: jclass
-    private lateinit var pluginConfig: PluginBean
-    override val id: String = pf.pluginId()
+    override val id: String = pluginConfig.id
 
     override suspend fun isEnabled() = pluginConfigById(id).enabled
 
@@ -64,24 +67,6 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
             })
     }
 
-    val userPlugin: jobject? by lazy {
-        NewGlobalRef(
-            NewObjectA(
-                pluginApiClass,
-                GetMethodID(pluginApiClass, "<init>", "(Ljava/lang/String;)V"),
-                nativeHeap.allocArray(1.toLong()) {
-                    l = NewStringUTF(id)
-                })
-        )
-    }
-
-    open suspend fun connect() {
-        pluginApiClass = pf.retrievePluginApiClass()
-        pluginConfig = pf.pluginConfig()
-        updateRawConfig(pluginConfig)
-        javaEnabled(pluginConfig.enabled)
-        fullLoad(pf)
-    }
 
     override fun on() {
         natPluginLogger.debug { "on" }
@@ -126,38 +111,6 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
         np?.unload(unloadReason)
     }
 
-    @ExperimentalUnsignedTypes
-    suspend fun fullLoad(jar: DrillPluginFile) {
-        //fixme move to global?
-        val agentIsEnabled = true
-        load(pluginConfig.enabled && agentIsEnabled)
-        initNativePart(jar)
-        try {
-            np?.updateRawConfig(pluginConfig)
-        } catch (ex: Exception) {
-            natPluginLogger.error { "Can't update the config for $id. Config: $pluginConfig" }
-        }
-        try {
-            np?.load(pluginConfig.enabled && agentIsEnabled)
-        } catch (ex: Exception) {
-            natPluginLogger.error { "Can't Load the native part for $id. Immedeatly: ${pluginConfig.enabled && agentIsEnabled}" }
-        }
-    }
-
-    private suspend fun initNativePart(jar: DrillPluginFile) {
-        if (jar.hasNativePart())
-            CallVoidMethodA(
-                userPlugin,
-                GetMethodID(pluginApiClass, "init", "(Ljava/lang/String;)V"),
-                nativeHeap.allocArray(1.toLong()) {
-
-                    val newStringUTF =
-                        NewStringUTF(jar.nativePart().absolutePath)
-                    l = newStringUTF
-
-                })
-    }
-
     override fun updateRawConfig(config: PluginBean) {
         notifyJavaPart(config)
     }
@@ -170,9 +123,6 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
                 val newStringUTF =
                     NewStringUTF(config.config)
                 l = newStringUTF
-
             })
     }
-
-
 }
