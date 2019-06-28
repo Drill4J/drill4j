@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
 @Suppress("unused")
-class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: String) :
-    AdminPluginPart<Action>(ws, agentInfo, id) {
+class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
+    AdminPluginPart<Action>(sender, agentInfo, id) {
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
     private var scopeName: String = ""
 
@@ -163,19 +163,19 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
 
     suspend fun updateScopeData() {
         val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
-        val scopesUncasted = ws.retrieveData(storageKey)
+        val scopesUncasted = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
         val scopes =
             if (scopesUncasted == null) mutableSetOf()
             else scopesUncasted as MutableSet<String>
         scopes.add(scopeName)
-        ws.storeData(storageKey, scopes)
+        sender.storeData(storageKey, scopes)
         updateScope()
         updateScopesSet(scopes)
     }
 
     private suspend fun updateGatheringState(state: Boolean) {
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/collection-state",
             GatheringState.serializer() stringify GatheringState(state)
@@ -183,7 +183,7 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
     }
 
     private suspend fun updateScope() {
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/active-scope",
             scopeName
@@ -191,7 +191,7 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
     }
 
     private suspend fun updateScopesSet(scopes: Set<String>) {
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/scopes",
             String.serializer().set stringify scopes
@@ -208,7 +208,7 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
     fun getScopeOrNull(
         storageKey: String = "${agentInfo.id}-${agentInfo.buildVersion}-$scopeName"
     ): Scope? {
-        val scopeUncasted = ws.retrieveData(storageKey)
+        val scopeUncasted = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
         return when (scopeUncasted) {
             null -> null
@@ -221,7 +221,7 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
         return when (scope) {
             null -> {
                 val storeData = Scope(scopeName)
-                ws.storeData("${agentInfo.id}-${agentInfo.buildVersion}-$scopeName", storeData)
+                sender.storeData("${agentInfo.id}-${agentInfo.buildVersion}-$scopeName", storeData)
                 return storeData
             }
             else -> scope
@@ -241,33 +241,33 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
-            ws.convertAndSend(
+            sender.convertAndSend(
                 agentInfo,
                 "/${prefix}associated-tests",
                 AssociatedTests.serializer().list stringify cis.associatedTests
             )
         }
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/${prefix}coverage",
             CoverageBlock.serializer() stringify cis.coverageBlock
         )
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/${prefix}coverage-new",
             NewCoverageBlock.serializer() stringify cis.newCoverageBlock
         )
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/${prefix}new-methods",
             SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
         )
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/${prefix}coverage-by-packages",
             JavaPackageCoverage.serializer().list stringify cis.packageCoverage
         )
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/${prefix}tests-usages",
             TestUsagesInfo.serializer().list stringify cis.testUsages
