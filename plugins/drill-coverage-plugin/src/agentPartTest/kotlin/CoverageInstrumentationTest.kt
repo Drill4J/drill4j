@@ -9,14 +9,17 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-
 class InstrumentationTests {
 
     companion object {
         const val sessionId = "xxx"
 
         val instrContextStub: InstrContext = object : InstrContext {
-            override fun get(key: String): String? = null
+            override fun get(key: String): String? = when (key) {
+                DRILL_TEST_TYPE -> "MANUAL"
+                DRIlL_TEST_NAME -> "test"
+                else -> null
+            }
 
             override fun invoke(): String? = sessionId
 
@@ -34,8 +37,8 @@ class InstrumentationTests {
     val targetClass = TestTarget::class.java
 
     val originalBytes = targetClass.readBytes()
-    
-    val originalClassId = CRC64.classId(originalBytes) 
+
+    val originalClassId = CRC64.classId(originalBytes)
 
     @Test
     fun `instrumented class should be larger the the original`() {
@@ -60,6 +63,49 @@ class InstrumentationTests {
         val counter = coverage.instructionCounter
         assertEquals(27, counter.coveredCount)
         assertEquals(2, counter.missedCount)
+    }
+
+    @Test
+    fun `should transform any of stringified TestType values to TestType`() {
+        val autoFromString = TestType["AUTO"]
+        assertEquals(TestType.AUTO, autoFromString)
+        val manualFromString = TestType["MANUAL"]
+        assertEquals(TestType.MANUAL, manualFromString)
+        val performanceFromString = TestType["PERFORMANCE"]
+        assertEquals(TestType.PERFORMANCE, performanceFromString)
+        val undefinedFromString = TestType["UNDEFINED"]
+        assertEquals(TestType.UNDEFINED, undefinedFromString)
+    }
+
+    @Test
+    fun `should transform any unexpected string to undefined test type`() {
+        val nullTestType = TestType[null]
+        assertEquals(TestType.UNDEFINED, nullTestType)
+        val trashTestType = TestType["asdf"]
+        assertEquals(TestType.UNDEFINED, trashTestType)
+    }
+
+    @Test
+    fun `should associate execution data with test name and type gathered from request headers`() {
+        addInstrumentedClass()
+        val instrumentedClass = memoryClassLoader.loadClass(targetClass.name)
+        TestProbeArrayProvider.start(sessionId)
+        val runnable = instrumentedClass.newInstance() as Runnable
+        runnable.run()
+        val runtimeData = TestProbeArrayProvider.stop(sessionId)
+        val transformedForAdminPart = runtimeData!!.map { datum ->
+            ExDataTemp(
+                id = datum.id,
+                className = datum.name,
+                probes = datum.probes.toList(),
+                testName = datum.testName,
+                testType = TestType[datum.testType]
+            )
+        }
+        transformedForAdminPart.forEach {
+            assertEquals(TestType.MANUAL, it.testType)
+            assertEquals("test", it.testName)
+        }
     }
 
     private fun addInstrumentedClass() {
