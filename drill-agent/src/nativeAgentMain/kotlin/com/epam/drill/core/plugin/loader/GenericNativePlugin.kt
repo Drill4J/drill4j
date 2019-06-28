@@ -100,7 +100,6 @@ open class GenericNativePlugin(private val pf: DrillPluginFile) : PluginRepresen
     }
 
 
-    @ExperimentalUnsignedTypes
     override fun load(onImmediately: Boolean) {
         CallVoidMethodA(
             userPlugin,

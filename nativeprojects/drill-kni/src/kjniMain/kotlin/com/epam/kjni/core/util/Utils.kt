@@ -1,7 +1,14 @@
 package com.epam.kjni.core.util
 
 import com.epam.kjni.core.Synthetic
-import jvmapi.*
+import jvmapi.GetMethodID
+import jvmapi.GetStringUTFChars
+import jvmapi.NewStringUTF
+import jvmapi.jclass
+import jvmapi.jmethodID
+import jvmapi.jobject
+import jvmapi.jstring
+import jvmapi.jvalue
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.nativeHeap
@@ -26,7 +33,6 @@ abstract class JavaMethod(
 
 }
 
-@ExperimentalUnsignedTypes
 fun toJObjectArray(raw: Array<out X>): CArrayPointer<jvalue> {
     return nativeHeap.allocArray(raw.size) { index ->
         val it = raw[index]
@@ -113,7 +119,7 @@ class JavaConstructor(
 ) {
 
     fun getMethod(): jmethodID? {
-        return GetMethodID( javaClass, methodName, methodSignature)
+        return GetMethodID(javaClass, methodName, methodSignature)
     }
 }
 

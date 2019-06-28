@@ -23,7 +23,6 @@ import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.Frame
-import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.get
 import io.ktor.locations.patch
 import io.ktor.locations.post
@@ -35,7 +34,6 @@ import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.generic.instance
 
-@KtorExperimentalLocationsAPI
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val plugins: Plugins by instance()

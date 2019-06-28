@@ -145,7 +145,6 @@ tasks {
     "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
         doFirst {
             copy {
-                println(file("subdep/$staticLibraryName").exists())
                 binary.linkerOpts.add("subdep/$staticLibraryName")
                 from(staticLibraryName)
                 into(file("build/bin/nativeAgent/testDebugExecutable"))

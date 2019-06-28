@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
     base
@@ -18,7 +19,7 @@ tasks {
     val cleanDistr by registering(Delete::class) {
         delete("distr")
     }
-    
+
     named("clean") {
         dependsOn(cleanDistr)
     }
@@ -26,6 +27,9 @@ tasks {
 
 allprojects {
     tasks.withType<KotlinCompile> {
+        kotlinOptions.allWarningsAsErrors = true
+    }
+    tasks.withType<KotlinNativeCompile> {
         kotlinOptions.allWarningsAsErrors = true
     }
 }

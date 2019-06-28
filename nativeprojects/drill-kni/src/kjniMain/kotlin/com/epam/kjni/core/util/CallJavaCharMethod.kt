@@ -12,7 +12,6 @@ class CallJavaCharMethod(
     methodName: String,
     methodSignature: String
 ) : JavaMethod(jO, javaClass, methodName, methodSignature) {
-    @ExperimentalUnsignedTypes
     override fun invoke(vararg raw: X): Char {
         val arguments = toJObjectArray(raw)
 

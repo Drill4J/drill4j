@@ -11,7 +11,6 @@ import com.epam.drill.pluginConfig
 val plLogger
     get() = DLogger("plLogger")
 
-@ExperimentalUnsignedTypes
 suspend fun loadPlugin(pluginFile: DrillPluginFile) {
     AttachNativeThreadToJvm()
     pluginFile.addPluginsToSystemClassLoader()

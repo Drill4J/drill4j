@@ -55,7 +55,6 @@ fun sendMessage(message: String) {
 }
 
 
-@ExperimentalUnsignedTypes
 fun startWs() =
     wsThread.executeCoroutines {
         launch { topicRegister() }
