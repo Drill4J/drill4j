@@ -18,7 +18,6 @@ import kotlinx.cinterop.nativeHeap
 val plLogger
     get() = DLogger("plLogger")
 
-@ExperimentalUnsignedTypes
 suspend fun loadPlugin(pluginFile: DrillPluginFile) {
     AttachNativeThreadToJvm()
     pluginFile.addPluginsToSystemClassLoader()

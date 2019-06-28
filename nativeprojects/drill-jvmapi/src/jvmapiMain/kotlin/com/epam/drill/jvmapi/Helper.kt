@@ -62,7 +62,6 @@ fun printAllowedCapabilities() {
     }
 }
 
-@ExperimentalUnsignedTypes
 @CName("checkEx")
 fun checkEx(errCode: jvmtiError, funName: String): jvmtiError {
     if (errCode == 0.toUInt()) {
@@ -150,14 +149,15 @@ fun jmethodID.getDeclaringClassName(): String = memScoped {
 
 }
 
-fun jlocation.toJLocation(methodId: jmethodID?): Int = kotlinx.cinterop.memScoped {
+@Suppress("unused")
+fun jlocation.toJLocation(methodId: jmethodID?): Int = memScoped {
     val count = alloc<jintVar>()
     val localTable = alloc<CPointerVar<jvmtiLineNumberEntry>>()
-    jvmapi.GetLineNumberTable(methodId, count.ptr, localTable.ptr)
+    GetLineNumberTable(methodId, count.ptr, localTable.ptr)
     val locaTab = localTable.value
     var lineNumber: jint? = 0
     if (locaTab == null) return 0
-    for (i in 0..(count.value - 1)) {
+    for (i in 0 until count.value) {
         val entry1 = locaTab[i]
         val entry2 = locaTab[i + 1]
         if (this@toJLocation >= entry1.start_location && this@toJLocation < entry2.start_location) {

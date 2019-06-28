@@ -18,7 +18,6 @@ val topicLogger
     get() = DLogger("topicLogger")
 
 
-@ExperimentalUnsignedTypes
 fun topicRegister() =
     WsRouter {
         topic("/plugins/load").withPluginFileTopic { pluginId, plugin ->

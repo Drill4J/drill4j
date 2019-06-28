@@ -12,7 +12,6 @@ class CallJavaBooleanMethod(
     methodName: String,
     methodSignature: String
 ) : JavaMethod(jO, javaClass, methodName, methodSignature) {
-    @ExperimentalUnsignedTypes
     override fun invoke(vararg raw: X): Boolean {
         val arguments = toJObjectArray(raw)
 

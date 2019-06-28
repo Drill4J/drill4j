@@ -85,7 +85,6 @@ open class GenericNativePlugin(
     }
 
 
-    @ExperimentalUnsignedTypes
     override fun load(onImmediately: Boolean) {
         CallVoidMethodA(
             userPlugin,
