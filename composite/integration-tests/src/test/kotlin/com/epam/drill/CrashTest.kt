@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.io.writeStringUtf8
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.net.InetSocketAddress
@@ -22,6 +23,7 @@ import kotlin.concurrent.thread
 class CrashTest {
 
     @KtorExperimentalAPI
+    @Ignore
     @Test(timeout = 31000)
     fun testConversation() = runBlocking(Dispatchers.IO) {
         val selectorManager = ActorSelectorManager(Dispatchers.IO)
