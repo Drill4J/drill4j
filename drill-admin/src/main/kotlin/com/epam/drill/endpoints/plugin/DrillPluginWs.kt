@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
-    private val pluginStorage: MutableMap<String, Any> = mutableMapOf()
+    private val pluginStorage: ConcurrentMap<String, Any> = ConcurrentHashMap()
     private val app: Application by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
