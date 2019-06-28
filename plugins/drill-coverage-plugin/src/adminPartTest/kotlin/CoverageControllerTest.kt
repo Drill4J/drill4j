@@ -5,7 +5,6 @@ import com.epam.drill.common.AgentStatus
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.plugin.api.message.DrillMessage
 import com.epam.drill.plugins.coverage.CoverageEventType.CLASS_BYTES
 import com.epam.drill.plugins.coverage.CoverageEventType.INIT
 import com.epam.drill.plugins.coverage.CoverageEventType.INITIALIZED
@@ -33,7 +32,7 @@ class CoverageControllerTest {
     )
     private val ws = WsServiceStub()
 
-    private val coverageController = CoverageController(ws, "test")
+    private val coverageController = CoverageController(ws, agentInfo, "test")
 
     @Test
     fun `should have empty state before init`() {
@@ -70,14 +69,15 @@ class CoverageControllerTest {
 
     @Test
     fun `should send messages to WebSocket on empty data`() {
+        val agentState = coverageController.getAgentStateBy(agentInfo)
         prepareClasses(Dummy::class.java)
         val message = CoverageMessage(SESSION_FINISHED, "")
 
 
         runBlocking {
             coverageController.processData(
-                agentInfo,
-                DrillMessage("", CoverageMessage.serializer() stringify message)
+                agentState,
+                message
             )
         }
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
@@ -87,6 +87,7 @@ class CoverageControllerTest {
 
     @Test
     fun `should preserve coverage for packages`() {
+        val agentState = coverageController.getAgentStateBy(agentInfo)
         // Count of Classes in package for test
         val countClassesInPackage = 1
         // Count of packages for test
@@ -101,8 +102,8 @@ class CoverageControllerTest {
 
         runBlocking {
             coverageController.processData(
-                agentInfo,
-                DrillMessage("", CoverageMessage.serializer() stringify message)
+                agentState,
+                message
             )
         }
 
@@ -141,9 +142,10 @@ class CoverageControllerTest {
     }
 
     private suspend fun sendMessage(message: CoverageMessage) {
+        val agentState = coverageController.getAgentStateBy(agentInfo)
         coverageController.processData(
-            agentInfo,
-            DrillMessage("", CoverageMessage.serializer() stringify message)
+            agentState,
+            message
         )
     }
 }

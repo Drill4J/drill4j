@@ -9,14 +9,15 @@ import kotlinx.serialization.serializer
 
 
 @Suppress("unused")
-class ExceptionAdminPart(private val ws: WsService, id: String) : AdminPluginPart<String>(ws, id) {
+class ExceptionAdminPart(private val ws: WsService, agentInfo: AgentInfo, id: String) :
+    AdminPluginPart<String>(ws, agentInfo, id) {
 
     override var actionSerializer: KSerializer<String> = String.serializer()
 
-    override suspend fun doAction(agentInfo: AgentInfo, action: String) {
+    override suspend fun doAction(action: String) {
     }
 
-    override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
+    override suspend fun processData(dm: DrillMessage): Any {
         println("$id got a message ${dm.content}")
         return ""
     }
