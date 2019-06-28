@@ -94,6 +94,9 @@ tasks {
         from(distJar) {
             into("adminStorage")
         }
+        from(agentPartJar) {
+            into("tests/coverage")
+        }
         destinationDir = project.rootProject.file("distr")
     }
 

@@ -3,97 +3,61 @@ package com.epam.drill.core.callbacks.classloading
 import com.epam.drill.core.exec
 import com.epam.drill.core.plugin.loader.InstrumentationNativePlugin
 import jvmapi.Allocate
-import jvmapi.DeleteLocalRef
-import jvmapi.GetArrayLength
-import jvmapi.GetByteArrayElements
-import jvmapi.JNI_ABORT
-import jvmapi.NewByteArray
-import jvmapi.ReleaseByteArrayElements
-import jvmapi.SetByteArrayRegion
-import jvmapi.jbyteArray
-import jvmapi.jbyteVar
 import jvmapi.jint
+import jvmapi.jobject
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.UByteVar
-import kotlinx.cinterop.get
 import kotlinx.cinterop.pointed
+import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.set
 import kotlinx.cinterop.value
 
-@ExperimentalUnsignedTypes
 @Suppress("unused", "UNUSED_PARAMETER")
 @CName("jvmtiEventClassFileLoadHookEvent")
 fun classLoadEvent(
     jvmtiEnv: CPointer<jvmapi.jvmtiEnvVar>?,
     jniEnv: CPointer<jvmapi.JNIEnvVar>?,
     classBeingRedefined: jvmapi.jclass?,
-    loader: jvmapi.jobject?,
+    loader: jobject?,
     kClassName: String?,
-    protection_domain: jvmapi.jobject?,
+    protection_domain: jobject?,
     classDataLen: jint,
     classData: CPointer<UByteVar>?,
     newClassDataLen: CPointer<jvmapi.jintVar>?,
     newData: CPointer<CPointerVar<UByteVar>>?
-
-
 ) {
-    try {
+    if (isNotSuitableClass(kClassName, classData, loader, protection_domain)) return
 
-        if (kClassName != null && classData != null) {
-            if (loader != null && protection_domain != null && exec { pstorage.isNotEmpty() }) {
-                exec {
-                    pstorage.values.first()
-                }.let { instrumentedPlugin ->
-                    if (instrumentedPlugin is InstrumentationNativePlugin) {
-                        val newByteArray: jbyteArray? = NewByteArray(classDataLen)
-                        SetByteArrayRegion(
-                            newByteArray, 0, classDataLen,
-                            getBytes(newByteArray, classDataLen, classData)
-                        )
-
-                        instrumentedPlugin.instrument(kClassName, newByteArray!!)?.let { instrument ->
-
-                            val size = GetArrayLength(instrument)
-                            Allocate(size.toLong(), newData)
-
-                            GetByteArrayElements(instrument, null)?.let { nativeBytes ->
-
-                                for (i in 0 until size) {
-                                    val pointed = newData!!.pointed
-                                    val innerValue = pointed.value!!
-                                    innerValue[i] = nativeBytes[i].toUByte()
-                                }
-
-                                ReleaseByteArrayElements(instrument, nativeBytes, JNI_ABORT)
-                                newClassDataLen!!.pointed.value = size
-                            }
-                        }
-                        DeleteLocalRef(newByteArray)
-                    }
-
-                }
-
+    exec { pstorage.values.filterIsInstance<InstrumentationNativePlugin>() }.forEach { instrumentedPlugin ->
+        instrumentedPlugin.instrument(kClassName!!, classData!!.readBytes(classDataLen))?.let { instrumentedBytes ->
+            val instrumentedSize = instrumentedBytes.size
+            Allocate(instrumentedSize.toLong(), newData)
+            instrumentedBytes.forEachIndexed { index, byte ->
+                val innerValue = newData!!.pointed.value!!
+                innerValue[index] = byte.toUByte()
             }
+            newClassDataLen!!.pointed.value = instrumentedSize
         }
-
-
-    } catch (ex: Throwable) {
-        println(kClassName)
-        ex.printStackTrace()
     }
+
 }
 
-private fun getBytes(
-    newByteArray: jbyteArray?,
-    classDataLen: jint,
-    classData: CPointer<UByteVar>
-): CPointer<jbyteVar>? {
-    val bytess: CPointer<jbyteVar>? = GetByteArrayElements(newByteArray, null)
-    for (i in 0 until classDataLen) {
-        val uByte = classData[i]
-        bytess!![i] = uByte.toByte()
-    }
-    return bytess
+private fun isNotSuitableClass(
+    kClassName: String?,
+    classData: CPointer<UByteVar>?,
+    loader: jobject?,
+    protection_domain: jobject?
+): Boolean {
+    return (isSyntheticClass(kClassName, classData) || isBootstrapClassLoading(loader, protection_domain)
+            || exec { pstorage.isEmpty() })
 }
+
+private fun isBootstrapClassLoading(loader: jobject?, protection_domain: jobject?) =
+    loader == null || protection_domain == null
+
+private fun isSyntheticClass(
+    kClassName: String?,
+    classData: CPointer<UByteVar>?
+) = kClassName == null || classData == null
 
