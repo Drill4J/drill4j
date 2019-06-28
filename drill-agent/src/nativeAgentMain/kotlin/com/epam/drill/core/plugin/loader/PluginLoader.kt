@@ -24,7 +24,7 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
                     exec {
                         pstorage[this@apply.id] = this@apply
                     }
-
+                    retransform()
                 }
             }
             Family.GENERIC -> {
