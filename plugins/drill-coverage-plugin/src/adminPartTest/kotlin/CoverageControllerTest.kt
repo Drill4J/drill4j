@@ -33,7 +33,7 @@ class CoverageControllerTest {
     )
     private val ws = WsServiceStub()
 
-    private val coverageController = CoverageController(ws, "test")
+    private val coverageController = CoverageController(ws, agentInfo, "test")
 
     @Test
     fun `should have empty state before init`() {
@@ -76,7 +76,6 @@ class CoverageControllerTest {
 
         runBlocking {
             coverageController.processData(
-                agentInfo,
                 DrillMessage("", CoverageMessage.serializer() stringify message)
             )
         }
@@ -101,7 +100,6 @@ class CoverageControllerTest {
 
         runBlocking {
             coverageController.processData(
-                agentInfo,
                 DrillMessage("", CoverageMessage.serializer() stringify message)
             )
         }
@@ -142,7 +140,6 @@ class CoverageControllerTest {
 
     private suspend fun sendMessage(message: CoverageMessage) {
         coverageController.processData(
-            agentInfo,
             DrillMessage("", CoverageMessage.serializer() stringify message)
         )
     }

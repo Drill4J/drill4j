@@ -23,34 +23,35 @@ import kotlin.math.abs
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
 @Suppress("unused")
-class CoverageController(private val ws: WsService, id: String) : AdminPluginPart<Action>(ws, id) {
+class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: String) :
+    AdminPluginPart<Action>(ws, agentInfo, id) {
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
     private var scope: String = ""
 
-    override suspend fun doAction(agentInfo: AgentInfo, action: Action) {
+    override suspend fun doAction(action: Action) {
         val agentState = getAgentStateBy(agentInfo)
         when (action.type) {
             ActionType.CREATE_SCOPE -> {
                 scope = action.payload.scopeName
-                updateScopeData(agentInfo)
-                calculateCoverageData(agentInfo, agentState)
+                updateScopeData()
+                calculateCoverageData(agentState)
             }
             ActionType.DROP_SCOPE -> {
                 scope = ""
-                calculateCoverageData(agentInfo, agentState)
+                calculateCoverageData(agentState)
             }
             else -> Unit
         }
     }
 
-    override suspend fun processData(agentInfo: AgentInfo, dm: DrillMessage): Any {
+    override suspend fun processData(dm: DrillMessage): Any {
         val agentState = getAgentStateBy(agentInfo)
         val content = dm.content
         val message = CoverageMessage.serializer() parse content!!
         return processData(agentState, message)
     }
 
-    private fun getAgentStateBy(agentInfo: AgentInfo) =
+    fun getAgentStateBy(agentInfo: AgentInfo) =
         agentStates.compute(agentInfo.id) { _, state ->
             when (state?.agentInfo) {
                 agentInfo -> state
@@ -60,10 +61,9 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
 
     @Suppress("MemberVisibilityCanBePrivate")// debug problem with private modifier
     suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
-        val agentInfo = agentState.agentInfo
         when (parse.type) {
             CoverageEventType.INIT -> {
-                updateScopeData(agentInfo)
+                updateScopeData()
                 val initInfo = InitInfo.serializer() parse parse.data
                 agentState.init(initInfo)
                 println(initInfo.message) //log init message
@@ -88,13 +88,13 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 val classesData = agentState.classesData()
                 classesData.execData.start()
                 println("Session ${parse.data} started.")
-                updateGatheringState(agentInfo, true)
+                updateGatheringState(true)
             }
             CoverageEventType.SESSION_CANCELLED -> {
                 val classesData = agentState.classesData()
                 classesData.execData.stop()
                 println("Session ${parse.data} cancelled.")
-                updateGatheringState(agentInfo, false)
+                updateGatheringState(false)
             }
             CoverageEventType.COVERAGE_DATA_PART -> {
                 val classesData = agentState.classesData()
@@ -104,17 +104,16 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
                 }
             }
             CoverageEventType.SESSION_FINISHED -> {
-                calculateCoverageData(agentInfo, agentState)
+                calculateCoverageData(agentState)
             }
         }
         return ""
     }
 
     suspend fun calculateCoverageData(
-        agentInfo: AgentInfo,
         agentState: AgentState
     ) {
-        updateGatheringState(agentInfo, false)
+        updateGatheringState(false)
         // Analyze all existing classes
         val classesData = agentState.classesData()
         val initialClassBytes = classesData.classesBytes
@@ -259,7 +258,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         )
     }
 
-    suspend fun updateScopeData(agentInfo: AgentInfo){
+    suspend fun updateScopeData() {
         val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
         val scopesUncasted = ws.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
@@ -268,11 +267,11 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
             else scopesUncasted as MutableSet<String>
         scopes.add(scope)
         ws.storeData(storageKey, scopes)
-        updateScope(agentInfo, scope)
-        updateScopesSet(agentInfo, scopes)
+        updateScope(scope)
+        updateScopesSet(scopes)
     }
 
-    private suspend fun updateGatheringState(agentInfo: AgentInfo, state: Boolean) {
+    private suspend fun updateGatheringState(state: Boolean) {
         ws.convertAndSend(
             agentInfo,
             "/collection-state",
@@ -280,7 +279,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         )
     }
 
-    private suspend fun updateScope(agentInfo: AgentInfo, scope: String) {
+    private suspend fun updateScope(scope: String) {
         ws.convertAndSend(
             agentInfo,
             "/active-scope",
@@ -288,7 +287,7 @@ class CoverageController(private val ws: WsService, id: String) : AdminPluginPar
         )
     }
 
-    private suspend fun updateScopesSet(agentInfo: AgentInfo, scopes: Set<String>) {
+    private suspend fun updateScopesSet(scopes: Set<String>) {
         ws.convertAndSend(
             agentInfo,
             "/scopes",

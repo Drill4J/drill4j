@@ -50,7 +50,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             val pluginClass = dp.pluginClass
             val agentEntry = agentManager.full(agentInfo.id)
             val plugin: AdminPluginPart<*> = fillPluginInstance(agentEntry, pluginClass, pluginId)
-            plugin.processData(agentInfo, message.drillMessage)
+            plugin.processData(message.drillMessage)
         } catch (ee: Exception) {
             ee.printStackTrace()
         }
@@ -62,8 +62,9 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         pluginId: String
     ): AdminPluginPart<*> {
         return agentEntry?.instance!![pluginId] ?: run {
-            val constructor = pluginClass.getConstructor(WsService::class.java, String::class.java)
-            val plugin = constructor.newInstance(wsService, pluginId)
+            val constructor =
+                pluginClass.getConstructor(WsService::class.java, AgentInfo::class.java, String::class.java)
+            val plugin = constructor.newInstance(wsService, agentEntry.agent, pluginId)
             agentEntry.instance[pluginId] = plugin
             plugin
         }
@@ -109,7 +110,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                             val plugin: AdminPluginPart<*> = fillPluginInstance(
                                 agentEntry, dp.pluginClass, pluginId
                             )
-                            plugin.doRawAction(agentInfo, action)
+                            plugin.doRawAction(action)
                             HttpStatusCode.OK to ""
                         }
                     }
