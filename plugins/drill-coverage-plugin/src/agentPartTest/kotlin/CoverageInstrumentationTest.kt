@@ -1,10 +1,13 @@
 package com.epam.drill.plugins.coverage
 
+import org.hamcrest.CoreMatchers
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
 import org.jacoco.core.internal.data.CRC64
+import org.junit.Rule
+import org.junit.rules.ErrorCollector
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -85,6 +88,9 @@ class InstrumentationTests {
         assertEquals(TestType.UNDEFINED, trashTestType)
     }
 
+    @get:Rule
+    val collector = ErrorCollector()
+
     @Test
     fun `should associate execution data with test name and type gathered from request headers`() {
         addInstrumentedClass()
@@ -93,18 +99,9 @@ class InstrumentationTests {
         val runnable = instrumentedClass.newInstance() as Runnable
         runnable.run()
         val runtimeData = TestProbeArrayProvider.stop(sessionId)
-        val transformedForAdminPart = runtimeData!!.map { datum ->
-            ExDataTemp(
-                id = datum.id,
-                className = datum.name,
-                probes = datum.probes.toList(),
-                testName = datum.testName,
-                testType = TestType[datum.testType]
-            )
-        }
-        transformedForAdminPart.forEach {
-            assertEquals(TestType.MANUAL, it.testType)
-            assertEquals("test", it.testName)
+        runtimeData?.forEach {
+            collector.checkThat("MANUAL", CoreMatchers.equalTo(it.testType))
+            collector.checkThat("test", CoreMatchers.equalTo(it.testName))
         }
     }
 
