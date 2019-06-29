@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.dumps
-import platform.posix.mkdir
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
@@ -133,9 +132,9 @@ suspend fun websocket(adminUrl: String) {
 
                         val src = plugMessage.pluginFile.toByteArray()
                         val pluginsDir = "$drillInstallationDir/drill-plugins"
-                        mkdir(pluginsDir)
+                        com.epam.drill.doMkdir(pluginsDir)
                         val pluginDir = "$pluginsDir/$id"
-                        mkdir(pluginDir)
+                        com.epam.drill.doMkdir(pluginDir)
                         val path = "$pluginDir/$ajar"
 
                         writeFileAsync(path, src)
