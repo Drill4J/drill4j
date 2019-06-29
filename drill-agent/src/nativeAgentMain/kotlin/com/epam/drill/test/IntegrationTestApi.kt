@@ -7,7 +7,6 @@ import com.epam.drill.common.PluginBean
 import com.epam.drill.core.exec
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.jvmapi.toKString
-import com.soywiz.korio.file.std.localVfs
 import jvmapi.JNIEnv
 import jvmapi.jobject
 import jvmapi.jstring
@@ -18,15 +17,16 @@ import kotlinx.coroutines.runBlocking
 @Suppress("UNUSED_PARAMETER")//this only for integrationTests
 @CName("Java_com_epam_drill_test_IntegrationTestApi_LoadPlugin")
 fun LoadPug(env: JNIEnv, thiz: jobject, path: jstring) = memScoped {
+    val pluginBean = PluginBean(
+        id = "coverage",
+        config = "{\"pathPrefixes\": [\"org\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+    )
     runBlocking {
         exec {
-            pl["coverage"] = PluginBean(
-                id = "coverage",
-                config = "{\"pathPrefixes\": [\"org\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
-            )
+            pl["coverage"] = pluginBean
         }
 
-        loadPlugin(localVfs(path.toKString()!!))
+        loadPlugin(path.toKString()!!, pluginBean)
     }
 }
 

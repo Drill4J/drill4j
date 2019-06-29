@@ -9,6 +9,7 @@ import com.epam.drill.build.staticLibraryPrefix
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 plugins {
@@ -91,6 +92,7 @@ kotlin {
                     else -> implementation("com.soywiz:korio-linuxx64:$korioVersion")
                 }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-kni"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
@@ -99,12 +101,13 @@ kotlin {
             }
         }
     }
-    sourceSets.all {
-        languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-    }
 
 }
 
+tasks.withType<KotlinNativeCompile> {
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.io.core.ExperimentalIoApi"
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
+}
 
 val staticLibraryName = "${staticLibraryPrefix}drill_jvmapi.$staticLibraryExtension"
 tasks {
