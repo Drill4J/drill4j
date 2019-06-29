@@ -1,6 +1,5 @@
 package com.epam.drill.core.ws
 
-import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.AgentConfig
 import com.epam.drill.common.AgentConfigParam
 import com.epam.drill.common.DrillEvent
@@ -17,8 +16,6 @@ import com.epam.drill.core.exec
 import com.epam.drill.core.messanger.sendNativeMessage
 import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.logger.DLogger
-import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.file.writeToFile
 import com.soywiz.korio.net.ws.WebSocketClient
 import kotlinx.cinterop.staticCFunction
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.dumps
+import platform.posix.mkdir
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
@@ -130,35 +128,41 @@ suspend fun websocket(adminUrl: String) {
                     println("try to load ${plugMessage.pl.id} plugin")
                     runBlocking {
                         exec { agentConfig.needSync = false }
-                        val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
-                        if (!pluginsDir.exists()) pluginsDir.mkdir()
                         val id = plugMessage.pl.id
-                        val vfsFile = pluginsDir[id]
-                        if (!vfsFile.exists()) vfsFile.mkdir()
-                        val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
-                        plugMessage.pluginFile.toByteArray().writeToFile(plugin)
-                        loadPlugin(plugin)
+                        val ajar = "agent-part.jar"
+
+                        val src = plugMessage.pluginFile.toByteArray()
+                        val pluginsDir = "$drillInstallationDir/drill-plugins"
+                        mkdir(pluginsDir)
+                        val pluginDir = "$pluginsDir/$id"
+                        mkdir(pluginDir)
+                        val path = "$pluginDir/$ajar"
+
+                        writeFileAsync(path, src)
+                        loadPlugin(path, plugMessage.pl)
+
                         if (plugMessage.nativePart != null) {
                             val natPlugin = when {
                                 plugMessage.nativePart!!.windowsPlugin.isNotEmpty() -> {
-                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.dll"]
-                                    plugMessage.nativePart!!.windowsPlugin.toByteArray().writeToFile(natPlugin)
-                                    natPlugin
-
+                                    val nativePath = "$pluginDir/native_plugin.dll"
+                                    writeFileAsync(nativePath, plugMessage.nativePart!!.windowsPlugin.toByteArray())
+                                    nativePath
                                 }
                                 plugMessage.nativePart!!.linuxPluginFileBytes.isNotEmpty() -> {
-                                    val natPlugin: DrillPluginFile = vfsFile["native_plugin.so"]
-                                    plugMessage.nativePart!!.linuxPluginFileBytes.toByteArray().writeToFile(natPlugin)
-                                    natPlugin
+                                    val nativePath = "$pluginDir/native_plugin.so"
+                                    writeFileAsync(
+                                        nativePath,
+                                        plugMessage.nativePart!!.linuxPluginFileBytes.toByteArray()
+                                    )
+                                    nativePath
                                 }
                                 else -> {
                                     throw RuntimeException()
                                 }
                             }
-
                             val loadNativePlugin = com.epam.drill.loadNativePlugin(
                                 id,
-                                natPlugin.absolutePath,
+                                natPlugin,
                                 staticCFunction(::sendNativeMessage)
                             )
                             loadNativePlugin?.initPlugin()
@@ -202,6 +206,7 @@ suspend fun websocket(adminUrl: String) {
         }
     }
 }
+
 
 private fun String.toWsMessage() = Message.serializer().parse(this)
 

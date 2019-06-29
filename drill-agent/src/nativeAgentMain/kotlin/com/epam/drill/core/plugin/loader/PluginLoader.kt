@@ -1,16 +1,23 @@
 package com.epam.drill.core.plugin.loader
 
-import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.Family
+import com.epam.drill.common.PluginBean
 import com.epam.drill.core.exceptions.PluginLoadException
 import com.epam.drill.core.exec
 import com.epam.drill.jvmapi.AttachNativeThreadToJvm
 import com.epam.drill.logger.DLogger
-import com.epam.drill.pluginConfig
+import jvmapi.AddToSystemClassLoaderSearch
+import jvmapi.CallObjectMethod
+import jvmapi.FindClass
 import jvmapi.GetMethodID
+import jvmapi.GetStaticFieldID
+import jvmapi.GetStaticObjectField
 import jvmapi.NewGlobalRef
 import jvmapi.NewObjectA
 import jvmapi.NewStringUTF
+import jvmapi.jclass
+import jvmapi.jfieldID
+import jvmapi.jmethodID
 import jvmapi.jobject
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.nativeHeap
@@ -18,12 +25,19 @@ import kotlinx.cinterop.nativeHeap
 val plLogger
     get() = DLogger("plLogger")
 
-suspend fun loadPlugin(pluginFile: DrillPluginFile) {
+fun loadPlugin(pluginFilePath: String, pluginConfig: PluginBean) {
     AttachNativeThreadToJvm()
-    pluginFile.addPluginsToSystemClassLoader()
+    AddToSystemClassLoaderSearch(pluginFilePath)
+    plLogger.warn { "System classLoader extends by '$pluginFilePath' path" }
     try {
-        val pluginConfig = pluginFile.pluginConfig()
-        val pluginApiClass = pluginFile.retrievePluginApiClass()
+        val initializerClass = FindClass("com/epam/drill/ws/ClassLoadingUtil")
+        val selfMethodId: jfieldID? =
+            GetStaticFieldID(initializerClass, "INSTANCE", "Lcom/epam/drill/ws/ClassLoadingUtil;")
+        val initializer: jobject? = GetStaticObjectField(initializerClass, selfMethodId)
+        val calculateBuild: jmethodID? =
+            GetMethodID(initializerClass, "retrieveApiClass", "(Ljava/lang/String;)Ljava/lang/Class;")
+        val pluginApiClass: jclass = CallObjectMethod(initializer, calculateBuild, NewStringUTF(pluginFilePath))!!
+
         val userPlugin: jobject =
             NewGlobalRef(
                 NewObjectA(
@@ -53,8 +67,8 @@ suspend fun loadPlugin(pluginFile: DrillPluginFile) {
     } catch (ex: Exception) {
         when (ex) {
             is PluginLoadException ->
-                plLogger.warn { "Can't load the plugin file ${pluginFile.absolutePath}. Error: ${ex.message}" }
-            else -> plLogger.error { "something terrible happened at the time of processing of ${pluginFile.absolutePath} jar... Error: ${ex.message} ${ex.printStackTrace()}" }
+                plLogger.warn { "Can't load the plugin file $pluginFilePath. Error: ${ex.message}" }
+            else -> plLogger.error { "something terrible happened at the time of processing of $pluginFilePath jar... Error: ${ex.message} ${ex.printStackTrace()}" }
         }
     }
 }

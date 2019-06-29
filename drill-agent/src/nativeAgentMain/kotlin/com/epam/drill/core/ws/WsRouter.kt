@@ -1,16 +1,11 @@
 package com.epam.drill.core.ws
 
-import com.epam.drill.DrillPluginFile
 import com.epam.drill.common.PluginAction
 import com.epam.drill.common.PluginBean
 import com.epam.drill.common.parse
-import com.epam.drill.core.drillInstallationDir
-import com.epam.drill.core.plugin.loader.loadPlugin
 import com.epam.drill.logger.DLogger
 import com.epam.drill.plugin.PluginManager
 import com.epam.drill.plugin.api.processing.UnloadReason
-import com.soywiz.korio.file.std.localVfs
-import com.soywiz.korio.file.writeToFile
 import kotlinx.serialization.KSerializer
 import kotlin.native.concurrent.ThreadLocal
 
@@ -20,14 +15,6 @@ val topicLogger
 
 fun topicRegister() =
     WsRouter {
-        topic("/plugins/load").withPluginFileTopic { pluginId, plugin ->
-            topicLogger.warn { "Load event. Plugin id is $pluginId" }
-            if (PluginManager[pluginId] != null) {
-                topicLogger.warn { "plugin '$pluginId' already is loaded" }
-            } else {
-                loadPlugin(plugin)
-            }
-        }
 
         topic("/plugins/unload").rawMessage { pluginId ->
             topicLogger.warn { "Unload event. Plugin id is $pluginId" }
@@ -144,20 +131,6 @@ object WsRouter {
 @Suppress("unused")
 fun WsRouter.topic(url: String): WsRouter.inners {
     return WsRouter.inners(url)
-}
-
-fun WsRouter.inners.withPluginFileTopic(bl: suspend (message: String, plugin: DrillPluginFile) -> Unit): FileTopic {
-    val fileTopic = PluginTopic(destination) { pluginId, file ->
-        val pluginsDir = localVfs(drillInstallationDir)["drill-plugins"]
-        if (!pluginsDir.exists()) pluginsDir.mkdir()
-        val vfsFile = pluginsDir[pluginId]
-        if (!vfsFile.exists()) vfsFile.mkdir()
-        val plugin: DrillPluginFile = vfsFile["agent-part.jar"]
-        file.writeToFile(plugin)
-        bl(pluginId, plugin)
-    }
-    WsRouter.mapper[destination] = fileTopic
-    return fileTopic
 }
 
 open class Topic(open val destination: String)
