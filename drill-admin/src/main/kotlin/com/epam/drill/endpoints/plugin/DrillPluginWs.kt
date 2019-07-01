@@ -9,6 +9,7 @@ import com.epam.drill.common.Message
 import com.epam.drill.common.MessageType
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
+import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.textFrame
 import com.epam.drill.plugin.api.end.WsService
 import io.ktor.application.Application
@@ -33,6 +34,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
     private val pluginStorage: MutableMap<String, Any> = mutableMapOf()
     private val app: Application by instance()
+    private val agentManager: AgentManager by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
@@ -82,28 +84,31 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                                 MessageType.SUBSCRIBE -> {
                                     val subscribeInfo = SubscribeInfo.serializer() parse event.message
                                     saveSession(event)
-                                    val buildVersion = subscribeInfo.buildVersion
 
+                                    val buildVersion =
+                                        subscribeInfo.buildVersion ?: agentManager[subscribeInfo.agentId]?.buildVersion
 
-                                    val message =
-                                        eventStorage[
-                                                subscribeInfo.agentId + ":" +
-                                                        event.destination + ":" +
-                                                        if (buildVersion.isNullOrEmpty()) subscribeInfo.agentId
-                                                        else buildVersion
-                                        ]
-
-                                    if (message.isNullOrEmpty()) {
-                                        this.send(
-                                            (Message.serializer() stringify
-                                                    Message(
-                                                        MessageType.MESSAGE,
-                                                        event.destination,
-                                                        ""
-                                                    )).textFrame()
+                                    if (buildVersion == null) {
+                                        close(
+                                            IllegalArgumentException(
+                                                "recieved null agent build version for ${subscribeInfo.agentId}"
+                                            )
                                         )
-                                    } else this.send(Frame.Text(message))
+                                    } else {
+                                        val id = "${subscribeInfo.agentId}:${event.destination}:$buildVersion"
+                                        val message = eventStorage[id]
 
+                                        if (message.isNullOrEmpty()) {
+                                            this.send(
+                                                (Message.serializer() stringify
+                                                        Message(
+                                                            MessageType.MESSAGE,
+                                                            event.destination,
+                                                            ""
+                                                        )).textFrame()
+                                            )
+                                        } else this.send(Frame.Text(message))
+                                    }
                                 }
                                 MessageType.UNSUBSCRIBE -> {
                                     sessionStorage[event.destination]?.let {

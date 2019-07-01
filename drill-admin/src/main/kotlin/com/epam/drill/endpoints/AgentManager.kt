@@ -48,18 +48,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
         val agentInfoDb = AgentInfoDb.findById(agentId)
         if (agentInfoDb != null) {
             when (agentInfoDb.status) {
-                AgentStatus.READY -> agentInfoDb.apply {
-                    if (buildVersions.none { it.buildVersion == pBuildVersion }) {
-                        val newVersion = AgentBuildVersion.new {
-                            buildVersion = pBuildVersion
-                            name = ""
-                        }
-                        val newVersionSet = (buildVersions + newVersion).toSet()
-                        buildVersions = SizedCollection(newVersionSet)
-                    }
-                    buildVersion = pBuildVersion
-                    buildAlias = ""
-                }
+                AgentStatus.READY -> agentInfoDb.authenticateBuildVersion(pBuildVersion)
                 AgentStatus.NOT_REGISTERED -> {
                     //TODO: add some processing for unregistered agents
                 }
@@ -88,6 +77,21 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             }.toAgentInfo()
         }
 
+    }
+
+    private fun AgentInfoDb.authenticateBuildVersion(pBuildVersion: String) {
+        buildVersion = pBuildVersion
+        val bv = buildVersions.firstOrNull { it.buildVersion == pBuildVersion }
+        if (bv == null) registerBuildVersion(pBuildVersion) else buildAlias = bv.name
+    }
+
+    private fun AgentInfoDb.registerBuildVersion(pBuildVersion: String) {
+        val newVersion = AgentBuildVersion.new {
+            buildVersion = pBuildVersion
+            name = ""
+        }
+        buildVersions = SizedCollection((buildVersions + newVersion).toSet())
+        buildAlias = ""
     }
 
 
