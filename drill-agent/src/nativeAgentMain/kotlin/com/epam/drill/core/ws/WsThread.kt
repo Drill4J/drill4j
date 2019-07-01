@@ -30,8 +30,8 @@ import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
 
 
-val wsLogger
-    get() = DLogger("DrillWebsocket")
+@SharedImmutable
+val wsLogger = DLogger("DrillWebsocket")
 
 @SharedImmutable
 val wsThread = Worker.start(true)

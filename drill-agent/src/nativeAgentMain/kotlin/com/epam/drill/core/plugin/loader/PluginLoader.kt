@@ -22,8 +22,9 @@ import jvmapi.jobject
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.nativeHeap
 
-val plLogger
-    get() = DLogger("plLogger")
+
+@SharedImmutable
+val plLogger = DLogger("plLogger")
 
 fun loadPlugin(pluginFilePath: String, pluginConfig: PluginBean) {
     AttachNativeThreadToJvm()

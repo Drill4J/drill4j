@@ -27,6 +27,7 @@ open class GenericNativePlugin(
     val userPlugin: jobject,
     pluginConfig: PluginBean
 ) : PluginRepresenter() {
+    private val pluginLogger = DLogger("GenericNativePlugin")
 
     init {
         updateRawConfig(pluginConfig)
@@ -42,9 +43,6 @@ open class GenericNativePlugin(
             NewStringUTF(action)
         )
     }
-
-    private val natPluginLogger
-        get() = DLogger("NativePluginController")
 
     override val id: String = pluginConfig.id
 
@@ -69,7 +67,7 @@ open class GenericNativePlugin(
 
 
     override fun on() {
-        natPluginLogger.debug { "on" }
+        pluginLogger.debug { "on" }
         CallVoidMethodA(
             userPlugin, GetMethodID(pluginApiClass, AgentPart<*, *>::on.name, "()V"), null
         )
@@ -77,7 +75,7 @@ open class GenericNativePlugin(
     }
 
     override fun off() {
-        natPluginLogger.debug { "off" }
+        pluginLogger.debug { "off" }
         CallVoidMethodA(
             userPlugin, GetMethodID(pluginApiClass, AgentPart<*, *>::off.name, "()V"), null
         )
