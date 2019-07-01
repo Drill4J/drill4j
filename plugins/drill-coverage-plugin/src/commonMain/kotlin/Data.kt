@@ -62,9 +62,3 @@ enum class TestType {
         }
     }
 }
-
-data class Scope(
-    val name: String,
-    val probes: MutableList<ExDataTemp> = mutableListOf(),
-    var accounted: Boolean = true
-)
