@@ -74,21 +74,21 @@ class InstrumentationTests {
     @Test
     fun `should transform any of stringified TestType values to TestType`() {
         val autoString: TestTypeString = "AUTO"
-        assertEquals(TestType.AUTO, autoString.getType())
+        collector.checkThat(autoString.toTestType(), CoreMatchers.equalTo(TestType.AUTO))
         val manualString: TestTypeString = "MANUAL"
-        assertEquals(TestType.MANUAL, manualString.getType())
+        collector.checkThat(manualString.toTestType(), CoreMatchers.equalTo(TestType.MANUAL))
         val performanceString: TestTypeString = "PERFORMANCE"
-        assertEquals(TestType.PERFORMANCE, performanceString.getType())
+        collector.checkThat(performanceString.toTestType(), CoreMatchers.equalTo(TestType.PERFORMANCE))
         val undefinedString: TestTypeString = "UNDEFINED"
-        assertEquals(TestType.UNDEFINED, undefinedString.getType())
+        collector.checkThat(undefinedString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
     }
 
     @Test
     fun `should transform any unexpected string to undefined test type`() {
         val nullTypeString: TestTypeString = null
-        assertEquals(TestType.UNDEFINED, nullTypeString.getType())
+        collector.checkThat(nullTypeString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
         val unexpectedTypeString: TestTypeString = "asdf"
-        assertEquals(TestType.UNDEFINED, unexpectedTypeString.getType())
+        collector.checkThat(unexpectedTypeString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
     }
 
     @Test
