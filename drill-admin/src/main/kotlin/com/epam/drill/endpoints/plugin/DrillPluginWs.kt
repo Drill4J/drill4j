@@ -45,7 +45,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
     override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
         val messageForSend = Message.serializer() stringify Message(MessageType.MESSAGE, destination, message)
 
-        val id = agentInfo.id  + ":" + destination + ":" + agentInfo.buildVersion
+        val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
         logger.debug { "send data to $id destination" }
         eventStorage[id] = messageForSend
 
