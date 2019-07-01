@@ -14,6 +14,8 @@ import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.list
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -147,7 +149,7 @@ class CoverageControllerTest {
 
 class WsServiceStub : WsService {
 
-    private val pluginStorage: MutableMap<String, Any> = mutableMapOf()
+    private val pluginStorage: ConcurrentHashMap<String, Any> = ConcurrentHashMap()
     val sent = mutableListOf<Pair<String, Any>>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
