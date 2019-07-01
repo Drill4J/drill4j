@@ -9,9 +9,8 @@ import com.epam.drill.plugin.api.processing.UnloadReason
 import kotlinx.serialization.KSerializer
 import kotlin.native.concurrent.ThreadLocal
 
-val topicLogger
-    get() = DLogger("topicLogger")
-
+@SharedImmutable
+val topicLogger = DLogger("topicLogger")
 
 fun topicRegister() =
     WsRouter {

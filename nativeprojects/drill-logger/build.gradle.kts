@@ -1,5 +1,6 @@
 import com.epam.drill.build.createNativeTargetForCurrentOs
 import com.epam.drill.build.korioVersion
+import com.epam.drill.build.ktorVersion
 import com.epam.drill.build.serializationNativeVersion
 
 
@@ -23,6 +24,7 @@ kotlin {
         loggerMain.apply {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
+                implementation("io.ktor:ktor-utils-native:$ktorVersion")
             }
         }
     }
