@@ -73,22 +73,22 @@ class InstrumentationTests {
 
     @Test
     fun `should transform any of stringified TestType values to TestType`() {
-        val autoFromString = getTestType("AUTO")
-        assertEquals(TestType.AUTO, autoFromString)
-        val manualFromString = getTestType("MANUAL")
-        assertEquals(TestType.MANUAL, manualFromString)
-        val performanceFromString = getTestType("PERFORMANCE")
-        assertEquals(TestType.PERFORMANCE, performanceFromString)
-        val undefinedFromString = getTestType("UNDEFINED")
-        assertEquals(TestType.UNDEFINED, undefinedFromString)
+        val autoString: TestTypeString = "AUTO"
+        assertEquals(TestType.AUTO, autoString.getType())
+        val manualString: TestTypeString = "MANUAL"
+        assertEquals(TestType.MANUAL, manualString.getType())
+        val performanceString: TestTypeString = "PERFORMANCE"
+        assertEquals(TestType.PERFORMANCE, performanceString.getType())
+        val undefinedString: TestTypeString = "UNDEFINED"
+        assertEquals(TestType.UNDEFINED, undefinedString.getType())
     }
 
     @Test
     fun `should transform any unexpected string to undefined test type`() {
-        val nullTestType = getTestType(null)
-        assertEquals(TestType.UNDEFINED, nullTestType)
-        val trashTestType = getTestType("asdf")
-        assertEquals(TestType.UNDEFINED, trashTestType)
+        val nullTypeString: TestTypeString = null
+        assertEquals(TestType.UNDEFINED, nullTypeString.getType())
+        val unexpectedTypeString: TestTypeString = "asdf"
+        assertEquals(TestType.UNDEFINED, unexpectedTypeString.getType())
     }
 
     @Test

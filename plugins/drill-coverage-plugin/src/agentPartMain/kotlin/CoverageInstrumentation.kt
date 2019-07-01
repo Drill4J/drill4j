@@ -28,12 +28,14 @@ typealias DrillInstrumenter = (String, Long, ByteArray) -> ByteArray
 const val DRILL_TEST_TYPE = "drill-test-type"
 const val DRIlL_TEST_NAME = "drill-test-name"
 
+typealias TestTypeString = String?
+
 class ExecDatum(
     val id: Long,
     val name: String,
     val probes: BooleanArray,
     val testName: String? = null,
-    val testType: String? = null
+    val testType: TestTypeString = null
 )
 
 interface SessionProbeArrayProvider : ProbeArrayProvider {
@@ -59,7 +61,7 @@ class ExecRuntime(
 
     val testRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
-    fun with(testName: String?, testType: String?): ExecRuntime = when(testName) {
+    fun with(testName: String?, testType: String?): ExecRuntime = when (testName) {
         null -> this
         else -> testRuntimes.getOrPut(testName) { ExecRuntime(testName, testType) }
     }
@@ -91,7 +93,7 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         return if (sessionRuntime != null) {
             val testName = instrContext[DRIlL_TEST_NAME]
             val testType = instrContext[DRILL_TEST_TYPE]
-            val runtime =  sessionRuntime.with(testName, testType)
+            val runtime = sessionRuntime.with(testName, testType)
             runtime(id, name, probeCount)
         } else BooleanArray(probeCount)
     }
