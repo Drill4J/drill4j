@@ -43,6 +43,9 @@ class InstrumentationTests {
 
     val originalClassId = CRC64.classId(originalBytes)
 
+    @get:Rule
+    val collector = ErrorCollector()
+
     @Test
     fun `instrumented class should be larger the the original`() {
         val instrumented = instrument(targetClass.name, originalClassId, originalBytes)
@@ -70,26 +73,23 @@ class InstrumentationTests {
 
     @Test
     fun `should transform any of stringified TestType values to TestType`() {
-        val autoFromString = TestType["AUTO"]
+        val autoFromString = getTestType("AUTO")
         assertEquals(TestType.AUTO, autoFromString)
-        val manualFromString = TestType["MANUAL"]
+        val manualFromString = getTestType("MANUAL")
         assertEquals(TestType.MANUAL, manualFromString)
-        val performanceFromString = TestType["PERFORMANCE"]
+        val performanceFromString = getTestType("PERFORMANCE")
         assertEquals(TestType.PERFORMANCE, performanceFromString)
-        val undefinedFromString = TestType["UNDEFINED"]
+        val undefinedFromString = getTestType("UNDEFINED")
         assertEquals(TestType.UNDEFINED, undefinedFromString)
     }
 
     @Test
     fun `should transform any unexpected string to undefined test type`() {
-        val nullTestType = TestType[null]
+        val nullTestType = getTestType(null)
         assertEquals(TestType.UNDEFINED, nullTestType)
-        val trashTestType = TestType["asdf"]
+        val trashTestType = getTestType("asdf")
         assertEquals(TestType.UNDEFINED, trashTestType)
     }
-
-    @get:Rule
-    val collector = ErrorCollector()
 
     @Test
     fun `should associate execution data with test name and type gathered from request headers`() {

@@ -115,7 +115,7 @@ class CoveragePlugin @JvmOverloads constructor(
                             className = datum.name,
                             probes = datum.probes.toList(),
                             testName = datum.testName,
-                            testType = TestType[datum.testType]
+                            testType = getTestType(datum.testType)
                         )
                     }
                     //send data in chunk of 10
@@ -157,4 +157,9 @@ class CoveragePlugin @JvmOverloads constructor(
 
     override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
+}
+
+fun getTestType(input: String?) = when (input) {
+    null -> TestType.UNDEFINED
+    else -> TestType.values().firstOrNull { it.name == input } ?: TestType.UNDEFINED
 }
