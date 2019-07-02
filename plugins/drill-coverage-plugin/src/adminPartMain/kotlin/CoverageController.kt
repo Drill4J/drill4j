@@ -32,6 +32,9 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
             ActionType.DROP_SCOPE -> {
                 checkoutScope("", agentState)
             }
+            ActionType.BUILD_COVERAGE -> {
+                calculateBuildCoverageData(action.payload.buildVersion, agentState)
+            }
             else -> Unit
         }
     }
@@ -162,16 +165,21 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
     }
 
     suspend fun updateScopeData() {
-        val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
+        val scopes = getScopeNameSetForBuild(agentInfo.buildVersion)
+        scopes.add(scopeName)
+        updateScope()
+        updateScopesSet(scopes)
+    }
+
+    fun getScopeNameSetForBuild(buildVersion: String): MutableSet<String> {
+        val storageKey = "scopes:${agentInfo.id}:${buildVersion}"
         val scopesUncasted = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
         val scopes =
             if (scopesUncasted == null) mutableSetOf()
             else scopesUncasted as MutableSet<String>
-        scopes.add(scopeName)
         sender.storeData(storageKey, scopes)
-        updateScope()
-        updateScopesSet(scopes)
+        return scopes
     }
 
     private suspend fun updateGatheringState(state: Boolean) {
@@ -205,6 +213,21 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         return scope.probes
     }
 
+    fun defineProbesForBuild(buildVersion: String): List<ExDataTemp> {
+        val buildScopeKeys = getKeysForBuildScopes(buildVersion)
+        val accountedScopes = buildScopeKeys.map { key ->
+            getScopeOrNull(key)
+        }.filter { it?.accounted ?: false }
+        return accountedScopes.flatMap { it?.probes ?: mutableListOf() }
+    }
+
+    fun getKeysForBuildScopes(buildVersion: String): List<String> {
+        val storageKeyPrefix = "${agentInfo.id}-${agentInfo.buildVersion}"
+        return getScopeNameSetForBuild(buildVersion).map {
+            "$storageKeyPrefix-$it"
+        }
+    }
+
     fun getScopeOrNull(
         storageKey: String = "${agentInfo.id}-${agentInfo.buildVersion}-$scopeName"
     ): Scope? {
@@ -230,11 +253,15 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
 
     private suspend fun checkoutScope(newScopeName: String, agentState: AgentState) {
         scopeName = newScopeName
-        updateScope()
         updateScopeData()
         val scopeProbes = defineProbesForScope(agentState)
         val cis = calculateCoverageData(agentState, scopeProbes)
         deliverMessages(cis)
+    }
+
+    private suspend fun calculateBuildCoverageData(buildVersion: String, agentState: AgentState) {
+        val cis = calculateCoverageData(agentState, defineProbesForBuild(buildVersion))
+        deliverMessages(cis, "build-")
     }
 
     suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String = "") {
