@@ -43,6 +43,9 @@ class InstrumentationTests {
 
     val originalClassId = CRC64.classId(originalBytes)
 
+    @get:Rule
+    val collector = ErrorCollector()
+
     @Test
     fun `instrumented class should be larger the the original`() {
         val instrumented = instrument(targetClass.name, originalClassId, originalBytes)
@@ -70,26 +73,23 @@ class InstrumentationTests {
 
     @Test
     fun `should transform any of stringified TestType values to TestType`() {
-        val autoFromString = TestType["AUTO"]
-        assertEquals(TestType.AUTO, autoFromString)
-        val manualFromString = TestType["MANUAL"]
-        assertEquals(TestType.MANUAL, manualFromString)
-        val performanceFromString = TestType["PERFORMANCE"]
-        assertEquals(TestType.PERFORMANCE, performanceFromString)
-        val undefinedFromString = TestType["UNDEFINED"]
-        assertEquals(TestType.UNDEFINED, undefinedFromString)
+        val autoString: TestTypeString = "AUTO"
+        collector.checkThat(autoString.toTestType(), CoreMatchers.equalTo(TestType.AUTO))
+        val manualString: TestTypeString = "MANUAL"
+        collector.checkThat(manualString.toTestType(), CoreMatchers.equalTo(TestType.MANUAL))
+        val performanceString: TestTypeString = "PERFORMANCE"
+        collector.checkThat(performanceString.toTestType(), CoreMatchers.equalTo(TestType.PERFORMANCE))
+        val undefinedString: TestTypeString = "UNDEFINED"
+        collector.checkThat(undefinedString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
     }
 
     @Test
     fun `should transform any unexpected string to undefined test type`() {
-        val nullTestType = TestType[null]
-        assertEquals(TestType.UNDEFINED, nullTestType)
-        val trashTestType = TestType["asdf"]
-        assertEquals(TestType.UNDEFINED, trashTestType)
+        val nullTypeString: TestTypeString = null
+        collector.checkThat(nullTypeString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
+        val unexpectedTypeString: TestTypeString = "asdf"
+        collector.checkThat(unexpectedTypeString.toTestType(), CoreMatchers.equalTo(TestType.UNDEFINED))
     }
-
-    @get:Rule
-    val collector = ErrorCollector()
 
     @Test
     fun `should associate execution data with test name and type gathered from request headers`() {

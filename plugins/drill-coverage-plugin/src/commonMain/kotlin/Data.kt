@@ -54,11 +54,4 @@ enum class TestType {
     MANUAL,
     PERFORMANCE,
     UNDEFINED;
-
-    companion object {
-        operator fun get(input: String?) = when (input) {
-            null -> UNDEFINED
-            else -> values().firstOrNull { it.name == input } ?: UNDEFINED
-        }
-    }
 }

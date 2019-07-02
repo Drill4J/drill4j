@@ -115,7 +115,7 @@ class CoveragePlugin @JvmOverloads constructor(
                             className = datum.name,
                             probes = datum.probes.toList(),
                             testName = datum.testName,
-                            testType = TestType[datum.testType]
+                            testType = datum.testType.toTestType()
                         )
                     }
                     //send data in chunk of 10
