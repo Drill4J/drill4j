@@ -32,6 +32,10 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
             ActionType.DROP_SCOPE -> {
                 checkoutScope("", agentState)
             }
+            ActionType.TOGGLE_SCOPE -> {
+                val scope = getScopeOrNull("${agentInfo.id}-${agentInfo.buildVersion}-${action.payload.scopeName}")
+                if (scope != null) scope.accounted = !scope.accounted
+            }
             else -> Unit
         }
     }
