@@ -12,46 +12,38 @@ import kotlinx.serialization.serializer
 import kotlinx.serialization.set
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
-import org.jacoco.core.analysis.IBundleCoverage
-import org.jacoco.core.analysis.IClassCoverage
-import org.jacoco.core.analysis.IMethodCoverage
-import org.jacoco.core.data.ExecutionData
 import org.jacoco.core.data.ExecutionDataStore
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
 
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
 @Suppress("unused")
-class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: String) :
-    AdminPluginPart<Action>(ws, agentInfo, id) {
+class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
+    AdminPluginPart<Action>(sender, agentInfo, id) {
     override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
-    private var scope: String = ""
+    private var scopeName: String = ""
 
     override suspend fun doAction(action: Action) {
-        val agentState = getAgentStateBy(agentInfo)
+        val agentState = getAgentStateByAgentInfo()
         when (action.type) {
             ActionType.CREATE_SCOPE -> {
-                scope = action.payload.scopeName
-                updateScopeData()
-                calculateCoverageData(agentState)
+                checkoutScope(action.payload.scopeName, agentState)
             }
             ActionType.DROP_SCOPE -> {
-                scope = ""
-                calculateCoverageData(agentState)
+                checkoutScope("", agentState)
             }
             else -> Unit
         }
     }
 
     override suspend fun processData(dm: DrillMessage): Any {
-        val agentState = getAgentStateBy(agentInfo)
+        val agentState = getAgentStateByAgentInfo()
         val content = dm.content
         val message = CoverageMessage.serializer() parse content!!
         return processData(agentState, message)
     }
 
-    fun getAgentStateBy(agentInfo: AgentInfo) =
+    fun getAgentStateByAgentInfo() =
         agentStates.compute(agentInfo.id) { _, state ->
             when (state?.agentInfo) {
                 agentInfo -> state
@@ -104,96 +96,43 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
                 }
             }
             CoverageEventType.SESSION_FINISHED -> {
-                calculateCoverageData(agentState)
+                updateGatheringState(false)
+                val scopeProbes = defineProbesForScope(agentState)
+                val cis = calculateCoverageData(agentState, scopeProbes)
+                deliverMessages(cis)
             }
         }
         return ""
     }
 
     suspend fun calculateCoverageData(
-        agentState: AgentState
-    ) {
+        agentState: AgentState,
+        scopeProbes: List<ExDataTemp>
+    ): CoverageInfoSet {
+        val classesData = agentState.classesData()
         updateGatheringState(false)
         // Analyze all existing classes
-        val classesData = agentState.classesData()
-        val initialClassBytes = classesData.classesBytes
-
         val coverageBuilder = CoverageBuilder()
         val dataStore = ExecutionDataStore()
+        val initialClassBytes = classesData.classesBytes
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
-        // Get new probes from message and populate dataStore with them
-        //also fill up assoc tests
-        val probesForMerge = classesData.execData.stop()
-        val storageKey = "${agentInfo.id}-${agentInfo.buildVersion}-$scope"
-        val scopeProbesUncasted = ws.retrieveData(storageKey)
-        @Suppress("UNCHECKED_CAST")
-        val scopeProbes =
-            if (scopeProbesUncasted == null) mutableSetOf()
-            else scopeProbesUncasted as MutableSet<ExDataTemp>
-        scopeProbes.addAll(probesForMerge)
-        ws.storeData(storageKey, scopeProbes)
-
-        val assocTestsMap = scopeProbes.flatMap { exData ->
-            val probeArray = exData.probes.toBooleanArray()
-            val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
-            dataStore.put(executionData)
-            when (exData.testName) {
-                null -> emptyList()
-                else -> collectAssocTestPairs(
-                    initialClassBytes,
-                    ExecutionData(exData.id, exData.className, probeArray.copyOf()),
-                    exData.testName
-                )
-            }
-        }.groupBy({ it.first }) { it.second } //group by test names
-            .mapValues { (_, tests) -> tests.distinct() }
-        val assocTests = assocTestsMap.map { (key, tests) ->
-            AssociatedTests(
-                id = key.id,
-                packageName = key.packageName,
-                className = key.className,
-                methodName = key.methodName,
-                tests = tests
-            )
-        }
-        if (assocTests.isNotEmpty()) {
-            println("Assoc tests - ids count: ${assocTests.count()}")
-            ws.convertAndSend(
-                agentInfo,
-                "/associated-tests",
-                AssociatedTests.serializer().list stringify assocTests
-            )
-        }
-
+        val assocTestsMap = getAssociatedTestMap(scopeProbes, dataStore, initialClassBytes)
+        val associatedTests = assocTestsMap.getAssociatedTests()
 
         initialClassBytes.forEach { (name, bytes) ->
             analyzer.analyzeClass(bytes, name)
         }
-
-        // TODO possible to store existing bundles to work with obsolete coverage results
         val bundleCoverage = coverageBuilder.getBundle("all")
-
         val totalCoveragePercent = bundleCoverage.coverage
         // change arrow indicator (increase, decrease)
-        val arrow = if (totalCoveragePercent != null) {
-            val prevCoverage = classesData.execData.coverage ?: 0.0
-            classesData.execData.coverage = totalCoveragePercent
-            val diff = totalCoveragePercent - prevCoverage
-            when {
-                abs(diff) < 1E-7 -> null
-                diff > 0.0 -> ArrowType.INCREASE
-                else -> ArrowType.DECREASE
-            }
-        } else null
+        val arrow = arrowType(totalCoveragePercent, classesData)
 
         classesData.execData.coverage = totalCoveragePercent
-
 
         val classesCount = bundleCoverage.classCounter.totalCount
         val methodsCount = bundleCoverage.methodCounter.totalCount
         val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
-
         val coverageBlock = CoverageBlock(
             coverage = totalCoveragePercent,
             classesCount = classesCount,
@@ -202,202 +141,152 @@ class CoverageController(private val ws: WsService, agentInfo: AgentInfo, id: St
             arrow = arrow
         )
         println(coverageBlock)
-        ws.convertAndSend(
-            agentInfo,
-            "/coverage",
-            CoverageBlock.serializer() stringify coverageBlock
-        )
 
         val newMethods = classesData.newMethods
-        val (newCoverageBlock, newMethodsCoverages) = if (newMethods.isNotEmpty()) {
-            println("New methods count: ${newMethods.count()}")
-            val newMethodSet = newMethods.toSet()
-            val newMethodsCoverages = bundleCoverage.packages
-                .flatMap { it.classes }
-                .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
-                .filter { it.first in newMethodSet }
-            val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
-            val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
-            //bytecode instruction coverage
-            val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
-
-            val coverages = newMethodsCoverages.map { (jm, mc) -> mc.simpleMethodCoverage(jm.ownerClass) }
-            NewCoverageBlock(
-                methodsCount = newMethodsCoverages.count(),
-                methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
-                coverage = newCoverage
-            ) to coverages
-        } else NewCoverageBlock() to emptyList()
+        val (newCoverageBlock, newMethodsCoverages)
+                = calculateNewCoverageBlock(newMethods, bundleCoverage)
         println(newCoverageBlock)
 
-        // TODO extend destination with plugin id
-        ws.convertAndSend(
-            agentInfo,
-            "/coverage-new",
-            NewCoverageBlock.serializer() stringify newCoverageBlock
-        )
-
-        ws.convertAndSend(
-            agentInfo,
-            "/new-methods",
-            SimpleJavaMethodCoverage.serializer().list stringify newMethodsCoverages
-        )
-
         val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
-        ws.convertAndSend(
-            agentInfo,
-            "/coverage-by-packages",
-            JavaPackageCoverage.serializer().list stringify packageCoverage
-        )
         val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
         val testUsages = testUsages(testRelatedBundles)
-        ws.convertAndSend(
-            agentInfo,
-            "/tests-usages",
-            TestUsagesInfo.serializer().list stringify testUsages
+
+        return CoverageInfoSet(
+            associatedTests,
+            coverageBlock,
+            newCoverageBlock,
+            newMethodsCoverages,
+            packageCoverage,
+            testUsages
         )
     }
 
     suspend fun updateScopeData() {
         val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
-        val scopesUncasted = ws.retrieveData(storageKey)
+        val scopesUncasted = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
         val scopes =
             if (scopesUncasted == null) mutableSetOf()
             else scopesUncasted as MutableSet<String>
-        scopes.add(scope)
-        ws.storeData(storageKey, scopes)
-        updateScope(scope)
+        scopes.add(scopeName)
+        sender.storeData(storageKey, scopes)
+        updateScope()
         updateScopesSet(scopes)
     }
 
     private suspend fun updateGatheringState(state: Boolean) {
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/collection-state",
             GatheringState.serializer() stringify GatheringState(state)
         )
     }
 
-    private suspend fun updateScope(scope: String) {
-        ws.convertAndSend(
+    private suspend fun updateScope() {
+        sender.convertAndSend(
             agentInfo,
             "/active-scope",
-            scope
+            scopeName
         )
     }
 
     private suspend fun updateScopesSet(scopes: Set<String>) {
-        ws.convertAndSend(
+        sender.convertAndSend(
             agentInfo,
             "/scopes",
             String.serializer().set stringify scopes
         )
     }
 
-    private fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
-        bundleMap.map { (k, v) ->
-            TestUsagesInfo(k, v.methodCounter.coveredCount, "Test type", "30.02.2019")
-        }
-
-    private fun testUsageBundles(
-        initialClassBytes: Map<String, ByteArray>,
-        probes: Collection<ExDataTemp>
-    ): Map<String, IBundleCoverage> = probes
-        .filter { it.testName != null }
-        .groupBy { it.testName!! }
-        .mapValues { (_, v) ->
-            val dataStore = ExecutionDataStore()
-            v.forEach {
-                val probeArray = it.probes.toBooleanArray()
-                val executionData = ExecutionData(it.id, it.className, probeArray)
-                dataStore.put(executionData)
-            }
-            testUsageBundle(initialClassBytes, dataStore)
-        }
-
-    private fun testUsageBundle(
-        initialClassBytes: Map<String, ByteArray>,
-        dataStore: ExecutionDataStore
-    ): IBundleCoverage {
-        val coverageBuilder = CoverageBuilder()
-        val analyzer = Analyzer(dataStore, coverageBuilder)
-        dataStore.contents.forEach { execData ->
-            analyzer.analyzeClass(initialClassBytes[execData.name], execData.name)
-        }
-        return coverageBuilder.getBundle("all")
+    fun defineProbesForScope(agentState: AgentState): List<ExDataTemp> {
+        val scope = getOrCreateScope()
+        val classesData = agentState.classesData()
+        scope.probes.addAll(classesData.execData.stop())
+        return scope.probes
     }
 
-    private fun collectAssocTestPairs(
-        initialClassBytes: Map<String, ByteArray>,
-        executionData: ExecutionData,
-        testName: String
-    ): List<Pair<CoverageKey, String>> {
-        val cb = CoverageBuilder()
-        Analyzer(ExecutionDataStore().apply { put(executionData) }, cb).analyzeClass(
-            initialClassBytes[executionData.name],
-            executionData.name
+    fun getScopeOrNull(
+        storageKey: String = "${agentInfo.id}-${agentInfo.buildVersion}-$scopeName"
+    ): Scope? {
+        val scopeUncasted = sender.retrieveData(storageKey)
+        @Suppress("UNCHECKED_CAST")
+        return when (scopeUncasted) {
+            null -> null
+            else -> scopeUncasted as Scope
+        }
+    }
+
+    fun getOrCreateScope(): Scope {
+        val scope = getScopeOrNull()
+        return when (scope) {
+            null -> {
+                val storeData = Scope(scopeName)
+                sender.storeData("${agentInfo.id}-${agentInfo.buildVersion}-$scopeName", storeData)
+                return storeData
+            }
+            else -> scope
+        }
+    }
+
+    private suspend fun checkoutScope(newScopeName: String, agentState: AgentState) {
+        scopeName = newScopeName
+        updateScope()
+        updateScopeData()
+        val scopeProbes = defineProbesForScope(agentState)
+        val cis = calculateCoverageData(agentState, scopeProbes)
+        deliverMessages(cis)
+    }
+
+    suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String = "") {
+        // TODO extend destination with plugin id
+        if (cis.associatedTests.isNotEmpty()) {
+            println("Assoc tests - ids count: ${cis.associatedTests.count()}")
+            sender.convertAndSend(
+                agentInfo,
+                "/${prefix}associated-tests",
+                AssociatedTests.serializer().list stringify cis.associatedTests
+            )
+        }
+        sender.convertAndSend(
+            agentInfo,
+            "/${prefix}coverage",
+            CoverageBlock.serializer() stringify cis.coverageBlock
         )
-        return cb.getBundle("").packages.flatMap { p ->
-            listOf(p.coverageKey() to testName) + p.classes.flatMap { c ->
-                listOf(c.coverageKey() to testName) + c.methods.flatMap { m ->
-                    if (m.instructionCounter.coveredCount > 0) {
-                        listOf(m.coverageKey(c) to testName)
-                    } else emptyList()
-                }
-            }
-        }
+        sender.convertAndSend(
+            agentInfo,
+            "/${prefix}coverage-new",
+            NewCoverageBlock.serializer() stringify cis.newCoverageBlock
+        )
+        sender.convertAndSend(
+            agentInfo,
+            "/${prefix}new-methods",
+            SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
+        )
+        sender.convertAndSend(
+            agentInfo,
+            "/${prefix}coverage-by-packages",
+            JavaPackageCoverage.serializer().list stringify cis.packageCoverage
+        )
+        sender.convertAndSend(
+            agentInfo,
+            "/${prefix}tests-usages",
+            TestUsagesInfo.serializer().list stringify cis.testUsages
+        )
     }
 
-    private fun packageCoverage(
-        bundleCoverage: IBundleCoverage,
-        assocTestsMap: Map<CoverageKey, List<String>>
-    ): List<JavaPackageCoverage> = bundleCoverage.packages
-        .map { packageCoverage ->
-            val packageKey = packageCoverage.coverageKey()
-            JavaPackageCoverage(
-                id = packageKey.id,
-                name = packageCoverage.name,
-                coverage = packageCoverage.coverage,
-                totalClassesCount = packageCoverage.classCounter.totalCount,
-                coveredClassesCount = packageCoverage.classCounter.coveredCount,
-                totalMethodsCount = packageCoverage.methodCounter.totalCount,
-                coveredMethodsCount = packageCoverage.methodCounter.coveredCount,
-                assocTestsCount = assocTestsMap[packageKey]?.count(),
-                classes = classCoverage(packageCoverage.classes, assocTestsMap)
-            )
-        }.toList()
-
-    private fun classCoverage(
-        classCoverages: Collection<IClassCoverage>,
-        assocTestsMap: Map<CoverageKey, List<String>>
-    ): List<JavaClassCoverage> = classCoverages
-        .map { classCoverage ->
-            val classKey = classCoverage.coverageKey()
-            JavaClassCoverage(
-                id = classKey.id,
-                name = classCoverage.name.substringAfterLast('/'),
-                path = classCoverage.name,
-                coverage = classCoverage.coverage,
-                totalMethodsCount = classCoverage.methodCounter.totalCount,
-                coveredMethodsCount = classCoverage.methodCounter.coveredCount,
-                assocTestsCount = assocTestsMap[classKey]?.count(),
-                methods = classCoverage.methods.map { methodCoverage ->
-                    val methodKey = methodCoverage.coverageKey(classCoverage)
-                    JavaMethodCoverage(
-                        id = methodKey.id,
-                        name = methodCoverage.name,
-                        desc = methodCoverage.desc,
-                        decl = declaration(methodCoverage.desc),
-                        coverage = methodCoverage.coverage,
-                        assocTestsCount = assocTestsMap[methodKey]?.count()
-                    )
-                }.toList()
-            )
-        }.toList()
-
-    private fun methodCoverageId(
-        classCoverage: IClassCoverage,
-        methodCoverage: IMethodCoverage
-    ) = "${classCoverage.name}.${methodCoverage.name}${methodCoverage.desc}".crc64
 }
+
+data class CoverageInfoSet(
+    val associatedTests: List<AssociatedTests>,
+    val coverageBlock: CoverageBlock,
+    val newCoverageBlock: NewCoverageBlock,
+    val newMethodsCoverages: List<SimpleJavaMethodCoverage>,
+    val packageCoverage: List<JavaPackageCoverage>,
+    val testUsages: List<TestUsagesInfo>
+)
+
+data class Scope(
+    val name: String,
+    val probes: MutableList<ExDataTemp> = mutableListOf(),
+    var accounted: Boolean = true
+)
