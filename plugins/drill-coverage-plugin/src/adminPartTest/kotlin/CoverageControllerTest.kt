@@ -149,7 +149,7 @@ class CoverageControllerTest {
 
 class WsServiceStub : WsService {
 
-    private val pluginStorage: ConcurrentHashMap<String, Any> = ConcurrentHashMap()
+    private val pluginStorage: ConcurrentHashMap<Any, Any> = ConcurrentHashMap()
     val sent = mutableListOf<Pair<String, Any>>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
@@ -162,11 +162,11 @@ class WsServiceStub : WsService {
 
     override fun getPlWsSession() = setOf<String>()
 
-    override fun storeData(key: String, obj: Any) {
+    override fun storeData(key: Any, obj: Any) {
         pluginStorage[key] = obj
     }
 
-    override fun retrieveData(key: String) = pluginStorage[key]
+    override fun retrieveData(key: Any) = pluginStorage[key]
 
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {}

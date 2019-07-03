@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger {}
 
 class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
 
-    private val pluginStorage: ConcurrentHashMap<String, Any> = ConcurrentHashMap()
+    private val pluginStorage: MutableMap<Any, Any> = ConcurrentHashMap()
     private val app: Application by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
@@ -60,11 +60,11 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
         }
     }
 
-    override fun storeData(key: String, obj: Any) {
+    override fun storeData(key: Any, obj: Any) {
         pluginStorage[key] = obj
     }
 
-    override fun retrieveData(key: String) = pluginStorage[key]
+    override fun retrieveData(key: Any) = pluginStorage[key]
 
     override fun getEntityBy(agentId: String, clazz: Class<Any>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

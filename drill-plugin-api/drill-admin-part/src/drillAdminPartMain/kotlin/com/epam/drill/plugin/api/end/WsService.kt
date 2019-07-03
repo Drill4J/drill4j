@@ -5,7 +5,7 @@ import com.epam.drill.common.AgentInfo
 interface WsService {
     suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String)
     fun getPlWsSession(): Set<String>
-    fun storeData(key: String, obj: Any)
-    fun retrieveData(key: String): Any?
+    fun storeData(key: Any, obj: Any)
+    fun retrieveData(key: Any): Any?
     fun getEntityBy(agentId: String, clazz: Class<Any>)
 }
