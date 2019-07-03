@@ -5,7 +5,7 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.AdminPluginPart
-import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugin.api.message.DrillMessage
 import kotlinx.serialization.list
 import kotlinx.serialization.serializer
@@ -17,10 +17,17 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
+//TODO This is a temporary storage API. It will be removed when the core API has been developed
+internal val agentStorages = ConcurrentHashMap<String, Storage>()
+
 @Suppress("unused")
-class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
+class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
-    override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
+    override val actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
+
+    //TODO This is a temporary storage API. It will be removed when the core API has been developed
+    private val storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
+
     private var scopeName: String = ""
 
     override suspend fun doAction(action: Action) {
@@ -43,7 +50,7 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         return processData(agentState, message)
     }
 
-    fun getAgentStateByAgentInfo() =
+    private fun getAgentStateByAgentInfo(): AgentState =
         agentStates.compute(agentInfo.id) { _, state ->
             when (state?.agentInfo) {
                 agentInfo -> state
@@ -105,7 +112,7 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         return ""
     }
 
-    suspend fun calculateCoverageData(
+    private suspend fun calculateCoverageData(
         agentState: AgentState,
         scopeProbes: List<ExDataTemp>
     ): CoverageInfoSet {
@@ -161,21 +168,16 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    suspend fun updateScopeData() {
-        val storageKey = "scopes:${agentInfo.id}:${agentInfo.buildVersion}"
-        val scopesUncasted = sender.retrieveData(storageKey)
-        @Suppress("UNCHECKED_CAST")
-        val scopes =
-            if (scopesUncasted == null) mutableSetOf()
-            else scopesUncasted as MutableSet<String>
-        scopes.add(scopeName)
-        sender.storeData(storageKey, scopes)
+    private suspend fun updateScopeData() {
+        val key = ScopesKey(agentInfo.buildVersion)
+        val scopes = storage.retrieve(key) ?: mutableSetOf()
+        storage.store(key, scopes + scopeName)
         updateScope()
         updateScopesSet(scopes)
     }
 
     private suspend fun updateGatheringState(state: Boolean) {
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/collection-state",
             GatheringState.serializer() stringify GatheringState(state)
@@ -183,7 +185,7 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
     }
 
     private suspend fun updateScope() {
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/active-scope",
             scopeName
@@ -191,37 +193,31 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
     }
 
     private suspend fun updateScopesSet(scopes: Set<String>) {
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/scopes",
             String.serializer().set stringify scopes
         )
     }
 
-    fun defineProbesForScope(agentState: AgentState): List<ExDataTemp> {
+    private suspend fun defineProbesForScope(agentState: AgentState): List<ExDataTemp> {
         val scope = getOrCreateScope()
         val classesData = agentState.classesData()
         scope.probes.addAll(classesData.execData.stop())
         return scope.probes
     }
 
-    fun getScopeOrNull(
-        storageKey: String = "${agentInfo.id}-${agentInfo.buildVersion}-$scopeName"
-    ): Scope? {
-        val scopeUncasted = sender.retrieveData(storageKey)
-        @Suppress("UNCHECKED_CAST")
-        return when (scopeUncasted) {
-            null -> null
-            else -> scopeUncasted as Scope
-        }
+    private suspend fun getScopeOrNull(): Scope? {
+        val key = ScopeKey(agentInfo.buildVersion, scopeName)
+        return storage.retrieve(key)
     }
 
-    fun getOrCreateScope(): Scope {
-        val scope = getScopeOrNull()
-        return when (scope) {
+    private suspend fun getOrCreateScope(): Scope {
+        return when (val scope = getScopeOrNull()) {
             null -> {
+                val key = ScopeKey(agentInfo.buildVersion, scopeName)
                 val storeData = Scope(scopeName)
-                sender.storeData("${agentInfo.id}-${agentInfo.buildVersion}-$scopeName", storeData)
+                storage.store(key, storeData)
                 return storeData
             }
             else -> scope
@@ -237,37 +233,37 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         deliverMessages(cis)
     }
 
-    suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String = "") {
+    private suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String = "") {
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
-            sender.convertAndSend(
+            sender.send(
                 agentInfo,
                 "/${prefix}associated-tests",
                 AssociatedTests.serializer().list stringify cis.associatedTests
             )
         }
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/${prefix}coverage",
             CoverageBlock.serializer() stringify cis.coverageBlock
         )
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/${prefix}coverage-new",
             NewCoverageBlock.serializer() stringify cis.newCoverageBlock
         )
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/${prefix}new-methods",
             SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
         )
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/${prefix}coverage-by-packages",
             JavaPackageCoverage.serializer().list stringify cis.packageCoverage
         )
-        sender.convertAndSend(
+        sender.send(
             agentInfo,
             "/${prefix}tests-usages",
             TestUsagesInfo.serializer().list stringify cis.testUsages
@@ -285,8 +281,19 @@ data class CoverageInfoSet(
     val testUsages: List<TestUsagesInfo>
 )
 
+typealias Scopes = Set<String>
+
 data class Scope(
     val name: String,
     val probes: MutableList<ExDataTemp> = mutableListOf(),
     var accounted: Boolean = true
 )
+
+data class ScopesKey(
+    val buildVersion: String
+) : StoreKey<Scopes>
+
+data class ScopeKey(
+    val buildVersion: String,
+    val name: String
+) : StoreKey<Scope>

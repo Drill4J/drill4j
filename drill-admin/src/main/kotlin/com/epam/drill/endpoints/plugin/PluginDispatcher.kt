@@ -11,7 +11,7 @@ import com.epam.drill.endpoints.AgentEntry
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugin.api.end.AdminPluginPart
-import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugin.api.message.MessageWrapper
 import com.epam.drill.plugins.Plugin
 import com.epam.drill.plugins.Plugins
@@ -37,7 +37,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
     private val plugins: Plugins by instance()
     private val agentManager: AgentManager by instance()
-    private val wsService: WsService by kodein.instance()
+    private val wsService: Sender by kodein.instance()
 
     suspend fun processPluginData(pluginData: String, agentInfo: AgentInfo) {
         val message = MessageWrapper.serializer().parse(pluginData)
@@ -60,7 +60,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     ): AdminPluginPart<*> {
         return agentEntry?.instance!![pluginId] ?: run {
             val constructor =
-                pluginClass.getConstructor(WsService::class.java, AgentInfo::class.java, String::class.java)
+                pluginClass.getConstructor(Sender::class.java, AgentInfo::class.java, String::class.java)
             val plugin = constructor.newInstance(wsService, agentEntry.agent, pluginId)
             agentEntry.instance[pluginId] = plugin
             plugin
