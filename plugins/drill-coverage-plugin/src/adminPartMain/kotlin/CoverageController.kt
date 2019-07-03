@@ -16,7 +16,6 @@ import org.jacoco.core.data.ExecutionDataStore
 import java.util.concurrent.ConcurrentHashMap
 
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
-const val BUILD_MESSAGE_PREFIX = "build"
 
 @Suppress("unused")
 class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
@@ -103,7 +102,7 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
                 updateGatheringState(false)
                 val scopeProbes = defineProbesForScope(agentState)
                 val cis = calculateCoverageData(agentState, scopeProbes)
-                deliverMessages(cis)
+                sendMessages(cis)
             }
         }
         return ""
@@ -173,12 +172,12 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
     }
 
     fun getScopeNameSetForBuild(buildVersion: String): MutableSet<String> {
-        val storageKey = StorageKey(KeyType.SCOPE_LIST, agentInfo.id, buildVersion)
-        val scopesUncasted = sender.retrieveData(storageKey)
+        val storageKey = StorageKey("scopeList", agentInfo.id, buildVersion)
+        val scopesUncast = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
         val scopes =
-            if (scopesUncasted == null) mutableSetOf()
-            else scopesUncasted as MutableSet<String>
+            if (scopesUncast == null) mutableSetOf()
+            else scopesUncast as MutableSet<String>
         sender.storeData(storageKey, scopes)
         return scopes
     }
@@ -218,24 +217,24 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         val buildScopeKeys = getKeysForBuildScopes(buildVersion)
         val accountedScopes = buildScopeKeys.map { key ->
             getScopeOrNull(key)
-        }.filter { it?.accounted ?: false }
+        }.filter { it?.includedInBuildCoverage ?: false }
         return accountedScopes.flatMap { it?.probes ?: mutableListOf() }
     }
 
     fun getKeysForBuildScopes(buildVersion: String): List<StorageKey> {
         return getScopeNameSetForBuild(buildVersion).map {
-            StorageKey(KeyType.SCOPE, agentInfo.id, agentInfo.buildVersion, it)
+            StorageKey("scope", agentInfo.id, agentInfo.buildVersion, it)
         }
     }
 
     fun getScopeOrNull(
-        storageKey: StorageKey = StorageKey(KeyType.SCOPE, agentInfo.id, agentInfo.buildVersion, scopeName)
+        storageKey: StorageKey = StorageKey("scope", agentInfo.id, agentInfo.buildVersion, scopeName)
     ): Scope? {
-        val scopeUncasted = sender.retrieveData(storageKey)
+        val scopeUncast = sender.retrieveData(storageKey)
         @Suppress("UNCHECKED_CAST")
-        return when (scopeUncasted) {
+        return when (scopeUncast) {
             null -> null
-            else -> scopeUncasted as Scope
+            else -> scopeUncast as Scope
         }
     }
 
@@ -243,7 +242,7 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         val scope = getScopeOrNull()
         return when (scope) {
             null -> {
-                val storageKey = StorageKey(KeyType.SCOPE, agentInfo.id, agentInfo.buildVersion, scopeName)
+                val storageKey = StorageKey("scope", agentInfo.id, agentInfo.buildVersion, scopeName)
                 val storeData = Scope(scopeName)
                 sender.storeData(storageKey, storeData)
                 return storeData
@@ -257,48 +256,47 @@ class CoverageController(sender: WsService, agentInfo: AgentInfo, id: String) :
         updateScopeData()
         val scopeProbes = defineProbesForScope(agentState)
         val cis = calculateCoverageData(agentState, scopeProbes)
-        deliverMessages(cis)
+        sendMessages(cis)
     }
 
     private suspend fun calculateBuildCoverageData(buildVersion: String, agentState: AgentState) {
         val cis = calculateCoverageData(agentState, defineProbesForBuild(buildVersion))
-        deliverMessages(cis, BUILD_MESSAGE_PREFIX)
+        sendMessages(cis, "/build")
     }
 
-    suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String? = null) {
+    suspend fun sendMessages(cis: CoverageInfoSet, path: String = "") {
         // TODO extend destination with plugin id
-        val address = if (prefix == null) "" else "$prefix-"
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
             sender.convertAndSend(
                 agentInfo,
-                "/${address}associated-tests",
+                "$path/associated-tests",
                 AssociatedTests.serializer().list stringify cis.associatedTests
             )
         }
         sender.convertAndSend(
             agentInfo,
-            "/${address}coverage",
+            "$path/coverage",
             CoverageBlock.serializer() stringify cis.coverageBlock
         )
         sender.convertAndSend(
             agentInfo,
-            "/${address}coverage-new",
+            "$path/coverage-new",
             NewCoverageBlock.serializer() stringify cis.newCoverageBlock
         )
         sender.convertAndSend(
             agentInfo,
-            "/${address}new-methods",
+            "$path/new-methods",
             SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
         )
         sender.convertAndSend(
             agentInfo,
-            "/${address}coverage-by-packages",
+            "$path/coverage-by-packages",
             JavaPackageCoverage.serializer().list stringify cis.packageCoverage
         )
         sender.convertAndSend(
             agentInfo,
-            "/${address}tests-usages",
+            "$path/tests-usages",
             TestUsagesInfo.serializer().list stringify cis.testUsages
         )
     }
@@ -317,17 +315,12 @@ data class CoverageInfoSet(
 data class Scope(
     val name: String,
     val probes: MutableList<ExDataTemp> = mutableListOf(),
-    var accounted: Boolean = true
+    var includedInBuildCoverage: Boolean = true
 )
 
 data class StorageKey(
-    val type: KeyType,
+    val type: String,
     val agentId: String,
     val buildVersion: String,
     val scopeName: String? = null
 )
-
-enum class KeyType {
-    SCOPE,
-    SCOPE_LIST
-}
