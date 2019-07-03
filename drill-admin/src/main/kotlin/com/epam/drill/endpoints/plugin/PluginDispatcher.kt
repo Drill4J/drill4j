@@ -13,9 +13,8 @@ import com.epam.drill.endpoints.agentWsMessage
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.WsService
 import com.epam.drill.plugin.api.message.MessageWrapper
-import com.epam.drill.plugins.DP
+import com.epam.drill.plugins.Plugin
 import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.pluginClass
 import com.epam.drill.router.Routes
 import com.epam.drill.util.parse
 import io.ktor.application.Application
@@ -44,7 +43,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         val message = MessageWrapper.serializer().parse(pluginData)
         val pluginId = message.pluginId
         try {
-            val dp: DP = plugins.plugins[pluginId] ?: return
+            val dp: Plugin = plugins[pluginId] ?: return
             val pluginClass = dp.pluginClass
             val agentEntry = agentManager.full(agentInfo.id)
             val plugin: AdminPluginPart<*> = fillPluginInstance(agentEntry, pluginClass, pluginId)
@@ -86,7 +85,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                     val action = call.receive<String>()
                     val agentId = ll.agentId
                     val pluginId = ll.pluginId
-                    val dp: DP? = plugins.plugins[pluginId]
+                    val dp: Plugin? = plugins[pluginId]
                     val agentInfo = agentManager[ll.agentId]
                     val (statusCode, response) = when {
                         (dp == null) -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
@@ -122,14 +121,14 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                     val pluginId = call.parse(PluginId.serializer()).pluginId
                     val (status, msg) = when (pluginId) {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
-                        in plugins -> {
+                        in plugins.keys -> {
                             if (agentId in agentManager) {
                                 val agentInfo = agentManager[agentId]!!
                                 if (agentInfo.plugins.any { it.id == pluginId }) {
                                     HttpStatusCode.BadRequest to "Plugin '$pluginId' is already in agent '$agentId'"
                                 } else {
                                     agentManager.addPluginFromLib(agentId, pluginId)
-                                    val dp: DP = plugins.plugins[pluginId]!!
+                                    val dp: Plugin = plugins[pluginId]!!
                                     val pluginClass = dp.pluginClass
                                     val agentEntry = agentManager.full(agentInfo.id)
                                     fillPluginInstance(agentEntry, pluginClass, pluginId)
@@ -164,7 +163,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             authenticate {
                 get<Routes.Api.PluginConfiguration> {
 
-                    call.respond(plugins.plugins.keys.toTypedArray())
+                    call.respond(plugins.keys.toTypedArray())
 
                 }
             }

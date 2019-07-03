@@ -6,25 +6,30 @@ import java.io.File
 import java.util.*
 
 
-class Plugins(val plugins: MutableMap<String, DP> = HashMap()) : MutableMap<String, DP> by plugins
+class Plugins(private val plugins: MutableMap<String, Plugin> = HashMap()) : Map<String, Plugin> by plugins {
+    internal operator fun set(k: String, v: Plugin) = plugins.put(k, v)
+}
 
-typealias DP = Triple<Class<AdminPluginPart<*>>, AgentPartFiles, PluginBean>
+data class Plugin(
+    val pluginClass: Class<AdminPluginPart<*>>,
+    val agentPartFiles: AgentPartFiles,
+    val pluginBean: PluginBean
+)
 
-val DP.pluginClass: Class<AdminPluginPart<*>>
-    get() = first
-val DP.agentPluginPart: File
-    get() = second.jar
-val DP.windowsPart: File?
-    get() = second.windowsPart
-val DP.linuxPar: File?
-    get() = second.linuxPart
-val DP.pluginBean: PluginBean
-    get() = third
+data class AgentPartFiles(
+    val jar: File,
+    val windowsPart: File?,
+    val linuxPart: File?
+)
 
+val Plugin.agentPluginPart: File
+    get() = agentPartFiles.jar
+val Plugin.windowsPart: File?
+    get() = agentPartFiles.windowsPart
+val Plugin.linuxPar: File?
+    get() = agentPartFiles.linuxPart
 
-data class AgentPartFiles(val jar: File, val windowsPart: File?, val linuxPart: File?)
-
-fun Plugins.getAllPluginBeans() = plugins.values.map { it.pluginBean }
+fun Plugins.getAllPluginBeans() = values.map { it.pluginBean }
 
 infix fun PluginBean.partOf(set: List<String>?) =
     if (set == null) false else this.id in set

@@ -8,7 +8,6 @@ import com.epam.drill.common.update
 import com.epam.drill.endpoints.AgentManager
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.plugins.pluginBean
 import com.epam.drill.router.Routes
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -56,7 +55,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                     call.respond("can't find the agent '${up.agentId}'")
                     return@post
                 }
-                val agentPluginPartFile = plugins.plugins[pluginId.pluginId]?.agentPluginPart
+                val agentPluginPartFile = plugins[pluginId.pluginId]?.agentPluginPart
                 if (agentPluginPartFile == null) {
                     call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${up.agentId}'")
                     return@post
@@ -121,7 +120,7 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerDrillAdmin() {
         authenticate {
             get<Routes.Api.AllPlugins> {
-                call.respond(plugins.plugins.values.map { dp -> dp.pluginBean.id })
+                call.respond(plugins.values.map { dp -> dp.pluginBean.id })
             }
         }
     }
