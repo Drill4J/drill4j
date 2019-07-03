@@ -32,7 +32,7 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
         try {
             logger.info { "Searching for plugins in paths $pluginPaths" }
             val pluginsFiles = pluginPaths.filter { it.exists() }
-                .flatMap { it.listFiles().asIterable() }
+                .flatMap { it.listFiles()!!.asIterable() }
                 .filter { it.isFile && it.extension.equals("jar", true) }
                 .map { it.canonicalFile }
             if (pluginsFiles.isNotEmpty()) {
@@ -46,7 +46,7 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
                             val configText = jar.getInputStream(configEntry).reader().readText()
                             val config = Json.parse(PluginBean.serializer(), configText)
                             val pluginId = config.id
-                            if (pluginId !in plugins) {
+                            if (pluginId !in plugins.keys) {
                                 val adminPartFile = jar.extractPluginEntry(pluginId, "admin-part.jar")
                                 val agentFile = jar.extractPluginEntry(pluginId, "agent-part.jar")
                                 if (adminPartFile != null && agentFile != null) {
@@ -54,7 +54,7 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
                                         processAdminPart(adminPartFile, adminJar)
                                     }
                                     if (adminPartClass != null) {
-                                        val dp = DP(
+                                        val dp = Plugin(
                                             adminPartClass,
                                             AgentPartFiles(
                                                 agentFile,

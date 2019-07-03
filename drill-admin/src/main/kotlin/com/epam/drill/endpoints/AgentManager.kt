@@ -18,7 +18,6 @@ import com.epam.drill.dataclasses.AgentBuildVersion
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.agentPluginPart
 import com.epam.drill.plugins.linuxPar
-import com.epam.drill.plugins.pluginBean
 import com.epam.drill.plugins.windowsPart
 import com.epam.drill.service.asyncTransaction
 import com.epam.drill.storage.AgentStorage

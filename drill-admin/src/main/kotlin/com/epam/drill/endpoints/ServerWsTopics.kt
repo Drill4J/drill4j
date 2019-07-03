@@ -14,7 +14,6 @@ import com.epam.drill.dataclasses.toAgentBuildVersionJson
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.plugins.getAllPluginBeans
 import com.epam.drill.plugins.partOf
-import com.epam.drill.plugins.pluginBean
 import com.epam.drill.plugins.toAllPluginsWebSocket
 import com.epam.drill.plugins.toPluginWebSocket
 import com.epam.drill.router.WsRoutes
