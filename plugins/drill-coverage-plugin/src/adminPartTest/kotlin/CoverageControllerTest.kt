@@ -4,18 +4,13 @@ import com.epam.drill.common.AgentInfo
 import com.epam.drill.common.AgentStatus
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
-import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugin.api.message.DrillMessage
-import com.epam.drill.plugins.coverage.CoverageEventType.CLASS_BYTES
-import com.epam.drill.plugins.coverage.CoverageEventType.INIT
-import com.epam.drill.plugins.coverage.CoverageEventType.INITIALIZED
-import com.epam.drill.plugins.coverage.CoverageEventType.SESSION_FINISHED
+import com.epam.drill.plugins.coverage.CoverageEventType.*
 import com.epam.drill.plugins.coverage.test.bar.BarDummy
 import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.list
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -33,7 +28,7 @@ class CoverageControllerTest {
         buildAlias = "test alias",
         buildVersions = mutableSetOf()
     )
-    private val ws = WsServiceStub()
+    private val ws = SenderStub()
 
     private val coverageController = CoverageController(ws, agentInfo, "test")
 
@@ -147,29 +142,17 @@ class CoverageControllerTest {
     }
 }
 
-class WsServiceStub : WsService {
+class SenderStub : Sender {
 
-    private val pluginStorage: ConcurrentHashMap<Any, Any> = ConcurrentHashMap()
     val sent = mutableListOf<Pair<String, Any>>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
-    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
+    override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         sent.add(destination to message)
         if (destination == "/coverage-by-packages")
             javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
     }
-
-    override fun getPlWsSession() = setOf<String>()
-
-    override fun storeData(key: Any, obj: Any) {
-        pluginStorage[key] = obj
-    }
-
-    override fun retrieveData(key: Any) = pluginStorage[key]
-
-
-    override fun getEntityBy(agentId: String, clazz: Class<Any>) {}
 }
 
 

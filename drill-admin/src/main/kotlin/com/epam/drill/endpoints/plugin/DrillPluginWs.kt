@@ -10,7 +10,7 @@ import com.epam.drill.common.MessageType
 import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
 import com.epam.drill.endpoints.textFrame
-import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.end.Sender
 import io.ktor.application.Application
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
@@ -29,20 +29,15 @@ import java.util.concurrent.ConcurrentMap
 
 private val logger = KotlinLogging.logger {}
 
-class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
+class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
 
-    private val pluginStorage: MutableMap<Any, Any> = ConcurrentHashMap()
     private val app: Application by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
 
 
-    override fun getPlWsSession(): Set<String> {
-        return sessionStorage.keys
-    }
-
-    override suspend fun convertAndSend(agentInfo: AgentInfo, destination: String, message: String) {
+    override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         val messageForSend = Message.serializer() stringify Message(MessageType.MESSAGE, destination, message)
 
         val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
@@ -58,17 +53,6 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, WsService {
                 }
             }
         }
-    }
-
-    override fun storeData(key: Any, obj: Any) {
-        pluginStorage[key] = obj
-    }
-
-    override fun retrieveData(key: Any) = pluginStorage[key]
-
-    override fun getEntityBy(agentId: String, clazz: Class<Any>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-
     }
 
     init {

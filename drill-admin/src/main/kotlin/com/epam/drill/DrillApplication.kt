@@ -16,7 +16,7 @@ import com.epam.drill.endpoints.plugin.PluginDispatcher
 import com.epam.drill.jwt.config.JwtConfig
 import com.epam.drill.jwt.user.source.UserSource
 import com.epam.drill.jwt.user.source.UserSourceImpl
-import com.epam.drill.plugin.api.end.WsService
+import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugins.PluginLoaderService
 import com.epam.drill.plugins.Plugins
 import com.epam.drill.router.Routes
@@ -86,7 +86,7 @@ val wsHandlers = Kodein.Module(name = "wsHandlers") {
             kodein
         )
     }
-    bind<WsService>() with eagerSingleton { DrillPluginWs(kodein) }
+    bind<Sender>() with eagerSingleton { DrillPluginWs(kodein) }
     bind<DrillServerWs>() with eagerSingleton {
         DrillServerWs(
             kodein
