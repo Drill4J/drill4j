@@ -15,7 +15,6 @@ import com.epam.drill.plugins.coverage.test.foo.FooDummy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.list
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
