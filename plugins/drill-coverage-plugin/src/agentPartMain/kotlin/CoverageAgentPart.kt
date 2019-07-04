@@ -1,8 +1,6 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.ClassPath
-import com.epam.drill.common.parse
-import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.processing.AgentPart
 import com.epam.drill.plugin.api.processing.InstrumentationPlugin
 import com.epam.drill.plugin.api.processing.Sender
@@ -17,7 +15,6 @@ private val instrContext = object : InstrContext {
     override fun invoke(): String? = DrillRequest.currentSession()
     override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
 }
-
 
 object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
 
@@ -98,14 +95,15 @@ class CoveragePlugin @JvmOverloads constructor(
 
 
     override fun doAction(action: Action) {
-        val sessionId = action.payload.sessionId
-        when (action.type) {
-            ActionType.START -> {
+        when (action) {
+            is StartSession -> {
+                val sessionId = action.payload.sessionId
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId)
                 sendMessage(CoverageEventType.SESSION_STARTED, sessionId)
             }
-            ActionType.STOP -> {
+            is StopSession -> {
+                val sessionId = action.payload.sessionId
                 println("End of recording for session $sessionId")
                 val runtimeData = instrContext.stop(sessionId)
                 runtimeData?.apply {
@@ -125,7 +123,8 @@ class CoveragePlugin @JvmOverloads constructor(
                     sendMessage(CoverageEventType.SESSION_FINISHED, sessionId)
                 }
             }
-            ActionType.CANCEL -> {
+            is CancelSession -> {
+                val sessionId = action.payload.sessionId
                 println("Cancellation of recording for session $sessionId")
                 instrContext.cancel(sessionId)
                 sendMessage(CoverageEventType.SESSION_CANCELLED, sessionId)

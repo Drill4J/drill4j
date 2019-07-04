@@ -13,7 +13,7 @@ abstract class AdminPluginPart<A>(val sender: Sender, val agentInfo: AgentInfo, 
 
     abstract suspend fun doAction(action: A)
 
-    suspend fun doRawAction(action: String) = doAction(
+    open suspend fun doRawAction(action: String) = doAction(
         actionSerializer parse action
     )
 }

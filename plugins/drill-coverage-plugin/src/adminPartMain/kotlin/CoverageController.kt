@@ -2,8 +2,6 @@ package com.epam.drill.plugins.coverage
 
 
 import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.parse
-import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugin.api.message.DrillMessage
@@ -23,7 +21,7 @@ internal val agentStorages = ConcurrentHashMap<String, Storage>()
 @Suppress("unused")
 class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
-    override val actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
+    override val actionSerializer = Action.serializer()
 
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
     private val storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
@@ -32,15 +30,16 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override suspend fun doAction(action: Action) {
         val agentState = getAgentStateByAgentInfo()
-        when (action.type) {
-            ActionType.CREATE_SCOPE -> {
-                checkoutScope(action.payload.scopeName, agentState)
-            }
-            ActionType.DROP_SCOPE -> {
-                checkoutScope("", agentState)
-            }
+        when(action) {
+            is SwitchScope -> checkoutScope(action.payload.scopeName, agentState)
+            is IgnoreScope -> Unit
+            is DropScope -> Unit
             else -> Unit
         }
+    }
+
+    override suspend fun doRawAction(action: String) {
+        doAction(actionSerializer parse action)
     }
 
     override suspend fun processData(dm: DrillMessage): Any {

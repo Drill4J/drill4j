@@ -1,25 +1,46 @@
 package com.epam.drill.plugins.coverage
 
-
 @kotlinx.serialization.Serializable
 data class CoverConfig(
     val pathPrefixes: List<String>,
     val message: String
 )
 
+@kotlinx.serialization.Polymorphic
+@kotlinx.serialization.Serializable
+abstract class Action
+
+@kotlinx.serialization.SerialName("START")
+@kotlinx.serialization.Serializable
+data class StartSession(val payload: SessionPayload) : Action()
+
+@kotlinx.serialization.SerialName("STOP")
+@kotlinx.serialization.Serializable
+data class StopSession(val payload: SessionPayload) : Action()
+
+@kotlinx.serialization.SerialName("CANCEL")
+@kotlinx.serialization.Serializable
+data class CancelSession(val payload: SessionPayload) : Action()
+
+
+@kotlinx.serialization.SerialName("SWITCH_SCOPE")
+@kotlinx.serialization.Serializable
+data class SwitchScope(val payload: ScopePayload) : Action()
+
+@kotlinx.serialization.SerialName("IGNORE_SCOPE")
+@kotlinx.serialization.Serializable
+data class IgnoreScope(val payload: ScopePayload) : Action()
+
+@kotlinx.serialization.SerialName("DROP_SCOPE")
+@kotlinx.serialization.Serializable
+data class DropScope(val payload: ScopePayload) : Action()
 
 @kotlinx.serialization.Serializable
-data class CoverageAction(
-    val sessionId: String,
-    val scopeName: String = ""
-)
+data class SessionPayload(val sessionId: String)
 
 @kotlinx.serialization.Serializable
-data class Action(val type: ActionType, val payload: CoverageAction)
+data class ScopePayload(val scopeName: String = "")
 
-enum class ActionType {
-    START, STOP, CANCEL, CREATE_SCOPE, DROP_SCOPE
-}
 
 @kotlinx.serialization.Serializable
 data class CoverageMessage(val type: CoverageEventType, val data: String)

@@ -1,17 +1,14 @@
 package com.epam.drill.plugin.api.processing
 
+import com.epam.drill.common.parse
 import com.epam.drill.common.stringify
 import com.epam.drill.plugin.api.DrillPlugin
-import kotlinx.serialization.json.Json
 
 
 actual abstract class AgentPart<T, A> : DrillPlugin<A>, Switchable, Lifecycle {
     private var rawConfig: String? = null
-    //    val config: T get() = confSerializer parse rawConfig!!
-    val config: T
-        get() {
-          return  Json.parse(confSerializer, rawConfig!!)
-        }
+
+    val config: T get() = confSerializer parse rawConfig!!
 
     actual open fun init(nativePluginPartPath: String) {
         try {
