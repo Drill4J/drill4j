@@ -30,6 +30,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.value
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import kotlin.native.concurrent.TransferMode
 
 
@@ -82,4 +83,4 @@ fun jvmtii(): CPointer<jvmtiEnvVar>? {
 
 
 @SharedImmutable
-val js = Json()
+val js = Json(JsonConfiguration.Stable)

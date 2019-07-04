@@ -44,6 +44,7 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
                         val configEntry = jar.getJarEntry(configPath)
                         if (configEntry != null) {
                             val configText = jar.getInputStream(configEntry).reader().readText()
+                            @Suppress("EXPERIMENTAL_API_USAGE")
                             val config = Json.parse(PluginBean.serializer(), configText)
                             val pluginId = config.id
                             if (pluginId !in plugins.keys) {
