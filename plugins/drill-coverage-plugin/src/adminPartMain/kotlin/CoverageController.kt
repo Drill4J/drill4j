@@ -62,7 +62,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
         when (parse.type) {
             CoverageEventType.INIT -> {
-                updateScopeData()
+                updateScopeMessages()
                 val initInfo = InitInfo.serializer() parse parse.data
                 agentState.init(initInfo)
                 println(initInfo.message) //log init message
@@ -80,6 +80,9 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
                 val classesData = agentState.classesData()
                 if (classesData.changed) {
                     classesData.execData.start()
+                    val defaultScope = Scope()
+                    storage.store(ScopeKey(agentInfo.buildVersion), defaultScope)
+                    defaultScope.sessions--
                     processData(agentState, CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
                 }
             }
@@ -104,7 +107,9 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
             }
             CoverageEventType.SESSION_FINISHED -> {
                 updateGatheringState(false)
-                val scopeProbes = defineProbesForScope(agentState)
+                val scope = storage.retrieve(scopeKey)!!
+                scope.sessions++
+                val scopeProbes = refreshProbesForScope(scope, agentState)
                 val cis = calculateCoverageData(agentState, scopeProbes)
                 deliverMessages(cis)
             }
@@ -168,7 +173,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun updateScopeData() {
+    private suspend fun updateScopeMessages() {
         val key = ScopesKey(agentInfo.buildVersion)
         val scopes = storage.retrieve(key) ?: mutableSetOf()
         storage.store(key, scopes + scopeKey.name)
@@ -219,31 +224,28 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         checkoutScope("", agentState)
     }
 
-    private suspend fun defineProbesForScope(agentState: AgentState): List<ExDataTemp> {
-        val scope = getOrCreateScope()
+
+    private fun refreshProbesForScope(scope: Scope, agentState: AgentState): List<ExDataTemp> {
         val classesData = agentState.classesData()
         scope.probes.addAll(classesData.execData.stop())
         return scope.probes
     }
 
-    private suspend fun getOrCreateScope(): Scope {
-        return when (val scope = storage.retrieve(scopeKey)) {
-            null -> {
-                val storeData = Scope(scopeKey.name)
-                storage.store(scopeKey, storeData)
-                return storeData
-            }
-            else -> scope
-        }
-    }
+    suspend fun checkoutScope(newScopeName: String, agentState: AgentState) {
+        if (newScopeName != scopeKey.name) {
+            val oldScope = storage.retrieve(scopeKey)!!
+            scopeKey = ScopeKey(agentInfo.buildVersion, newScopeName)
+            updateScopeMessages()
+            val scope = storage.retrieve(scopeKey) ?:
+                Scope().apply { storage.store(scopeKey, this) }
 
-    private suspend fun checkoutScope(newScopeName: String, agentState: AgentState) {
-        scopeKey = ScopeKey(agentInfo.buildVersion, newScopeName)
-        sendActiveScopeName()
-        updateScopeData()
-        val scopeProbes = defineProbesForScope(agentState)
-        val cis = calculateCoverageData(agentState, scopeProbes)
-        deliverMessages(cis)
+            oldScope.stop()
+            scope.start()
+
+            val scopeProbes = refreshProbesForScope(scope, agentState)
+            val cis = calculateCoverageData(agentState, scopeProbes)
+            deliverMessages(cis)
+        }
     }
 
     private suspend fun deliverMessages(cis: CoverageInfoSet, prefix: String = "") {
