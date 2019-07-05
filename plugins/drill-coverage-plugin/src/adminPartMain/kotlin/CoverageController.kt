@@ -26,14 +26,15 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
     private val storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
 
-    private var scopeName: String = ""
+    @Volatile
+    private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
 
     override suspend fun doAction(action: Action) {
         val agentState = getAgentStateByAgentInfo()
-        when(action) {
+        when (action) {
             is SwitchScope -> checkoutScope(action.payload.scopeName, agentState)
-            is IgnoreScope -> Unit
-            is DropScope -> Unit
+            is IgnoreScope -> toggleScope(action.payload.scopeName, action.payload.enabled)
+            is DropScope -> dropScope(action.payload.scopeName, agentState)
             else -> Unit
         }
     }
@@ -170,9 +171,9 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     private suspend fun updateScopeData() {
         val key = ScopesKey(agentInfo.buildVersion)
         val scopes = storage.retrieve(key) ?: mutableSetOf()
-        storage.store(key, scopes + scopeName)
-        updateScope()
-        updateScopesSet(scopes)
+        storage.store(key, scopes + scopeKey.name)
+        sendActiveScopeName()
+        sendScopes(scopes)
     }
 
     private suspend fun updateGatheringState(state: Boolean) {
@@ -183,20 +184,39 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun updateScope() {
+    private suspend fun sendActiveScopeName() {
         sender.send(
             agentInfo,
             "/active-scope",
-            scopeName
+            scopeKey.name
         )
     }
 
-    private suspend fun updateScopesSet(scopes: Set<String>) {
+    private suspend fun sendScopes(scopes: Set<String>) {
         sender.send(
             agentInfo,
             "/scopes",
             String.serializer().set stringify scopes
         )
+    }
+
+    private suspend fun toggleScope(scopeName: String, enabled: Boolean) {
+        val toggleScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
+        val scope = storage.retrieve(toggleScopeKey)
+        scope?.enabled = enabled
+    }
+
+    private suspend fun dropScope(scopeName: String, agentState: AgentState) {
+        val dropScopeFromSetKey = ScopesKey(agentInfo.buildVersion)
+        val currentScopeSet = storage.retrieve(dropScopeFromSetKey) ?: setOf()
+        if (scopeName in currentScopeSet) {
+            val processedScopeSet = currentScopeSet - scopeName
+            storage.store(dropScopeFromSetKey, processedScopeSet)
+            sendScopes(processedScopeSet)
+            val dropScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
+            storage.delete(dropScopeKey)
+        }
+        checkoutScope("", agentState)
     }
 
     private suspend fun defineProbesForScope(agentState: AgentState): List<ExDataTemp> {
@@ -206,17 +226,11 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         return scope.probes
     }
 
-    private suspend fun getScopeOrNull(): Scope? {
-        val key = ScopeKey(agentInfo.buildVersion, scopeName)
-        return storage.retrieve(key)
-    }
-
     private suspend fun getOrCreateScope(): Scope {
-        return when (val scope = getScopeOrNull()) {
+        return when (val scope = storage.retrieve(scopeKey)) {
             null -> {
-                val key = ScopeKey(agentInfo.buildVersion, scopeName)
-                val storeData = Scope(scopeName)
-                storage.store(key, storeData)
+                val storeData = Scope(scopeKey.name)
+                storage.store(scopeKey, storeData)
                 return storeData
             }
             else -> scope
@@ -224,8 +238,8 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     private suspend fun checkoutScope(newScopeName: String, agentState: AgentState) {
-        scopeName = newScopeName
-        updateScope()
+        scopeKey = ScopeKey(agentInfo.buildVersion, newScopeName)
+        sendActiveScopeName()
         updateScopeData()
         val scopeProbes = defineProbesForScope(agentState)
         val cis = calculateCoverageData(agentState, scopeProbes)
@@ -279,20 +293,3 @@ data class CoverageInfoSet(
     val packageCoverage: List<JavaPackageCoverage>,
     val testUsages: List<TestUsagesInfo>
 )
-
-typealias Scopes = Set<String>
-
-data class Scope(
-    val name: String,
-    val probes: MutableList<ExDataTemp> = mutableListOf(),
-    var accounted: Boolean = true
-)
-
-data class ScopesKey(
-    val buildVersion: String
-) : StoreKey<Scopes>
-
-data class ScopeKey(
-    val buildVersion: String,
-    val name: String
-) : StoreKey<Scope>
