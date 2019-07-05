@@ -1,31 +1,41 @@
 package com.epam.drill.plugins.coverage
 
-import java.util.*
-
-
 typealias Scopes = Set<String>
 
 data class Scope(
     val name: String = "",
     val probes: MutableList<ExDataTemp> = mutableListOf(),
-    var enabled: Boolean = true,
-    var startDate: Date = Date(),
-    var finishDate: Date? = null,
-    var duration: Long = 0,
-    var sessions: Int = 0
-){
-    fun start(){
-        startDate = Date()
-        finishDate = null
+    var enabled: Boolean = true
+) {
+    var started: Long = 0L
+        private set
+
+    var finished: Long? = null
+        private set
+
+    var duration: Long = 0L
+        private set
+    
+    var sessionCount: Int = 0
+        private set
+    
+    init {
+        start()
     }
 
-    fun stop(){
-        finishDate = Date()
-        duration += finishDate!!.time - startDate.time
+    fun start() {
+        started = System.currentTimeMillis()
+        finished = null
     }
+
+    fun finish() {
+        val t = System.currentTimeMillis()
+        finished = t
+        duration += t - started
+    }
+    
+    fun incSessionCount() = sessionCount++
 }
-
-
 
 data class ScopesKey(
     val buildVersion: String
