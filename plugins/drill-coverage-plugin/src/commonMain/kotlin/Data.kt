@@ -27,9 +27,9 @@ data class CancelSession(val payload: SessionPayload) : Action()
 @kotlinx.serialization.Serializable
 data class SwitchScope(val payload: ScopePayload) : Action()
 
-@kotlinx.serialization.SerialName("IGNORE_SCOPE")
+@kotlinx.serialization.SerialName("TOGGLE_SCOPE")
 @kotlinx.serialization.Serializable
-data class IgnoreScope(val payload: ScopePayload) : Action()
+data class IgnoreScope(val payload: ToggleScopePayload) : Action()
 
 @kotlinx.serialization.SerialName("DROP_SCOPE")
 @kotlinx.serialization.Serializable
@@ -41,6 +41,8 @@ data class SessionPayload(val sessionId: String)
 @kotlinx.serialization.Serializable
 data class ScopePayload(val scopeName: String = "")
 
+@kotlinx.serialization.Serializable
+data class ToggleScopePayload(val scopeName: String = "", val enabled: Boolean)
 
 @kotlinx.serialization.Serializable
 data class CoverageMessage(val type: CoverageEventType, val data: String)

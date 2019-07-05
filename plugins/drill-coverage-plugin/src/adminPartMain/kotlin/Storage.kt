@@ -8,10 +8,11 @@ interface StoreKey<T : Any>
 interface Storage {
     suspend fun <T : Any> store(key: StoreKey<T>, value: T)
     suspend fun <T : Any> retrieve(key: StoreKey<T>): T?
+    suspend fun <T : Any> delete(key: StoreKey<T>): T?
 }
 
 class MapStorage : Storage {
-    
+
     private val m = ConcurrentHashMap<Any, Any>()
 
     @Suppress("UNCHECKED_CAST")
@@ -20,4 +21,7 @@ class MapStorage : Storage {
     override suspend fun <T : Any> store(key: StoreKey<T>, value: T) {
         m[key] = value
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <T : Any> delete(key: StoreKey<T>) = m.remove(key) as? T
 }
