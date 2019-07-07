@@ -2,6 +2,7 @@ package com.epam.drill.plugins.coverage
 
 
 import com.epam.drill.common.AgentInfo
+import com.epam.drill.plugin.api.SerDe
 import com.epam.drill.plugin.api.end.AdminPluginPart
 import com.epam.drill.plugin.api.end.Sender
 import com.epam.drill.plugin.api.message.DrillMessage
@@ -21,7 +22,8 @@ internal val agentStorages = ConcurrentHashMap<String, Storage>()
 @Suppress("unused")
 class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
-    override val actionSerializer = Action.serializer()
+
+    override val serDe: SerDe<Action> = commonSerDe
 
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
     private val storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
@@ -37,10 +39,6 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
             is DropScope -> dropScope(action.payload.scopeName, agentState)
             else -> Unit
         }
-    }
-
-    override suspend fun doRawAction(action: String) {
-        doAction(actionSerializer parse action)
     }
 
     override suspend fun processData(dm: DrillMessage): Any {

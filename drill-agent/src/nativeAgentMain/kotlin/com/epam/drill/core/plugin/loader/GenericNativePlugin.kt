@@ -36,11 +36,11 @@ open class GenericNativePlugin(
         load(pluginConfig.enabled && agentIsEnabled)
     }
 
-    override fun doRawAction(action: String) {
+    override suspend fun doRawAction(rawAction: String) {
         CallVoidMethod(
             userPlugin,
-            GetMethodID(pluginApiClass, ::doRawAction.name, "(Ljava/lang/String;)V"),
-            NewStringUTF(action)
+            GetMethodID(pluginApiClass, "doRawActionBlocking", "(Ljava/lang/String;)V"),
+            NewStringUTF(rawAction)
         )
     }
 

@@ -8,7 +8,7 @@ expect abstract class AgentPart<T, A>() : DrillPlugin<A>, Switchable, Lifecycle 
     var np: NativePart<T>?
     var enabled: Boolean
 
-    abstract var confSerializer: KSerializer<T>
+    abstract val confSerializer: KSerializer<T>
 
     open fun init(nativePluginPartPath: String)
 
@@ -25,8 +25,6 @@ expect abstract class AgentPart<T, A>() : DrillPlugin<A>, Switchable, Lifecycle 
     abstract override fun off()
 
     fun rawConfig(): String
-
-    abstract fun doRawAction(action: String)
 }
 
 

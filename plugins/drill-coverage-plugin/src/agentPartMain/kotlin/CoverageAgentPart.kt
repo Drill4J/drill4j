@@ -24,6 +24,10 @@ class CoveragePlugin @JvmOverloads constructor(
     private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
 ) : AgentPart<CoverConfig, Action>(), InstrumentationPlugin {
 
+    override val confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
+
+    override val serDe = commonSerDe
+
     val instrumenter = instrumenter(instrContext)
 
     private val loadedClassesRef = AtomicReference<Map<String, Long?>>(emptyMap())
@@ -94,7 +98,7 @@ class CoveragePlugin @JvmOverloads constructor(
     }
 
 
-    override fun doAction(action: Action) {
+    override suspend fun doAction(action: Action) {
         when (action) {
             is StartSession -> {
                 val sessionId = action.payload.sessionId
@@ -134,10 +138,6 @@ class CoveragePlugin @JvmOverloads constructor(
 
     }
 
-    override fun doRawAction(action: String) {
-        doAction(actionSerializer parse action)
-    }
-
     private fun sendClass(classBytes: ClassBytes) {
         val classJson = ClassBytes.serializer() stringify classBytes
         sendMessage(CoverageEventType.CLASS_BYTES, classJson)
@@ -152,8 +152,4 @@ class CoveragePlugin @JvmOverloads constructor(
         val message = CoverageMessage.serializer() stringify CoverageMessage(type, str)
         Sender.sendMessage("coverage", message)
     }
-
-
-    override var confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
-    override var actionSerializer: kotlinx.serialization.KSerializer<Action> = Action.serializer()
 }
