@@ -28,7 +28,6 @@ abstract class DummyAgentPart(override val id: String) : AgentPart<Any, Any>() {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    override var confSerializer: KSerializer<Any>
+    override val confSerializer: KSerializer<Any>
         get() = TODO("stub")
-        set(value) {}
 }

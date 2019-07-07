@@ -5,7 +5,7 @@ import com.epam.drill.plugin.api.processing.PluginRepresenter
 
 @Suppress("unused")
 class AgentPartStub(var enabledx: Boolean, override val id: String) : PluginRepresenter() {
-    override fun doRawAction(action: String) {
+    override suspend fun doRawAction(action: String) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

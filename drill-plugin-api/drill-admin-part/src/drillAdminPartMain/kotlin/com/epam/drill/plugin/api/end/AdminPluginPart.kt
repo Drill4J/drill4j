@@ -7,13 +7,5 @@ import com.epam.drill.plugin.api.message.DrillMessage
 
 abstract class AdminPluginPart<A>(val sender: Sender, val agentInfo: AgentInfo, override val id: String) :
     DrillPlugin<A> {
-    abstract val actionSerializer: kotlinx.serialization.KSerializer<A>
-
     abstract suspend fun processData(dm: DrillMessage): Any
-
-    abstract suspend fun doAction(action: A)
-
-    open suspend fun doRawAction(action: String) = doAction(
-        actionSerializer parse action
-    )
 }
