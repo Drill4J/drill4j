@@ -17,6 +17,7 @@ tasks {
     }
 
     val cleanDistr by registering(Delete::class) {
+        group = "build"
         delete("distr")
     }
 
