@@ -45,7 +45,7 @@ class CoverageControllerTest {
         sendMessage(message)
 
         assertEquals(1, agentStates.count())
-        val agentData = agentStates[agentInfo.id]?.dataRef?.get()
+        val agentData = agentStates[agentInfo.id]?.data
         assertTrue { agentData is ClassDataBuilder && agentData.count == initInfo.classesCount }
     }
 
@@ -58,7 +58,7 @@ class CoverageControllerTest {
         sendClass(dummyClass)
 
         agentStates[agentInfo.id]!!.run {
-            val agentData = dataRef.get() as ClassDataBuilder
+            val agentData = data as ClassDataBuilder
             val (name, bytes) = agentData.classData.poll()!!
             assertEquals(dummyClass.path, name)
             assertTrue { dummyBytes.contentEquals(bytes) }

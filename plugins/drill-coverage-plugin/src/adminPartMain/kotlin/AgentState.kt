@@ -1,13 +1,13 @@
 package com.epam.drill.plugins.coverage
 
-import com.epam.drill.common.AgentInfo
-import org.jacoco.core.analysis.Analyzer
-import org.jacoco.core.analysis.CoverageBuilder
-import org.jacoco.core.data.ExecutionDataStore
-import org.javers.core.JaversBuilder
-import org.javers.core.diff.changetype.NewObject
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
+import com.epam.drill.common.*
+import kotlinx.atomicfu.*
+import org.jacoco.core.analysis.*
+import org.jacoco.core.data.*
+import org.javers.core.*
+import org.javers.core.diff.changetype.*
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 
 /**
  * Agent state.
@@ -19,12 +19,19 @@ class AgentState(
     val agentInfo: AgentInfo,
     prevState: AgentState?
 ) {
-    internal val dataRef: AtomicReference<AgentData> = AtomicReference(prevState?.dataRef?.get() ?: NoData)
-    
+    @Suppress("PropertyName")
+    internal val _data = atomic(prevState?.data ?: NoData)
+
+    internal var data: AgentData
+        get() = _data.value
+        private set(value) {
+            _data.value = value
+        }
+
     private val javers = JaversBuilder.javers().build()
 
     fun init(initInfo: InitInfo) {
-        dataRef.updateAndGet { prevData ->
+        _data.updateAndGet { prevData ->
             ClassDataBuilder(
                 count = initInfo.classesCount,
                 prevData = prevData as? ClassesData
@@ -34,13 +41,13 @@ class AgentState(
 
     fun addClass(key: String, bytes: ByteArray) {
         //throw ClassCastException if the ref value is in the wrong state
-        val agentData = dataRef.get() as ClassDataBuilder
+        val agentData = data as ClassDataBuilder
         agentData.classData.offer(key to bytes)
     }
 
     fun initialized() {
         //throw ClassCastException if the ref value is in the wrong state
-        val agentData = dataRef.get() as ClassDataBuilder
+        val agentData = data as ClassDataBuilder
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
         val classBytes = LinkedHashMap<String, ByteArray>(agentData.count)
@@ -82,19 +89,17 @@ class AgentState(
             agentInfo == prevAgentInfo && diffNewMethods.isEmpty() -> prevData.newMethods to false
             else -> diffNewMethods to true
         }
-        dataRef.set(
-            ClassesData(
-                agentInfo = agentInfo,
-                classesBytes = classBytes,
-                javaClasses = javaClasses,
-                newMethods = newMethods,
-                changed = changed
-            )
+        data = ClassesData(
+            agentInfo = agentInfo,
+            classesBytes = classBytes,
+            javaClasses = javaClasses,
+            newMethods = newMethods,
+            changed = changed
         )
     }
 
     //throw ClassCastException if the ref value is in the wrong state
-    fun classesData(): ClassesData = dataRef.get() as ClassesData
+    fun classesData(): ClassesData = data as ClassesData
 }
 
 sealed class AgentData
