@@ -12,11 +12,11 @@ interface DrillPlugin<A> {
 
     val serDe: SerDe<A>
 
-    suspend fun doAction(action: A)
+    suspend fun doAction(action: A): Any
 
-    suspend fun doRawAction(rawAction: String) {
+    suspend fun doRawAction(rawAction: String): Any {
         val action = serDe.actionSerializer.parse(rawAction)
-        doAction(action)
+        return doAction(action)
     }
     
     infix fun <T> KSerializer<T>.parse(rawData: String) = serDe.parse(this, rawData)
