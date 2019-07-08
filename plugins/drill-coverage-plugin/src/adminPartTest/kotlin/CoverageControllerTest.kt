@@ -33,8 +33,8 @@ class CoverageControllerTest {
     private val coverageController = CoverageController(ws, agentInfo, "test")
 
     @Test
-    fun `should have empty state before init`() {
-        assertTrue { agentStates.isEmpty() }
+    fun `should have some state before init`() {
+        assertTrue { agentStates.isNotEmpty() }
     }
 
     @Test
