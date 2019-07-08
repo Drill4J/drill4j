@@ -19,45 +19,41 @@ internal val agentStates = ConcurrentHashMap<String, AgentState>()
 //TODO This is a temporary storage API. It will be removed when the core API has been developed
 internal val agentStorages = ConcurrentHashMap<String, Storage>()
 
-@Suppress("unused")
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
 
     override val serDe: SerDe<Action> = commonSerDe
 
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
-    private val storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
+    private val storage: Storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
+
+    private val agentState: AgentState = agentStates.compute(agentInfo.id) { _, state ->
+        when (state?.agentInfo) {
+            agentInfo -> state
+            else -> AgentState(agentInfo, state)
+        }
+    }!!
 
     @Volatile
     private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
 
     override suspend fun doAction(action: Action) {
-        val agentState = getAgentStateByAgentInfo()
         when (action) {
-            is SwitchScope -> checkoutScope(action.payload.scopeName, agentState)
+            is SwitchScope -> checkoutScope(action.payload.scopeName)
             is IgnoreScope -> toggleScope(action.payload.scopeName, action.payload.enabled)
-            is DropScope -> dropScope(action.payload.scopeName, agentState)
+            is DropScope -> dropScope(action.payload.scopeName)
             else -> Unit
         }
     }
 
     override suspend fun processData(dm: DrillMessage): Any {
-        val agentState = getAgentStateByAgentInfo()
         val content = dm.content
         val message = CoverageMessage.serializer() parse content!!
-        return processData(agentState, message)
+        return processData(message)
     }
 
-    private fun getAgentStateByAgentInfo(): AgentState =
-        agentStates.compute(agentInfo.id) { _, state ->
-            when (state?.agentInfo) {
-                agentInfo -> state
-                else -> AgentState(agentInfo, state)
-            }
-        }!!
-
-    @Suppress("MemberVisibilityCanBePrivate")// debug problem with private modifier
-    suspend fun processData(agentState: AgentState, parse: CoverageMessage): Any {
+    internal suspend fun processData(parse: CoverageMessage): Any {
         when (parse.type) {
             CoverageEventType.INIT -> {
                 updateScopeMessages()
@@ -80,7 +76,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
                     classesData.execData.start()
                     val defaultScope = Scope()
                     storage.store(ScopeKey(agentInfo.buildVersion), defaultScope)
-                    processData(agentState, CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
+                    processData(CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
                 }
             }
             CoverageEventType.SESSION_STARTED -> {
@@ -107,7 +103,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
                 scope.incSessionCount()
                 val classesData = agentState.classesData()
                 scope.probes.addAll(classesData.execData.stop())
-                val cis = calculateCoverageData(agentState, scope.probes)
+                val cis = calculateCoverageData(scope.probes)
                 updateGatheringState(false)
                 sendCalcResults(cis)
             }
@@ -115,11 +111,8 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         return ""
     }
 
-    private fun calculateCoverageData(
-        agentState: AgentState,
-        scopeProbes: List<ExDataTemp>
-    ): CoverageInfoSet {
-        val classesData = agentState.classesData()
+    internal fun calculateCoverageData(scopeProbes: List<ExDataTemp>): CoverageInfoSet {
+        val classesData = agentState.classesData()  
         // Analyze all existing classes
         val coverageBuilder = CoverageBuilder()
         val dataStore = ExecutionDataStore()
@@ -170,7 +163,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun updateScopeMessages() {
+    internal suspend fun updateScopeMessages() {
         val key = ScopesKey(agentInfo.buildVersion)
         val scopes = storage.retrieve(key) ?: mutableSetOf()
         storage.store(key, scopes + scopeKey.name)
@@ -178,7 +171,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         sendScopes(scopes)
     }
 
-    private suspend fun updateGatheringState(state: Boolean) {
+    internal suspend fun updateGatheringState(state: Boolean) {
         sender.send(
             agentInfo,
             "/collection-state",
@@ -186,7 +179,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun sendActiveScopeName() {
+    internal suspend fun sendActiveScopeName() {
         sender.send(
             agentInfo,
             "/active-scope",
@@ -194,7 +187,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun sendScopes(scopes: Set<String>) {
+    internal suspend fun sendScopes(scopes: Set<String>) {
         sender.send(
             agentInfo,
             "/scopes",
@@ -202,13 +195,13 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    private suspend fun toggleScope(scopeName: String, enabled: Boolean) {
+    internal suspend fun toggleScope(scopeName: String, enabled: Boolean) {
         val toggleScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
         val scope = storage.retrieve(toggleScopeKey)
         scope?.enabled = enabled
     }
 
-    private suspend fun dropScope(scopeName: String, agentState: AgentState) {
+    internal suspend fun dropScope(scopeName: String) {
         val dropScopeFromSetKey = ScopesKey(agentInfo.buildVersion)
         val currentScopeSet = storage.retrieve(dropScopeFromSetKey) ?: setOf()
         if (scopeName in currentScopeSet) {
@@ -218,10 +211,10 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
             val dropScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
             storage.delete(dropScopeKey)
         }
-        checkoutScope("", agentState)
+        checkoutScope("")
     }
 
-    private suspend fun checkoutScope(scopeName: String, agentState: AgentState) {
+    private suspend fun checkoutScope(scopeName: String) {
         if (scopeName != scopeKey.name) {
             val oldScope = storage.retrieve(scopeKey)
             oldScope?.finish()
@@ -231,12 +224,12 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
 
             scope.start()
 
-            val cis = calculateCoverageData(agentState, scope.probes)
+            val cis = calculateCoverageData(scope.probes)
             sendCalcResults(cis)
         }
     }
 
-    private suspend fun sendCalcResults(cis: CoverageInfoSet, prefix: String = "") {
+    internal suspend fun sendCalcResults(cis: CoverageInfoSet, prefix: String = "") {
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
