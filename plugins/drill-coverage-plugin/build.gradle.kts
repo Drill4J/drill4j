@@ -1,13 +1,24 @@
-import com.epam.drill.build.jvmCoroutinesVersion
-import com.epam.drill.build.serializationRuntimeVersion
+import com.epam.drill.build.*
 
 plugins {
     `kotlin-multiplatform`
     `kotlinx-serialization`
+    `kotlinx-atomicfu`
 }
 
-val agentDeps by configurations.creating{}
-val adminDeps by configurations.creating{}
+val jacocoVersion = "0.8.3"
+val javersVersion = "5.3.4"
+
+val agentJarDeps by configurations.creating {}
+
+val adminJarDeps by configurations.creating {}
+
+dependencies {
+    agentJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
+
+    adminJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
+    adminJarDeps("org.javers:javers-core:$javersVersion")
+}
 
 
 kotlin {
@@ -15,12 +26,13 @@ kotlin {
         jvm("adminPart"),
         jvm("agentPart")
     )
+
     sourceSets {
         named("commonMain") {
             dependencies {
+                implementation(project(":drill-common"))
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
-                implementation(project(":drill-common"))
             }
         }
         named("commonTest") {
@@ -30,35 +42,35 @@ kotlin {
             }
         }
         named("agentPartMain") {
+            project.configurations.named(implementationConfigurationName) {
+                extendsFrom(agentJarDeps)
+            }
             dependencies {
-                implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
-                project.dependencies.add("agentDeps", "org.jacoco:org.jacoco.core:0.8.3")
-                api("org.jacoco:org.jacoco.core:0.8.3")
-                api("org.javers:javers-core:5.3.4")
             }
         }
         named("adminPartMain") {
+            project.configurations.named(implementationConfigurationName) {
+                extendsFrom(adminJarDeps)
+            }
             dependencies {
-                implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-admin-part"))
-                implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
-                implementation("org.jacoco:org.jacoco.core:0.8.3")
-                implementation("org.javers:javers-core:5.3.4")
-
-                project.dependencies.add("adminDeps","org.jacoco:org.jacoco.core:0.8.3")
-                project.dependencies.add("adminDeps","org.javers:javers-core:5.3.4")
-
             }
         }
 
-        //jvm junit deps
+        //common jvm deps
         jvms.forEach {
+            it.compilations["main"].defaultSourceSet {
+                dependencies {
+                    implementation(project(":drill-common"))
+                    implementation(kotlin("stdlib-jdk8"))
+                    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
+                    compileOnly("org.jetbrains.kotlinx:atomicfu:$atomicFuVersion")
+                }
+            }
             it.compilations["test"].defaultSourceSet {
                 dependencies {
+                    implementation("org.jetbrains.kotlinx:atomicfu:$atomicFuVersion")
                     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
                     implementation(kotlin("test-junit"))
                 }
@@ -76,12 +88,12 @@ tasks {
     val adminPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("admin-part.jar")
-        from(adminDeps.flattenJars())
+        from(adminJarDeps.flattenJars())
     }
     val agentPartJar by existing(Jar::class) {
         group = "build"
         archiveFileName.set("agent-part.jar")
-        from(agentDeps.flattenJars())
+        from(agentJarDeps.flattenJars())
     }
 
     val distJar by registering(Jar::class) {
