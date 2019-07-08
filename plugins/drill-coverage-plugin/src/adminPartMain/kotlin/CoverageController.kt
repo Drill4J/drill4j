@@ -12,6 +12,7 @@ import kotlinx.serialization.set
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.data.ExecutionDataStore
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
@@ -38,11 +39,12 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     @Volatile
     private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
 
-    override suspend fun doAction(action: Action) {
-        when (action) {
+    override suspend fun doAction(action: Action): Any {
+        return when (action) {
             is SwitchScope -> checkoutScope(action.payload.scopeName)
             is IgnoreScope -> toggleScope(action.payload.scopeName, action.payload.enabled)
             is DropScope -> dropScope(action.payload.scopeName)
+            is StartSession -> SessionPayload.serializer() stringify SessionPayload(UUID.randomUUID().toString())
             else -> Unit
         }
     }

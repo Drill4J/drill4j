@@ -10,7 +10,7 @@ actual abstract class AgentPart<T, A> : DrillPlugin<A>, Switchable, Lifecycle {
     val config: T get() = confSerializer parse rawConfig!!
 
     //TODO figure out how to handle suspend from the agent
-    fun doRawActionBlocking(rawAction: String) = runBlocking {
+    fun doRawActionBlocking(rawAction: String) = runBlocking<Unit> {
         doRawAction(rawAction)
     }
 

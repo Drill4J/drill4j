@@ -107,8 +107,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                             val plugin: AdminPluginPart<*> = fillPluginInstance(
                                 agentEntry, dp.pluginClass, pluginId
                             )
-                            plugin.doRawAction(action)
-                            HttpStatusCode.OK to ""
+                            HttpStatusCode.OK to plugin.doRawAction(action)
                         }
                     }
                     call.respond(statusCode, response)
