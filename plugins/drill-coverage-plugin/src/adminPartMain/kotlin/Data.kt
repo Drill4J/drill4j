@@ -99,3 +99,18 @@ data class TestUsagesInfo(
 
 @Serializable
 data class GatheringState(val state: Boolean)
+
+@Serializable
+data class ScopeSummary(
+        val name: String,
+        val started: Long,
+        val coverage: Double? = null,
+        val coveragesByType: Map<String, TestTypeSummary>
+)
+
+@Serializable
+data class TestTypeSummary(
+        val testType: String,
+        val coverage: Double?,
+        val tests: Int
+)

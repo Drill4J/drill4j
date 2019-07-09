@@ -1,6 +1,6 @@
 package com.epam.drill.plugins.coverage
 
-typealias Scopes = Set<String>
+typealias Scopes = Map<String, ScopeSummary>
 
 data class Scope(
     val name: String = "",
@@ -15,10 +15,10 @@ data class Scope(
 
     var duration: Long = 0L
         private set
-    
+
     var sessionCount: Int = 0
         private set
-    
+
     init {
         start()
     }
@@ -33,7 +33,7 @@ data class Scope(
         finished = t
         duration += t - started
     }
-    
+
     fun incSessionCount() = sessionCount++
 }
 
