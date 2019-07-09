@@ -8,6 +8,7 @@ plugins {
 
 val jacocoVersion = "0.8.3"
 val javersVersion = "5.3.4"
+val vavrVersion = "0.10.0"
 
 val agentJarDeps by configurations.creating {}
 
@@ -15,8 +16,10 @@ val adminJarDeps by configurations.creating {}
 
 dependencies {
     agentJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
+    agentJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
 
     adminJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
+    adminJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
     adminJarDeps("org.javers:javers-core:$javersVersion")
 }
 
