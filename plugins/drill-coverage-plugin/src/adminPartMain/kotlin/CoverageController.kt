@@ -38,6 +38,8 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     @Volatile
     private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
+    
+    private val scopesKey = ScopesKey(agentInfo.buildVersion)
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
@@ -58,7 +60,8 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     internal suspend fun processData(parse: CoverageMessage): Any {
         when (parse.type) {
             CoverageEventType.INIT -> {
-                updateScopeMessages()
+                val scopes = storage.retrieve(scopesKey) ?: emptyMap()
+                updateScopeMessages(scopes)
                 val initInfo = InitInfo.serializer() parse parse.data
                 agentState.init(initInfo)
                 println(initInfo.message) //log init message
@@ -165,10 +168,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal suspend fun updateScopeMessages() {
-        val key = ScopesKey(agentInfo.buildVersion)
-        val scopes = storage.retrieve(key) ?: mutableSetOf()
-        storage.store(key, scopes + scopeKey.name)
+    internal suspend fun updateScopeMessages(scopes: Scopes) {
         sendActiveScopeName()
         sendScopes(scopes)
     }
@@ -189,11 +189,11 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal suspend fun sendScopes(scopes: Set<String>) {
+    internal suspend fun sendScopes(scopes: Scopes) {
         sender.send(
             agentInfo,
             "/scopes",
-            String.serializer().set stringify scopes
+            String.serializer().set stringify scopes.keys
         )
     }
 
@@ -204,12 +204,11 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun dropScope(scopeName: String) {
-        val dropScopeFromSetKey = ScopesKey(agentInfo.buildVersion)
-        val currentScopeSet = storage.retrieve(dropScopeFromSetKey) ?: setOf()
+        val currentScopeSet = storage.retrieve(scopesKey) ?: setOf()
         if (scopeName in currentScopeSet) {
-            val processedScopeSet = currentScopeSet - scopeName
-            storage.store(dropScopeFromSetKey, processedScopeSet)
-            sendScopes(processedScopeSet)
+            val processedScopes = currentScopeSet - scopeName
+            storage.store(scopesKey, processedScopes)
+            sendScopes(processedScopes)
             val dropScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
             storage.delete(dropScopeKey)
         }
@@ -221,8 +220,10 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
             val oldScope = storage.retrieve(scopeKey)
             oldScope?.finish()
             scopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
-            updateScopeMessages()
+            //TODO Replace this!!!
             val scope = storage.retrieve(scopeKey) ?: Scope().apply { storage.store(scopeKey, this) }
+            val scopes = storage.retrieve(scopesKey) ?: emptyMap()
+            updateScopeMessages(scopes)
 
             scope.start()
 
