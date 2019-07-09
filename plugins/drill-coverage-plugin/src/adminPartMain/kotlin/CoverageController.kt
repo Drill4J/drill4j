@@ -204,7 +204,7 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun dropScope(scopeName: String) {
-        val currentScopeSet = storage.retrieve(scopesKey) ?: setOf()
+        val currentScopeSet = storage.retrieve(scopesKey) ?: emptyMap()
         if (scopeName in currentScopeSet) {
             val processedScopes = currentScopeSet - scopeName
             storage.store(scopesKey, processedScopes)
