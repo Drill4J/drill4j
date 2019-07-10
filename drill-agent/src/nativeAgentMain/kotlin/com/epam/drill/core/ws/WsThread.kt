@@ -1,33 +1,22 @@
 package com.epam.drill.core.ws
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.common.AgentConfigParam
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NeedSyncParam
-import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.parse
-import com.epam.drill.common.stringify
-import com.epam.drill.core.concurrency.LockFreeMPSCQueue
-import com.epam.drill.core.drillInstallationDir
-import com.epam.drill.core.exceptions.WsClosedException
-import com.epam.drill.core.exec
-import com.epam.drill.core.messanger.sendNativeMessage
-import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.logger.DLogger
-import com.soywiz.korio.net.ws.WebSocketClient
-import kotlinx.cinterop.staticCFunction
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.dumps
-import kotlin.native.concurrent.Future
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
+import com.epam.drill.common.*
+import com.epam.drill.core.*
+import com.epam.drill.core.concurrency.*
+import com.epam.drill.core.exceptions.*
+import com.epam.drill.core.messanger.*
+import com.epam.drill.core.plugin.loader.*
+import com.epam.drill.logger.*
+import com.soywiz.korio.net.ws.*
+import kotlinx.cinterop.*
+import kotlinx.coroutines.*
+import kotlinx.serialization.*
+import kotlinx.serialization.cbor.*
+import kotlin.collections.isNotEmpty
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toByteArray
+import kotlin.native.concurrent.*
 
 
 @SharedImmutable

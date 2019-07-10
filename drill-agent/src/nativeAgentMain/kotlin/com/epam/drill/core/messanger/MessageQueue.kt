@@ -1,14 +1,9 @@
 package com.epam.drill.core.messanger
 
-import com.epam.drill.api.drillRequest
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.stringify
-import com.epam.drill.core.plugin.dto.DrillMessage
-import com.epam.drill.core.plugin.dto.MessageWrapper
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.toKString
+import com.epam.drill.api.*
+import com.epam.drill.common.*
+import com.epam.drill.core.plugin.dto.*
+import kotlinx.cinterop.*
 
 
 fun sendNativeMessage(pluginId: CPointer<ByteVar>, content: CPointer<ByteVar>) {

@@ -1,7 +1,7 @@
 package com.epam.drill.jwt.user.source
 
-import com.epam.drill.jwt.user.User
-import io.ktor.auth.UserPasswordCredential
+import com.epam.drill.jwt.user.*
+import io.ktor.auth.*
 
 interface UserSource {
     fun findUserById(id: Int): User

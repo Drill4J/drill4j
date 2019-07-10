@@ -1,8 +1,8 @@
 package com.epam.drill.plugin
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.processing.AgentPart
-import java.util.concurrent.ConcurrentHashMap
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.processing.*
+import java.util.concurrent.*
 
 
 actual val storage: MutableMap<String, AgentPart<*, *>>

@@ -1,11 +1,10 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.Message
-import com.epam.drill.common.stringify
-import io.ktor.application.Application
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.locations.locations
-import io.ktor.websocket.DefaultWebSocketServerSession
+import com.epam.drill.common.*
+import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.locations.*
+import io.ktor.websocket.*
 
 fun Application.toLocation(rout: Any): String {
     return this.locations.href(rout)

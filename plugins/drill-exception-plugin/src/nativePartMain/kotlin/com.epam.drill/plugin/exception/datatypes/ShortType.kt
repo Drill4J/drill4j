@@ -1,15 +1,7 @@
 package com.epam.drill.plugin.exception.datatypes
 
-import com.epam.drill.plugin.exception.datatypes.JType
-import jvmapi.GetLocalInt
-
-import jvmapi.jintVar
-import jvmapi.jthread
-import jvmapi.jvmtiLocalVariableEntry
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.nativeHeap
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.value
+import jvmapi.*
+import kotlinx.cinterop.*
 
 class ShortType : JType() {
 

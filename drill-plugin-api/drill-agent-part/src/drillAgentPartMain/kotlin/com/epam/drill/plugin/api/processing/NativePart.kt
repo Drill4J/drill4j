@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.api.processing
 
-import com.epam.drill.common.PluginBean
-import kotlinx.serialization.KSerializer
+import com.epam.drill.common.*
+import kotlinx.serialization.*
 
 actual abstract class NativePart<T> {
 

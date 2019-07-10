@@ -2,20 +2,10 @@
 
 package com.epam.drill.core.callbacks.vminit
 
-import com.epam.drill.core.exec
-import com.epam.drill.core.ws.startWs
-import jvmapi.CallIntMethod
-import jvmapi.FindClass
-import jvmapi.GetMethodID
-import jvmapi.GetStaticFieldID
-import jvmapi.GetStaticObjectField
-import jvmapi.JNIEnvVar
-import jvmapi.jfieldID
-import jvmapi.jmethodID
-import jvmapi.jobject
-import jvmapi.jthread
-import jvmapi.jvmtiEnvVar
-import kotlinx.cinterop.CPointer
+import com.epam.drill.core.*
+import com.epam.drill.core.ws.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 @Suppress("UNUSED_PARAMETER")
 @CName("jvmtiEventVMInitEvent")

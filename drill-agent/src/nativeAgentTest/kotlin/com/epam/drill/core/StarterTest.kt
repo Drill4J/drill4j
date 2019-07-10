@@ -1,8 +1,6 @@
 package com.epam.drill.core
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.*
 
 class StarterTest {
     @Test

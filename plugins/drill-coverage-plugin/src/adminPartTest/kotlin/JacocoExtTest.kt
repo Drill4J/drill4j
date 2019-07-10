@@ -1,12 +1,8 @@
 package com.epam.drill.plugins.coverage
 
-import org.jacoco.core.analysis.CoverageNodeImpl
-import org.jacoco.core.analysis.ICoverageNode
+import org.jacoco.core.analysis.*
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class JacocoExtTest {
 

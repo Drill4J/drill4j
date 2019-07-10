@@ -2,7 +2,7 @@
 
 package com.epam.drill.router
 
-import io.ktor.locations.Location
+import io.ktor.locations.*
 
 object Routes {
 

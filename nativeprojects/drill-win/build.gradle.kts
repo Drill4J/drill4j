@@ -1,4 +1,4 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
+import com.epam.drill.build.*
 
 
 plugins {

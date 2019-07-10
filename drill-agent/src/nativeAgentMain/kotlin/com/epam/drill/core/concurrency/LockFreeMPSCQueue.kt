@@ -2,11 +2,8 @@
 
 package com.epam.drill.core.concurrency
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.atomicfu.update
-import kotlinx.atomicfu.updateAndGet
-import kotlin.native.concurrent.SharedImmutable
+import kotlinx.atomicfu.*
+import kotlin.native.concurrent.*
 
 /**
  * Lock-free Multiply-Producer Single-Consumer Queue.

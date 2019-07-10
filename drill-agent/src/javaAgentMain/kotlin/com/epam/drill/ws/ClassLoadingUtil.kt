@@ -2,8 +2,8 @@
 
 package com.epam.drill.ws
 
-import com.epam.drill.plugin.api.processing.AgentPart
-import java.util.jar.JarFile
+import com.epam.drill.plugin.api.processing.*
+import java.util.jar.*
 
 object ClassLoadingUtil {
 

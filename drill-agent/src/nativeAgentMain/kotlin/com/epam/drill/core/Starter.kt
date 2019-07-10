@@ -1,36 +1,13 @@
 package com.epam.drill.core
 
-import com.epam.drill.api.enableJvmtiEventClassFileLoadHook
-import com.epam.drill.api.enableJvmtiEventNativeMethodBind
-import com.epam.drill.api.enableJvmtiEventVmDeath
-import com.epam.drill.api.enableJvmtiEventVmInit
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.jvmapi.printAllowedCapabilities
-import com.epam.drill.logger.DLogger
-import jvmapi.AddCapabilities
-import jvmapi.AddToSystemClassLoaderSearch
-import jvmapi.GetPotentialCapabilities
-import jvmapi.JNIEnvVar
-import jvmapi.JNI_OK
-import jvmapi.JavaVMVar
-import jvmapi.SetEventCallbacks
-import jvmapi.SetNativeMethodPrefix
-import jvmapi.agentSetup
-import jvmapi.generateDefaultCallbacks
-import jvmapi.gjavaVMGlob
-import jvmapi.jint
-import jvmapi.jvmtiEnvVar
-import jvmapi.jvmtiEventCallbacks
-import jvmapi.saveVmToGlobal
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.staticCFunction
-import kotlinx.cinterop.useContents
-import kotlinx.cinterop.value
-import platform.posix.getpid
-import kotlin.native.concurrent.freeze
+import com.epam.drill.api.*
+import com.epam.drill.common.*
+import com.epam.drill.jvmapi.*
+import com.epam.drill.logger.*
+import jvmapi.*
+import kotlinx.cinterop.*
+import platform.posix.*
+import kotlin.native.concurrent.*
 
 
 @Suppress("UNUSED_PARAMETER", "UNUSED")

@@ -1,8 +1,7 @@
 package com.epam.drill
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import kotlinx.coroutines.*
+import org.junit.*
 
 class BuildVersionCalculator {
 

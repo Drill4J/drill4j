@@ -1,7 +1,7 @@
 package com.epam.drill
 
-import mu.KotlinLogging
-import java.net.URL
+import mu.*
+import java.net.*
 
 
 private val logger = KotlinLogging.logger {}

@@ -1,10 +1,8 @@
 package com.epam.drill.plugin.api
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.StringFormat
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.EmptyModule
-import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import kotlinx.serialization.modules.*
 
 
 interface DrillPlugin<A> {

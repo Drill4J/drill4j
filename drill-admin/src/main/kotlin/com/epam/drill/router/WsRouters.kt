@@ -1,6 +1,6 @@
 package com.epam.drill.router
 
-import io.ktor.locations.Location
+import io.ktor.locations.*
 
 object WsRoutes {
     @Location("/get-all-agents")

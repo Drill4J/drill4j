@@ -1,8 +1,8 @@
 package com.epam.drill.plugins.coverage
 
-import com.epam.drill.plugin.api.SerDe
-import kotlinx.serialization.SharedImmutable
-import kotlinx.serialization.modules.SerializersModule
+import com.epam.drill.plugin.api.*
+import kotlinx.serialization.*
+import kotlinx.serialization.modules.*
 
 @SharedImmutable
 val commonSerDe = SerDe(

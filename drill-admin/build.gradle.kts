@@ -1,6 +1,5 @@
-import com.epam.drill.build.ktorVersion
-import com.epam.drill.build.serializationRuntimeVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.epam.drill.build.*
+import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     kotlin("jvm")

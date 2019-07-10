@@ -1,11 +1,8 @@
 package com.epam.drill.plugins.coverage
 
-import com.epam.drill.ClassPath
-import com.epam.drill.getByteCodeOf
+import com.epam.drill.*
 import org.junit.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 
 open class ClassPathTest {

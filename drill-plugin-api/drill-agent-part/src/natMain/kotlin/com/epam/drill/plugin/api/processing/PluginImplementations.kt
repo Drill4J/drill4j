@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.api.processing
 
-import com.epam.drill.plugin.api.SerDe
-import kotlinx.serialization.KSerializer
+import com.epam.drill.plugin.api.*
+import kotlinx.serialization.*
 
 abstract class PluginRepresenter : AgentPart<Any, Any>() {
     override val serDe: SerDe<Any>

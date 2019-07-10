@@ -2,11 +2,8 @@
 
 package com.epam.drill.plugin.api.processing
 
-import jvmapi.jthread
-import jvmapi.jvmtiEnvVar
-import jvmapi.jvmtiEventCallbacks
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointer
+import jvmapi.*
+import kotlinx.cinterop.*
 
 //todo MOVE IT TO API KLIB:)
 

@@ -1,9 +1,7 @@
 package com.epam.drill.core.methodbind
 
-import jvmapi.jlong
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.toCPointer
+import jvmapi.*
+import kotlinx.cinterop.*
 
 
 typealias DirectBufferAddress = jlong

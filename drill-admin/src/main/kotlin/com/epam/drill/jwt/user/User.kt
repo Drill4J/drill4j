@@ -1,6 +1,6 @@
 package com.epam.drill.jwt.user
 
-import io.ktor.auth.Principal
+import io.ktor.auth.*
 
 data class User(
     val id: Int,

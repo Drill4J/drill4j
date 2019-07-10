@@ -1,36 +1,8 @@
 package com.epam.drill.plugin.exception
 
-import com.epam.drill.jvmapi.toKString
-import jvmapi.CallObjectMethod
-import jvmapi.FindClass
-import jvmapi.GetClassSignature
-import jvmapi.GetLineNumberTable
-import jvmapi.GetLocalVariableTable
-import jvmapi.GetMethodDeclaringClass
-import jvmapi.GetMethodID
-import jvmapi.GetMethodName
-import jvmapi.GetObjectClass
-import jvmapi.GetStackTrace
-import jvmapi.jclassVar
-import jvmapi.jint
-import jvmapi.jintVar
-import jvmapi.jlocation
-import jvmapi.jmethodID
-import jvmapi.jstring
-import jvmapi.jthread
-import jvmapi.jthrowable
-import jvmapi.jvmtiFrameInfo
-import jvmapi.jvmtiLineNumberEntry
-import jvmapi.jvmtiLocalVariableEntry
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.get
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.value
+import com.epam.drill.jvmapi.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 fun jthrowable.getMessage() = memScoped {
     val throwableClass = FindClass("java/lang/Throwable")

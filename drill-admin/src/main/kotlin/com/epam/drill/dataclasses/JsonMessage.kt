@@ -1,8 +1,6 @@
 package com.epam.drill.dataclasses
 
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.dao.IdTable
+import org.jetbrains.exposed.dao.*
 
 
 object JsonMessages : IdTable<String>() {

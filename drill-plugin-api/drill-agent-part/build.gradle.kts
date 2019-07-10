@@ -1,6 +1,4 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
-import com.epam.drill.build.jvmCoroutinesVersion
-import com.epam.drill.build.serializationRuntimeVersion
+import com.epam.drill.build.*
 
 plugins {
     id("kotlin-multiplatform")

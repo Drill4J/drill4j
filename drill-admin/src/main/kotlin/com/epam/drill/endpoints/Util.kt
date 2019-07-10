@@ -1,10 +1,8 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.stringify
-import io.ktor.http.cio.websocket.Frame
-import kotlinx.serialization.KSerializer
+import com.epam.drill.common.*
+import io.ktor.http.cio.websocket.*
+import kotlinx.serialization.*
 
 fun<T> KSerializer<T>.agentWsMessage(destination: String, message: T): Frame.Text {
     val toJson = Message.serializer() stringify

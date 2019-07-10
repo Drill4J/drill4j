@@ -1,21 +1,11 @@
 package com.epam.drill.core
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.processing.AgentPart
-import kotlinx.cinterop.CFunction
-import kotlinx.cinterop.CPointer
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.processing.*
+import kotlinx.cinterop.*
 import kotlin.collections.set
-import kotlin.native.concurrent.SharedImmutable
-import kotlin.native.concurrent.ThreadLocal
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KFunction2
-import kotlin.reflect.KFunction3
-import kotlin.reflect.KFunction4
-import kotlin.reflect.KFunction5
+import kotlin.native.concurrent.*
+import kotlin.reflect.*
 
 class DI {
     lateinit var agentConfig: AgentConfig

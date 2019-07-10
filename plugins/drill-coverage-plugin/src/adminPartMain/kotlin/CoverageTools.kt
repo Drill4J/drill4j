@@ -1,13 +1,8 @@
 package com.epam.drill.plugins.coverage
 
-import org.jacoco.core.analysis.Analyzer
-import org.jacoco.core.analysis.CoverageBuilder
-import org.jacoco.core.analysis.IBundleCoverage
-import org.jacoco.core.analysis.IClassCoverage
-import org.jacoco.core.analysis.IMethodCoverage
-import org.jacoco.core.data.ExecutionData
-import org.jacoco.core.data.ExecutionDataStore
-import kotlin.math.abs
+import org.jacoco.core.analysis.*
+import org.jacoco.core.data.*
+import kotlin.math.*
 
 fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
     bundleMap.map { (k, v) ->

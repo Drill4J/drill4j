@@ -1,37 +1,18 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentInfoDb
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.common.DrillEvent
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NativePlugin
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.PluginMessage
-import com.epam.drill.common.stringify
-import com.epam.drill.common.toAgentInfo
-import com.epam.drill.common.toPluginBean
-import com.epam.drill.common.update
-import com.epam.drill.dataclasses.AgentBuildVersion
-import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.plugins.linuxPar
-import com.epam.drill.plugins.windowsPart
-import com.epam.drill.service.asyncTransaction
-import com.epam.drill.storage.AgentStorage
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
-import io.ktor.http.cio.websocket.Frame
-import kotlinx.coroutines.delay
-import kotlinx.serialization.cbor.Cbor
-import mu.KotlinLogging
-import org.jetbrains.exposed.sql.SizedCollection
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import com.epam.drill.agentmanager.*
+import com.epam.drill.common.*
+import com.epam.drill.dataclasses.*
+import com.epam.drill.plugins.*
+import com.epam.drill.service.*
+import com.epam.drill.storage.*
+import io.ktor.http.cio.websocket.*
+import kotlinx.coroutines.*
+import kotlinx.serialization.cbor.*
+import mu.*
+import org.jetbrains.exposed.sql.*
+import org.kodein.di.*
+import org.kodein.di.generic.*
 
 private val logger = KotlinLogging.logger {}
 

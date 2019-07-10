@@ -1,10 +1,10 @@
 package com.epam.drill.jvmapi
 
-import com.epam.drill.logger.DLogger
+import com.epam.drill.logger.*
 import jvmapi.*
 import kotlinx.cinterop.*
-import kotlin.native.concurrent.SharedImmutable
-import kotlin.reflect.KClass
+import kotlin.native.concurrent.*
+import kotlin.reflect.*
 
 val logger
     get() = DLogger("capabilities")

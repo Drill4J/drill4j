@@ -1,25 +1,12 @@
 package com.epam.drill.core.plugin.loader
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.core.plugin.pluginConfigById
-import com.epam.drill.jvmapi.jniName
-import com.epam.drill.jvmapi.jniParamName
-import com.epam.drill.logger.DLogger
-import com.epam.drill.plugin.api.processing.AgentPart
-import com.epam.drill.plugin.api.processing.PluginRepresenter
-import com.epam.drill.plugin.api.processing.UnloadReason
-import jvmapi.CallVoidMethod
-import jvmapi.CallVoidMethodA
-import jvmapi.FindClass
-import jvmapi.GetMethodID
-import jvmapi.GetStaticFieldID
-import jvmapi.GetStaticObjectField
-import jvmapi.NewStringUTF
-import jvmapi.jclass
-import jvmapi.jobject
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap
+import com.epam.drill.common.*
+import com.epam.drill.core.plugin.*
+import com.epam.drill.jvmapi.*
+import com.epam.drill.logger.*
+import com.epam.drill.plugin.api.processing.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 @Suppress("LeakingThis")
 open class GenericNativePlugin(

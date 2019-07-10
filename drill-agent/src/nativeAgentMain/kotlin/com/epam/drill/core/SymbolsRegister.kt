@@ -2,33 +2,10 @@
 
 package com.epam.drill.core
 
-import com.epam.drill.api.drillRequest
-import com.epam.drill.api.sendToSocket
-import com.epam.drill.jvmapi.JNIEnvPointer
-import com.epam.drill.jvmapi.toKString
-import jvmapi.FindClass
-import jvmapi.GetLoadedClasses
-import jvmapi.GetObjectArrayElement
-import jvmapi.JNIEnv
-import jvmapi.NewObjectArray
-import jvmapi.NewStringUTF
-import jvmapi.SetObjectArrayElement
-import jvmapi.jclassVar
-import jvmapi.jint
-import jvmapi.jintVar
-import jvmapi.jobject
-import jvmapi.jobjectArray
-import jvmapi.jstring
-import jvmapi.jvmtiEnvVar
-import jvmapi.jvmtiError
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.get
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.value
+import com.epam.drill.api.*
+import com.epam.drill.jvmapi.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 @CName("currentEnvs")
 fun currentEnvs(): JNIEnvPointer {

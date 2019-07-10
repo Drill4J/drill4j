@@ -1,9 +1,8 @@
 package com.epam.drill.cache.impl
 
-import com.epam.drill.cache.CacheService
-import com.epam.drill.cache.type.Cache
-import com.hazelcast.core.Hazelcast
-import com.hazelcast.core.HazelcastInstance
+import com.epam.drill.cache.*
+import com.epam.drill.cache.type.*
+import com.hazelcast.core.*
 
 class HazelcastCacheService(private val ins: HazelcastInstance = Hazelcast.newHazelcastInstance()) :
     CacheService {

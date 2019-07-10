@@ -1,16 +1,7 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
-import com.epam.drill.build.jvmCoroutinesVersion
-import com.epam.drill.build.korioVersion
-import com.epam.drill.build.mainCompilation
-import com.epam.drill.build.serializationNativeVersion
-import com.epam.drill.build.serializationRuntimeVersion
-import com.epam.drill.build.staticLibraryExtension
-import com.epam.drill.build.staticLibraryPrefix
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
+import com.epam.drill.build.*
+import org.apache.tools.ant.taskdefs.condition.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     id("kotlin-multiplatform")

@@ -1,6 +1,6 @@
 package com.epam.drill.plugin.api.processing
 
-import kotlinx.serialization.KSerializer
+import kotlinx.serialization.*
 
 
 abstract class DummyAgentPart(override val id: String) : AgentPart<Any, Any>() {

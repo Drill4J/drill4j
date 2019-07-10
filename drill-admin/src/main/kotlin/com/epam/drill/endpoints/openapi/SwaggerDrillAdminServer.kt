@@ -1,29 +1,22 @@
 package com.epam.drill.endpoints.openapi
 
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.stringify
-import com.epam.drill.common.update
-import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.plugins.Plugins
-import com.epam.drill.plugins.agentPluginPart
-import com.epam.drill.router.Routes
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.auth.authenticate
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.locations.get
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.*
+import com.epam.drill.plugins.*
+import com.epam.drill.router.*
+import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.locations.*
 import io.ktor.locations.post
-import io.ktor.request.receive
-import io.ktor.response.respond
+import io.ktor.request.*
+import io.ktor.response.*
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
-import kotlinx.serialization.Serializable
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import kotlinx.serialization.*
+import org.kodein.di.*
+import org.kodein.di.generic.*
 
 /**
  * Swagger DrillAdmin

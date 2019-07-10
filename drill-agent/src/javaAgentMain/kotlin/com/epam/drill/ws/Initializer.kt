@@ -2,11 +2,9 @@
 
 package com.epam.drill.ws
 
-import com.epam.drill.ClassPath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
-import kotlin.system.measureTimeMillis
+import com.epam.drill.*
+import kotlinx.coroutines.*
+import kotlin.system.*
 
 object Initializer {
 

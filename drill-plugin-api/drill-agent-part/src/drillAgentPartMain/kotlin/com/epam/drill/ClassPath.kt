@@ -1,15 +1,9 @@
 package com.epam.drill
 
-import java.io.File
-import java.io.IOException
-import java.net.MalformedURLException
-import java.net.URISyntaxException
-import java.net.URL
-import java.net.URLClassLoader
+import java.io.*
+import java.net.*
 import java.util.*
-import java.util.jar.Attributes
-import java.util.jar.JarFile
-import java.util.jar.Manifest
+import java.util.jar.*
 
 fun MutableMap<String, ClassLoader>.getByteCodeOf(className: String) = this[className]?.url(className)?.readBytes()
 fun ClassLoader.url(resourceName: String): URL {

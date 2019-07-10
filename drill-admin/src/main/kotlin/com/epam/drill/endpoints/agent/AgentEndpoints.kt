@@ -1,23 +1,21 @@
 package com.epam.drill.endpoints.agent
 
 
-import com.epam.drill.agentmanager.AgentInfoWebSocketSingle
-import com.epam.drill.common.AgentBuildVersionJson
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.router.Routes
-import com.epam.drill.util.parse
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.auth.authenticate
-import io.ktor.http.HttpStatusCode
-import io.ktor.locations.post
-import io.ktor.response.respond
-import io.ktor.routing.routing
-import kotlinx.serialization.Serializable
+import com.epam.drill.agentmanager.*
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.*
+import com.epam.drill.router.*
+import com.epam.drill.util.*
+import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.http.*
+import io.ktor.locations.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import kotlinx.serialization.*
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import org.kodein.di.generic.*
 
 class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()

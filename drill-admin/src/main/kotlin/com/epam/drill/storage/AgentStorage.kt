@@ -1,7 +1,6 @@
 package com.epam.drill.storage
 
-import com.epam.drill.endpoints.AgentEntry
-import com.epam.drill.endpoints.DrillWsSession
+import com.epam.drill.endpoints.*
 
 typealias AgentStorage = ObservableMapStorage<String, AgentEntry, MutableSet<DrillWsSession>>
 

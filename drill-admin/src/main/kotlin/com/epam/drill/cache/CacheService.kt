@@ -1,7 +1,7 @@
 package com.epam.drill.cache
 
-import com.epam.drill.cache.type.Cache
-import kotlin.reflect.KProperty
+import com.epam.drill.cache.type.*
+import kotlin.reflect.*
 
 interface CacheService {
     fun <K, V> getOrCreateMapCache(cacheName: String): Cache<K, V>

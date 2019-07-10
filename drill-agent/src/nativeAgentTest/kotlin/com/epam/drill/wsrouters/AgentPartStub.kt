@@ -1,7 +1,7 @@
 package com.epam.drill.wsrouters
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.processing.PluginRepresenter
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.processing.*
 
 @Suppress("unused")
 class AgentPartStub(var enabledx: Boolean, override val id: String) : PluginRepresenter() {
