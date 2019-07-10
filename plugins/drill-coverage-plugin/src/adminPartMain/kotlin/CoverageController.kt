@@ -46,7 +46,15 @@ class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
             is SwitchScope -> checkoutScope(action.payload.scopeName)
             is IgnoreScope -> toggleScope(action.payload.scopeName, action.payload.enabled)
             is DropScope -> dropScope(action.payload.scopeName)
-            is StartSession -> SessionPayload.serializer() stringify SessionPayload(UUID.randomUUID().toString())
+            is StartNewSession -> {
+                val startAgentSession = StartSession(
+                    payload = StartSessionPayload(
+                        sessionId = UUID.randomUUID().toString(),
+                        startPayload = action.payload
+                    )
+                )
+                serDe.actionSerializer stringify startAgentSession
+            }
             else -> Unit
         }
     }

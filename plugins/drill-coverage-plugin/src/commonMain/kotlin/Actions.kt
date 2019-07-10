@@ -6,7 +6,11 @@ abstract class Action
 
 @kotlinx.serialization.SerialName("START")
 @kotlinx.serialization.Serializable
-data class StartSession(val payload: SessionPayload) : Action()
+data class StartNewSession(val payload: StartPayload) : Action()
+
+@kotlinx.serialization.SerialName("START_AGENT_SESSION")
+@kotlinx.serialization.Serializable
+data class StartSession(val payload: StartSessionPayload) : Action()
 
 @kotlinx.serialization.SerialName("STOP")
 @kotlinx.serialization.Serializable
@@ -15,7 +19,6 @@ data class StopSession(val payload: SessionPayload) : Action()
 @kotlinx.serialization.SerialName("CANCEL")
 @kotlinx.serialization.Serializable
 data class CancelSession(val payload: SessionPayload) : Action()
-
 
 @kotlinx.serialization.SerialName("SWITCH_SCOPE")
 @kotlinx.serialization.Serializable
@@ -28,6 +31,12 @@ data class IgnoreScope(val payload: ToggleScopePayload) : Action()
 @kotlinx.serialization.SerialName("DROP_SCOPE")
 @kotlinx.serialization.Serializable
 data class DropScope(val payload: ScopePayload) : Action()
+
+@kotlinx.serialization.Serializable
+data class StartPayload(val testType: String)
+
+@kotlinx.serialization.Serializable
+data class StartSessionPayload(val sessionId: String, val startPayload: StartPayload)
 
 @kotlinx.serialization.Serializable
 data class SessionPayload(val sessionId: String)
