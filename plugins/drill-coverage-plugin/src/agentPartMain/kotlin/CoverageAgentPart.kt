@@ -98,8 +98,9 @@ class CoveragePlugin @JvmOverloads constructor(
         when (action) {
             is StartSession -> {
                 val sessionId = action.payload.sessionId
+                val testType = action.payload.startPayload.testType
                 println("Start recording for session $sessionId")
-                instrContext.start(sessionId)
+                instrContext.start(sessionId, testType)
                 sendMessage(CoverageEventType.SESSION_STARTED, sessionId)
             }
             is StopSession -> {
