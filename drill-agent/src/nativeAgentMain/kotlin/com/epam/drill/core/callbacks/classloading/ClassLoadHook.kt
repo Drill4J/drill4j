@@ -1,10 +1,8 @@
 package com.epam.drill.core.callbacks.classloading
 
-import com.epam.drill.core.exec
-import com.epam.drill.core.plugin.loader.InstrumentationNativePlugin
-import jvmapi.Allocate
-import jvmapi.jint
-import jvmapi.jobject
+import com.epam.drill.core.*
+import com.epam.drill.core.plugin.loader.*
+import jvmapi.*
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.UByteVar

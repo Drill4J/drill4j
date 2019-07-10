@@ -1,22 +1,8 @@
 package com.epam.drill.core.plugin.loader
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.processing.InstrumentationPlugin
-import jvmapi.CallObjectMethod
-import jvmapi.CallVoidMethodA
-import jvmapi.DeleteLocalRef
-import jvmapi.GetArrayLength
-import jvmapi.GetByteArrayElements
-import jvmapi.GetMethodID
-import jvmapi.NewByteArray
-import jvmapi.NewStringUTF
-import jvmapi.SetByteArrayRegion
-import jvmapi.jbyte
-import jvmapi.jbyteArray
-import jvmapi.jbyteVar
-import jvmapi.jclass
-import jvmapi.jmethodID
-import jvmapi.jobject
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.processing.*
+import jvmapi.*
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.memScoped

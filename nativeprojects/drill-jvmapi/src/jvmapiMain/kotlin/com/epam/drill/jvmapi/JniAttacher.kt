@@ -2,7 +2,7 @@ package com.epam.drill.jvmapi
 
 import jvmapi.*
 import kotlinx.cinterop.*
-import kotlin.native.concurrent.ThreadLocal
+import kotlin.native.concurrent.*
 
 @CName("currentEnvs")
 fun currentEnvs(): JNIEnvPointer {

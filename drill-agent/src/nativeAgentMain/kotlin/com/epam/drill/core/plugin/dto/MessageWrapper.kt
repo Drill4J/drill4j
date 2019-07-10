@@ -1,6 +1,6 @@
 package com.epam.drill.core.plugin.dto
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 
 @Suppress("unused")
 @Serializable

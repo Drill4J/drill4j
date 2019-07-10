@@ -1,9 +1,7 @@
 package com.epam.drill.plugin.exception.datatypes
 
-import jvmapi.JNIEnvVar
-import jvmapi.jthread
-import jvmapi.jvmtiLocalVariableEntry
-import kotlinx.cinterop.CPointer
+import jvmapi.*
+import kotlinx.cinterop.*
 
 class RefType(val env: CPointer<JNIEnvVar>?) : JType() {
 

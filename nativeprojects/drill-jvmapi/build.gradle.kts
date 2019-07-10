@@ -1,9 +1,5 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
-import com.epam.drill.build.jvmPaths
-import com.epam.drill.build.mainCompilation
-import com.epam.drill.build.serializationNativeVersion
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import com.epam.drill.build.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     id("kotlin-multiplatform")

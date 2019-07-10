@@ -5,29 +5,12 @@
 
 package com.epam.drill.core.ws
 
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.usePinned
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import platform.posix.FILE
-import platform.posix.SEEK_SET
-import platform.posix.fseek
-import platform.posix.fwrite
-import platform.posix.posix_errno
-import platform.posix.strerror
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
-import kotlin.math.min
-import kotlin.native.concurrent.Worker
-import kotlin.native.concurrent.freeze
-import kotlin.native.concurrent.isFrozen
+import kotlinx.cinterop.*
+import kotlinx.coroutines.*
+import platform.posix.*
+import kotlin.coroutines.*
+import kotlin.math.*
+import kotlin.native.concurrent.*
 
 fun ByteArray.openAsync(): AsyncStream =
     MemoryAsyncStreamBase(this).toAsyncStream(0L)

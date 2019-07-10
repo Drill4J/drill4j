@@ -1,12 +1,9 @@
 package com.epam.drill.plugin.exception.datatypes
 
 
-import jvmapi.jthread
-import jvmapi.jvmtiLocalVariableEntry
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.toKString
-import com.epam.drill.plugin.exception.VariableLine
+import com.epam.drill.plugin.exception.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 
 fun jvmtiLocalVariableEntry.createVariableLine(thread:jthread, depth:Int): VariableLine? {

@@ -1,18 +1,9 @@
-import com.epam.drill.common.AgentInfos
-import com.epam.drill.common.Family
-import com.epam.drill.common.PluginBeanDb
-import com.epam.drill.common.PluginBeans
-import com.epam.drill.dataclasses.JsonMessage
-import com.epam.drill.dataclasses.JsonMessages
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.Test
+import com.epam.drill.common.*
+import com.epam.drill.dataclasses.*
+import com.zaxxer.hikari.*
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.*
+import org.junit.*
 
 class StorageTest {
     @Test

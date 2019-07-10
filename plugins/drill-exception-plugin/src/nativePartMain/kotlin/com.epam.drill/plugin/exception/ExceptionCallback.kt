@@ -1,14 +1,8 @@
 package com.epam.drill.plugin.exception
 
-import com.epam.drill.plugin.api.processing.plugin
-import com.epam.drill.plugin.api.processing.pluginApi
-import jvmapi.JNIEnvVar
-import jvmapi.jlocation
-import jvmapi.jmethodID
-import jvmapi.jobject
-import jvmapi.jthread
-import jvmapi.jvmtiEnvVar
-import kotlinx.cinterop.CPointer
+import com.epam.drill.plugin.api.processing.*
+import jvmapi.*
+import kotlinx.cinterop.*
 
 
 @Suppress("UNUSED_PARAMETER")

@@ -1,13 +1,7 @@
 package com.epam.drill.core.request
 
-import com.epam.drill.plugin.HttpRequest
-import com.epam.drill.plugin.parseHttpRequest
-import com.epam.drill.plugin.toDrillRequest
-import com.epam.drill.plugin.toRawRequestString
-import com.epam.drill.plugin.toRequestQuery
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import com.epam.drill.plugin.*
+import kotlin.test.*
 
 
 class DrillRequestTest {

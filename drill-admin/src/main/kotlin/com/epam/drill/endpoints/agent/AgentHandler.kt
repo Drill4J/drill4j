@@ -2,26 +2,19 @@
 
 package com.epam.drill.endpoints.agent
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.common.AgentConfigParam
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.NeedSyncParam
-import com.epam.drill.common.parse
-import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.plugin.PluginDispatcher
-import io.ktor.application.Application
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readText
-import io.ktor.routing.routing
-import io.ktor.websocket.webSocket
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.loads
-import mu.KotlinLogging
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.*
+import com.epam.drill.endpoints.plugin.*
+import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.routing.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.channels.*
+import kotlinx.serialization.*
+import kotlinx.serialization.cbor.*
+import mu.*
+import org.kodein.di.*
+import org.kodein.di.generic.*
 
 private val logger = KotlinLogging.logger {}
 

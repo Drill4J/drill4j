@@ -1,13 +1,8 @@
 package com.epam.drill.plugin.api.processing
 
-import jvmapi.JavaVMVar
-import jvmapi.jvmtiEnvVar
-import jvmapi.jvmtiEventCallbacks
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CFunction
-import kotlinx.cinterop.CPointer
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
+import jvmapi.*
+import kotlinx.cinterop.*
+import kotlin.native.concurrent.*
 
 class NativePluginApi(
     val pluginId: String,

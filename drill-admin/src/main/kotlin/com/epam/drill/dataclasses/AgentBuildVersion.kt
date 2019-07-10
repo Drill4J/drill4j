@@ -1,10 +1,7 @@
 package com.epam.drill.dataclasses
 
-import com.epam.drill.common.AgentBuildVersionJson
-import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.dao.IntEntity
-import org.jetbrains.exposed.dao.IntEntityClass
-import org.jetbrains.exposed.dao.IntIdTable
+import com.epam.drill.common.*
+import org.jetbrains.exposed.dao.*
 
 object AgentBuildVersions : IntIdTable() {
     val buildVersion = varchar("build_version", length = 100)

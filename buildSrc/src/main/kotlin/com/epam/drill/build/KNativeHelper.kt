@@ -1,12 +1,10 @@
 package com.epam.drill.build
 
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.api.Action
-import org.gradle.internal.jvm.Jvm
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetPreset
+import org.apache.tools.ant.taskdefs.condition.*
+import org.gradle.api.*
+import org.gradle.internal.jvm.*
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 val preset =
     when {

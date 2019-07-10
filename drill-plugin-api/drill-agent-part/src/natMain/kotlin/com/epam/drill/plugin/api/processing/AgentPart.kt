@@ -1,8 +1,8 @@
 package com.epam.drill.plugin.api.processing
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.DrillPlugin
-import kotlinx.serialization.KSerializer
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.*
+import kotlinx.serialization.*
 
 actual abstract class AgentPart<T, A> : DrillPlugin<A>, Switchable, Lifecycle {
 

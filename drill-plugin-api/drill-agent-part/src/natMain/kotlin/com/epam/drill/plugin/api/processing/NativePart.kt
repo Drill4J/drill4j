@@ -1,13 +1,8 @@
 package com.epam.drill.plugin.api.processing
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.common.parse
-import kotlinx.cinterop.Arena
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.toKString
-import kotlinx.serialization.KSerializer
+import com.epam.drill.common.*
+import kotlinx.cinterop.*
+import kotlinx.serialization.*
 
 const val initPlugin = "initPlugin"
 

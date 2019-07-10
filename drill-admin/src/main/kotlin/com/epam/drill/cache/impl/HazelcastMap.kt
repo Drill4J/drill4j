@@ -1,7 +1,7 @@
 package com.epam.drill.cache.impl
 
-import com.epam.drill.cache.type.Cache
-import com.hazelcast.core.IMap
+import com.epam.drill.cache.type.*
+import com.hazelcast.core.*
 
 class HazelcastMap<K, V>(private val cache: IMap<K, V>) : Cache<K, V> {
     override fun get(key: K) = cache[key]

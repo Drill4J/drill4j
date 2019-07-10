@@ -1,24 +1,18 @@
 package com.epam.drill
 
-import com.epam.drill.plugin.api.processing.Sender
-import com.epam.drill.session.DrillRequest
-import com.epam.drill.test.IntegrationTestApi
-import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.awaitClosed
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.util.KtorExperimentalAPI
-import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.io.writeStringUtf8
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.junit.Ignore
-import org.junit.Test
-import java.io.File
-import java.net.InetSocketAddress
-import kotlin.concurrent.thread
+import com.epam.drill.plugin.api.processing.*
+import com.epam.drill.session.*
+import com.epam.drill.test.*
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.util.*
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.io.*
+import org.junit.*
+import java.io.*
+import java.net.*
+import kotlin.concurrent.*
 
 class CrashTest {
 

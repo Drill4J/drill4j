@@ -1,6 +1,6 @@
 package com.epam.drill
 
-import java.util.jar.JarEntry
+import java.util.jar.*
 
 
 private fun getClassName(je: JarEntry): String {

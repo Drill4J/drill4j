@@ -1,7 +1,6 @@
 package com.epam.drill.plugins
 
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.PluginBean
+import com.epam.drill.common.*
 import kotlinx.serialization.Serializable
 
 @Serializable

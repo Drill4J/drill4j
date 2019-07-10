@@ -1,12 +1,8 @@
 package com.epam.drill.agentmanager
 
-import com.epam.drill.common.AgentBuildVersionJson
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.AgentStatus
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugins.PluginWebSocket
-import com.epam.drill.plugins.toPluginsWebSocket
-import kotlinx.serialization.Serializable
+import com.epam.drill.common.*
+import com.epam.drill.plugins.*
+import kotlinx.serialization.*
 
 @Suppress("unused")
 @Serializable

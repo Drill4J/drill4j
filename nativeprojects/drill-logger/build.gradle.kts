@@ -1,7 +1,4 @@
-import com.epam.drill.build.createNativeTargetForCurrentOs
-import com.epam.drill.build.korioVersion
-import com.epam.drill.build.ktorVersion
-import com.epam.drill.build.serializationNativeVersion
+import com.epam.drill.build.*
 
 
 plugins {

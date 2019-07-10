@@ -1,8 +1,8 @@
 package com.epam.drill.endpoints
 
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.plugin.api.end.AdminPluginPart
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.end.*
+import io.ktor.http.cio.websocket.*
 
 class AgentEntry(
     val agent: AgentInfo,

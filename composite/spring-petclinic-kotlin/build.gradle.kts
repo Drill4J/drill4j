@@ -1,7 +1,7 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.springframework.boot.gradle.tasks.bundling.BootJar
-import org.springframework.boot.gradle.tasks.run.BootRun
+import org.apache.tools.ant.taskdefs.condition.*
+import org.jetbrains.kotlin.gradle.tasks.*
+import org.springframework.boot.gradle.tasks.bundling.*
+import org.springframework.boot.gradle.tasks.run.*
 
 plugins {
     kotlin("jvm") version ("1.3.30")

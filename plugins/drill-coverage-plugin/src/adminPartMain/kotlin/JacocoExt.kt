@@ -1,10 +1,7 @@
 package com.epam.drill.plugins.coverage
 
-import org.jacoco.core.analysis.IClassCoverage
-import org.jacoco.core.analysis.ICoverageNode
-import org.jacoco.core.analysis.IMethodCoverage
-import org.jacoco.core.analysis.IPackageCoverage
-import org.jacoco.core.internal.data.CRC64
+import org.jacoco.core.analysis.*
+import org.jacoco.core.internal.data.*
 
 data class CoverageKey(
     val id: String,

@@ -2,27 +2,17 @@
 
 package com.epam.drill.endpoints.agent
 
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.parse
-import com.epam.drill.common.stringify
-import com.epam.drill.endpoints.DrillWsSession
-import com.epam.drill.endpoints.WsTopic
-import com.epam.drill.endpoints.removeTopic
-import com.epam.drill.endpoints.sendTo
-import io.ktor.application.Application
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readText
-import io.ktor.routing.routing
-import io.ktor.swagger.Json
-import io.ktor.websocket.webSocket
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.serializer
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.*
+import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.routing.*
+import io.ktor.swagger.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.channels.*
+import kotlinx.serialization.*
+import org.kodein.di.*
+import org.kodein.di.generic.*
 
 
 class DrillServerWs(override val kodein: Kodein) : KodeinAware {

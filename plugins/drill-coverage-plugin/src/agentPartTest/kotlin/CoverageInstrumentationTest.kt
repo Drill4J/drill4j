@@ -1,16 +1,13 @@
 package com.epam.drill.plugins.coverage
 
-import org.hamcrest.CoreMatchers
-import org.jacoco.core.analysis.Analyzer
-import org.jacoco.core.analysis.CoverageBuilder
-import org.jacoco.core.data.ExecutionData
-import org.jacoco.core.data.ExecutionDataStore
-import org.jacoco.core.internal.data.CRC64
-import org.junit.Rule
-import org.junit.rules.ErrorCollector
+import org.hamcrest.*
+import org.jacoco.core.analysis.*
+import org.jacoco.core.data.*
+import org.jacoco.core.internal.data.*
+import org.junit.*
+import org.junit.rules.*
+import kotlin.test.*
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class InstrumentationTests {
 

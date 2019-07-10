@@ -1,11 +1,10 @@
 package com.epam.drill.cache
 
-import com.epam.drill.cache.impl.HazelcastCacheService
-import com.epam.drill.cache.type.Cache
-import com.hazelcast.core.Hazelcast
+import com.epam.drill.cache.impl.*
+import com.epam.drill.cache.type.*
+import com.hazelcast.core.*
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.*
 
 
 class HazelcastCacheServiceTest {

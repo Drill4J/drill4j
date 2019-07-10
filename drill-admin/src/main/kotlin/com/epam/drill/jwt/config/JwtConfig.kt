@@ -1,9 +1,8 @@
 package com.epam.drill.jwt.config
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTVerifier
-import com.auth0.jwt.algorithms.Algorithm
-import com.epam.drill.jwt.user.User
+import com.auth0.jwt.*
+import com.auth0.jwt.algorithms.*
+import com.epam.drill.jwt.user.*
 import java.util.*
 
 object JwtConfig {

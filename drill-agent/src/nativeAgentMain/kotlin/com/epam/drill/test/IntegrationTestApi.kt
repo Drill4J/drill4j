@@ -2,16 +2,14 @@
 
 package com.epam.drill.test
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.common.PluginBean
-import com.epam.drill.core.exec
-import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.jvmapi.toKString
-import jvmapi.JNIEnv
-import jvmapi.jobject
-import jvmapi.jstring
-import kotlinx.cinterop.memScoped
-import kotlinx.coroutines.runBlocking
+import com.epam.drill.common.*
+import com.epam.drill.core.*
+import com.epam.drill.core.plugin.loader.*
+import com.epam.drill.jvmapi.*
+import jvmapi.*
+import kotlinx.cinterop.*
+import kotlinx.coroutines.*
+import kotlin.collections.set
 
 
 @Suppress("UNUSED_PARAMETER")//this only for integrationTests

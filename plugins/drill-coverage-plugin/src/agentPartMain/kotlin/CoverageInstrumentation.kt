@@ -1,18 +1,10 @@
 package com.epam.drill.plugins.coverage
 
-import org.jacoco.core.internal.flow.ClassProbesAdapter
-import org.jacoco.core.internal.flow.ClassProbesVisitor
-import org.jacoco.core.internal.flow.MethodProbesVisitor
-import org.jacoco.core.internal.instr.ClassInstrumenter
-import org.jacoco.core.internal.instr.IProbeArrayStrategy
-import org.jacoco.core.internal.instr.InstrSupport
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
-import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
+import org.jacoco.core.internal.flow.*
+import org.jacoco.core.internal.instr.*
+import org.objectweb.asm.*
+import java.io.*
+import java.util.concurrent.*
 
 /**
  * Provides boolean array for the probe.

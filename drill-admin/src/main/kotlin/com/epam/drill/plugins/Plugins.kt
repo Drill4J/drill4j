@@ -1,8 +1,8 @@
 package com.epam.drill.plugins
 
-import com.epam.drill.common.PluginBean
-import com.epam.drill.plugin.api.end.AdminPluginPart
-import java.io.File
+import com.epam.drill.common.*
+import com.epam.drill.plugin.api.end.*
+import java.io.*
 import java.util.*
 
 
