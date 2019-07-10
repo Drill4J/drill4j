@@ -66,6 +66,7 @@ jib {
         image = "gcr.io/distroless/java:8"
     }
     to {
+        image = "drill4j/${project.name}"
         tags = mutableSetOf("latest")
     }
     container {
