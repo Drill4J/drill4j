@@ -1,0 +1,13 @@
+pipeline:
+  steps:
+    admin:
+      image: gradle:5.4.1-jdk8
+      commands:
+        - gradle :drill-admin:check
+    agent:
+      image: gradle:5.4.1-jdk8
+      environment:
+        KONAN_DATA_DIR: /home/gradle/.gradle/konan
+        GRADLE_OPTS: -Dorg.gradle.daemon=false
+      commands:
+        - gradle :drill-agent:build :drill-agent:check
