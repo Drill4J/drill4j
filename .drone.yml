@@ -1,10 +1,12 @@
-pipeline:
-  steps:
-    admin:
+kind: pipeline
+name: default
+
+steps:
+  - name: admin
       image: gradle:5.4.1-jdk8
       commands:
         - gradle :drill-admin:check
-    agent:
+  - name: agent
       image: gradle:5.4.1-jdk8
       environment:
         KONAN_DATA_DIR: /home/gradle/.gradle/konan
