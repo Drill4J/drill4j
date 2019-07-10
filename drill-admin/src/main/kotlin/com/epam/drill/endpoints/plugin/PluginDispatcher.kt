@@ -1,37 +1,26 @@
 package com.epam.drill.endpoints.plugin
 
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.common.PluginAction
-import com.epam.drill.common.PluginBean
-import com.epam.drill.common.parse
-import com.epam.drill.common.stringify
-import com.epam.drill.endpoints.AgentEntry
-import com.epam.drill.endpoints.AgentManager
-import com.epam.drill.endpoints.agentWsMessage
-import com.epam.drill.plugin.api.end.AdminPluginPart
-import com.epam.drill.plugin.api.end.Sender
-import com.epam.drill.plugin.api.message.MessageWrapper
-import com.epam.drill.plugins.Plugin
-import com.epam.drill.plugins.Plugins
-import com.epam.drill.router.Routes
-import com.epam.drill.util.parse
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.auth.authenticate
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.locations.get
-import io.ktor.locations.patch
-import io.ktor.locations.post
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.routing
-import kotlinx.serialization.Serializable
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.generic.instance
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.*
+import com.epam.drill.plugin.api.end.*
+import com.epam.drill.plugin.api.message.*
+import com.epam.drill.plugins.*
+import com.epam.drill.router.*
+import com.epam.drill.util.*
+import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.client.utils.*
+import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.locations.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import kotlinx.serialization.*
+import org.kodein.di.*
+import org.kodein.di.generic.*
+import kotlin.collections.contains
+import kotlin.collections.set
 
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
@@ -91,23 +80,27 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                         (dp == null) -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
                         (agentInfo == null) -> HttpStatusCode.NotFound to "agent with id $agentId not found"
                         else -> {
-                            val message = PluginAction.serializer() stringify
-                                    PluginAction(pluginId, action)
-                            agentManager.agentSession(agentId)
-                                ?.send(
-                                    Frame.Text(
-                                        Message.serializer() stringify Message(
-                                            MessageType.MESSAGE,
-                                            "/plugins/action",
-                                            message
-                                        )
-                                    )
-                                )
                             val agentEntry = agentManager.full(agentId)
-                            val plugin: AdminPluginPart<*> = fillPluginInstance(
-                                agentEntry, dp.pluginClass, pluginId
-                            )
-                            HttpStatusCode.OK to plugin.doRawAction(action)
+                            val adminPart: AdminPluginPart<*> = fillPluginInstance(agentEntry, dp.pluginClass, pluginId)
+                            val adminActionResult = adminPart.doRawAction(action)
+                            val agentPartMsg = when(adminActionResult) {
+                                is String -> adminActionResult
+                                is Unit -> action
+                                else -> Unit
+                            }
+                            if (agentPartMsg is String) {
+                                agentManager.agentSession(agentId)?.apply {
+                                    val agentAction = PluginAction(pluginId, agentPartMsg)
+                                    val agentPluginMsg = PluginAction.serializer() stringify agentAction
+                                    val agentMsg = Message(MessageType.MESSAGE, "/plugins/action", agentPluginMsg)
+                                    val agentFrame = Frame.Text(Message.serializer() stringify agentMsg)
+                                    send(agentFrame)
+                                }
+                            }
+                            HttpStatusCode.OK to when(adminActionResult) {
+                                is String -> adminActionResult
+                                else -> EmptyContent
+                            }
                         }
                     }
                     call.respond(statusCode, response)

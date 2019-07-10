@@ -9,6 +9,7 @@ val commonSerDe = SerDe(
     actionSerializer = Action.serializer(),
     ctx = SerializersModule {
         polymorphic(Action::class) {
+            StartNewSession::class with StartNewSession.serializer()
             StartSession::class with StartSession.serializer()
             StopSession::class with StopSession.serializer()
             CancelSession::class with CancelSession.serializer()
