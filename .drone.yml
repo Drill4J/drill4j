@@ -3,6 +3,6 @@ name: default
 
 steps:
   - name: build
-      image: gradle:5.4.1-jdk8
-      commands:
-        - gradle :drill-admin:check
+    image: gradle:5.4.1-jdk8
+    commands:
+      - gradle :drill-admin:check
