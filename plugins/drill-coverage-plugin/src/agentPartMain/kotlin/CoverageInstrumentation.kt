@@ -31,7 +31,7 @@ class ExecDatum(
 )
 
 interface SessionProbeArrayProvider : ProbeArrayProvider {
-    fun start(sessionId: String)
+    fun start(sessionId: String, testType: String)
     fun stop(sessionId: String): List<ExecDatum>?
     fun cancel(sessionId: String)
 }
@@ -45,8 +45,8 @@ interface InstrContext : () -> String? {
  * TODO ad hoc implementation, rewrite to something more descent
  */
 class ExecRuntime(
-    val testName: String? = null,
-    val testType: String? = null
+    val testType: String,
+    val testName: String? = null
 ) : ProbeArrayProvider {
 
     val execData = ConcurrentHashMap<Long, ExecDatum>()
@@ -84,14 +84,13 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
         return if (sessionRuntime != null) {
             val testName = instrContext[DRIlL_TEST_NAME]
-            val testType = instrContext[DRILL_TEST_TYPE]
-            val runtime = sessionRuntime.with(testName, testType)
+            val runtime = sessionRuntime.with(testName, sessionRuntime.testType)
             runtime(id, name, probeCount)
         } else BooleanArray(probeCount)
     }
 
-    override fun start(sessionId: String) {
-        sessionRuntimes[sessionId] = ExecRuntime()
+    override fun start(sessionId: String, testType: String) {
+        sessionRuntimes[sessionId] = ExecRuntime(testType)
     }
 
     override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
