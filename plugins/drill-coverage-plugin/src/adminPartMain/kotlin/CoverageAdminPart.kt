@@ -57,57 +57,54 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override suspend fun processData(dm: DrillMessage): Any {
         val content = dm.content
-        val message = CoverageMessage.serializer() parse content!!
-        return processData(message)
+        val message = CoverMessage.serializer() parse content!!
+        return processData(dm.sessionId, message)
     }
 
-    internal suspend fun processData(parse: CoverageMessage): Any {
-        when (parse.type) {
-            CoverageEventType.INIT -> {
+    internal suspend fun processData(sessionId: String?, coverMsg: CoverMessage): Any {
+        when (coverMsg) {
+            is InitInfo -> {
                 val scopes = storage.retrieve(scopesKey) ?: emptyMap()
                 updateScopeMessages(scopes)
-                val initInfo = InitInfo.serializer() parse parse.data
-                agentState.init(initInfo)
-                println(initInfo.message) //log init message
-                println("${initInfo.classesCount} classes to load")
+                agentState.init(coverMsg)
+                println(coverMsg.message) //log init message
+                println("${coverMsg.classesCount} classes to load")
             }
-            CoverageEventType.CLASS_BYTES -> {
-                val classData = ClassBytes.serializer() parse parse.data
-                val className = classData.className
-                val bytes = classData.bytes.toByteArray()
+            is ClassBytes -> {
+                val className = coverMsg.className
+                val bytes = coverMsg.bytes.toByteArray()
                 agentState.addClass(className, bytes)
             }
-            CoverageEventType.INITIALIZED -> {
-                println(parse.data) //log initialized message
+            is Initialized -> {
+                println(coverMsg.msg) //log initialized message
                 agentState.initialized()
                 val classesData = agentState.classesData()
                 if (classesData.changed) {
                     classesData.execData.start()
                     val defaultScope = Scope()
                     storage.store(ScopeKey(agentInfo.buildVersion), defaultScope)
-                    processData(CoverageMessage(CoverageEventType.SESSION_FINISHED, ""))
+                    processData(sessionId, SessionFinished(ts = System.currentTimeMillis()))
                 }
             }
-            CoverageEventType.SESSION_STARTED -> {
+            is SessionStarted -> {
                 val classesData = agentState.classesData()
                 classesData.execData.start()
-                println("Session ${parse.data} started.")
+                println("Session $sessionId started.")
                 updateGatheringState(true)
             }
-            CoverageEventType.SESSION_CANCELLED -> {
+            is SessionCancelled -> {
                 val classesData = agentState.classesData()
                 classesData.execData.stop()
-                println("Session ${parse.data} cancelled.")
+                println("Session $sessionId cancelled.")
                 updateGatheringState(false)
             }
-            CoverageEventType.COVERAGE_DATA_PART -> {
+            is CoverDataPart -> {
                 val classesData = agentState.classesData()
-                val probes = ExDataTemp.serializer().list parse parse.data
-                probes.forEach {
+                coverMsg.data.forEach {
                     classesData.execData.add(it)
                 }
             }
-            CoverageEventType.SESSION_FINISHED -> {
+            is SessionFinished -> {
                 val scope = storage.retrieve(scopeKey)!!
                 scope.incSessionCount()
                 val classesData = agentState.classesData()
@@ -115,6 +112,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 val cis = calculateCoverageData(scope.probes)
                 updateGatheringState(false)
                 sendCalcResults(cis)
+                println("Session $sessionId finished.")
             }
         }
         return ""
