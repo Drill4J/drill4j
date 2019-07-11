@@ -1,20 +1,18 @@
-kind: pipeline
-name: admin
 
-steps:
-  - name: build-and-publish
+pipeline:
+  build:
     image: gradle:5.4.1-jdk8
-    secrets: [ drill_username, drill_password, docker_username ]
+    secrets: [drill_username, drill_password]
     environment:
       XX_USERNAME:
-        from secret: drill_username
+        from secret:
+          drill_username
+      XX_PASSWORD:
+        from secret:
+          drill_password
       KONAN_DATA_DIR: /home/gradle/.gradle/konan
       GRADLE_OPTS: -Dorg.gradle.daemon=false
     commands:
-      - env
+      - echo $XX_USERNAME
       - echo $DRILL_USERNAME
-      - echo $KONAN_DATA_DIR
-      - echo $DOCKER_USERNAME
-    when:
-      branch:
-        - feature/EPMDJ-398-drone-io
+      - env

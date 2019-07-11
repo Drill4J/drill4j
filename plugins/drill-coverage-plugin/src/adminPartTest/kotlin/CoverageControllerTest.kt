@@ -24,7 +24,7 @@ class CoverageControllerTest {
     )
     private val ws = SenderStub()
 
-    private val coverageController = CoverageController(ws, agentInfo, "test")
+    private val coverageController = CoverageAdminPart(ws, agentInfo, "test")
 
     @Test
     fun `should have some state before init`() {

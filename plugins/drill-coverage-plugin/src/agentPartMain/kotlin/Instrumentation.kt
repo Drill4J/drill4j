@@ -4,102 +4,11 @@ import org.jacoco.core.internal.flow.*
 import org.jacoco.core.internal.instr.*
 import org.objectweb.asm.*
 import java.io.*
-import java.util.concurrent.*
-
-/**
- * Provides boolean array for the probe.
- * Implementations must be kotlin singleton objects.
- */
-typealias ProbeArrayProvider = (Long, String, Int) -> BooleanArray
 
 /**
  * Instrumenter type
  */
 typealias DrillInstrumenter = (String, Long, ByteArray) -> ByteArray
-
-const val DRILL_TEST_TYPE = "drill-test-type"
-const val DRIlL_TEST_NAME = "drill-test-name"
-
-typealias TestTypeString = String?
-
-class ExecDatum(
-    val id: Long,
-    val name: String,
-    val probes: BooleanArray,
-    val testName: String? = null,
-    val testType: TestTypeString = null
-)
-
-interface SessionProbeArrayProvider : ProbeArrayProvider {
-    fun start(sessionId: String, testType: String)
-    fun stop(sessionId: String): List<ExecDatum>?
-    fun cancel(sessionId: String)
-}
-
-interface InstrContext : () -> String? {
-    operator fun get(key: String): String?
-}
-
-/**
- * A container for session runtime data and optionally runtime data of tests
- * TODO ad hoc implementation, rewrite to something more descent
- */
-class ExecRuntime(
-    val testType: String,
-    val testName: String? = null
-) : ProbeArrayProvider {
-
-    val execData = ConcurrentHashMap<Long, ExecDatum>()
-
-    val testRuntimes = ConcurrentHashMap<String, ExecRuntime>()
-
-    fun with(testName: String?, testType: String?): ExecRuntime = when (testName) {
-        null -> this
-        else -> testRuntimes.getOrPut(testName) { ExecRuntime(testName, testType) }
-    }
-
-    override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
-        ExecDatum(
-            id = id,
-            name = name,
-            probes = BooleanArray(probeCount),
-            testName = testName,
-            testType = testType
-        )
-    }.probes
-
-    fun collect() = execData.values + testRuntimes.values.flatMap { it.execData.values }
-}
-
-/**
- * Simple probe array provider that employs ConcurrentHashMap for runtime data storage.
- * This class is intended to be an ancestor for a concrete probe array provider object.
- * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
- */
-open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContext) : SessionProbeArrayProvider {
-    private val sessionRuntimes = ConcurrentHashMap<String, ExecRuntime>()
-
-    override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
-        val sessionId = instrContext()
-        val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
-        return if (sessionRuntime != null) {
-            val testName = instrContext[DRIlL_TEST_NAME]
-            val runtime = sessionRuntime.with(testName, sessionRuntime.testType)
-            runtime(id, name, probeCount)
-        } else BooleanArray(probeCount)
-    }
-
-    override fun start(sessionId: String, testType: String) {
-        sessionRuntimes[sessionId] = ExecRuntime(testType)
-    }
-
-    override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
-
-    override fun cancel(sessionId: String) {
-        sessionRuntimes.remove(sessionId)
-    }
-
-}
 
 /**
  * JaCoCo instrumenter
@@ -131,7 +40,6 @@ private class CustomInstrumenter(
             probeArrayProvider,
             className,
             classId,
-            InstrSupport.needsFrames(version),
             counter.count
         )
         val writer = object : ClassWriter(reader, 0) {
@@ -169,7 +77,6 @@ private class DrillProbeStrategy(
     private val probeArrayProvider: ProbeArrayProvider,
     private val className: String,
     private val classId: Long,
-    private val withFrames: Boolean, //TODO frames?
     private val probeCount: Int
 ) : IProbeArrayStrategy {
     override fun storeInstance(mv: MethodVisitor?, clinit: Boolean, variable: Int): Int = mv!!.run {
