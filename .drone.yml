@@ -6,3 +6,15 @@ pipeline:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
     commands:
       - gradle build check
+
+  publish:
+    image: gradle:5.4.1-jdk8
+    secrets: [ drill_username, drill_password ]
+    commands:
+      - gradle :drill-admin:jib -Djib.to.auth.username=$${DRILL_USERNAME} -Djib.to.auth.password=$${DRILL_PASSWORD}
+    when:
+      branch:
+        - develop
+      event:
+        exclude:
+          - pull_request
