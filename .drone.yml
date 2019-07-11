@@ -1,8 +1,17 @@
 pipeline:
   build:
     image: gradle:5.4.1-jdk8
+    secrets: [drill_username, drill_password]
     environment:
+      XX_USERNAME:
+        from secret:
+          drill_username
+      XX_PASSWORD:
+        from secret:
+          drill_password
       KONAN_DATA_DIR: /home/gradle/.gradle/konan
       GRADLE_OPTS: -Dorg.gradle.daemon=false
     commands:
-      - gradle build check
+      - echo $XX_USERNAME
+      - echo $DRILL_USERNAME
+      - env
