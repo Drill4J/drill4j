@@ -4,18 +4,32 @@ import com.epam.drill.plugin.api.*
 import kotlinx.serialization.*
 import kotlinx.serialization.modules.*
 
+private val serialModule = SerializersModule {
+    polymorphic<Action> {
+        addSubclass(SwitchScope.serializer())
+        addSubclass(IgnoreScope.serializer())
+        addSubclass(DropScope.serializer())
+
+        addSubclass(StartNewSession.serializer())
+        addSubclass(StartSession.serializer())
+        addSubclass(StopSession.serializer())
+        addSubclass(CancelSession.serializer())
+    }
+    polymorphic<CoverMessage> {
+        addSubclass(InitInfo.serializer())
+        addSubclass(ClassBytes.serializer())
+        addSubclass(Initialized.serializer())
+
+        addSubclass(SessionStarted.serializer())
+        addSubclass(SessionCancelled.serializer())
+        addSubclass(CoverDataPart.serializer())
+        addSubclass(SessionFinished.serializer())
+    }
+}
+
 @SharedImmutable
 val commonSerDe = SerDe(
-    actionSerializer = Action.serializer(),
-    ctx = SerializersModule {
-        polymorphic(Action::class) {
-            StartNewSession::class with StartNewSession.serializer()
-            StartSession::class with StartSession.serializer()
-            StopSession::class with StopSession.serializer()
-            CancelSession::class with CancelSession.serializer()
-            SwitchScope::class with SwitchScope.serializer()
-            IgnoreScope::class with IgnoreScope.serializer()
-            DropScope::class with DropScope.serializer()
-        }
-    }
+        actionSerializer = Action.serializer(),
+        ctx = serialModule
 )
+

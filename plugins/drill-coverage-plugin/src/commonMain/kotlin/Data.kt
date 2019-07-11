@@ -1,36 +1,57 @@
 package com.epam.drill.plugins.coverage
 
-@kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+
+@Serializable
 data class CoverConfig(
-    val pathPrefixes: List<String>,
-    val message: String
+        val pathPrefixes: List<String>,
+        val message: String
 )
 
+@kotlinx.serialization.Polymorphic
+@Serializable
+abstract class CoverMessage
 
-@kotlinx.serialization.Serializable
-data class CoverageMessage(val type: CoverageEventType, val data: String)
+@SerialName("INIT")
+@Serializable
+data class InitInfo(
+        val classesCount: Int,
+        val message: String
+) : CoverMessage()
 
-enum class CoverageEventType {
-    INIT,
-    CLASS_BYTES,
-    INITIALIZED,
-    SESSION_STARTED,
-    COVERAGE_DATA_PART,
-    SESSION_FINISHED,
-    SESSION_CANCELLED
-}
 
-@kotlinx.serialization.Serializable
-data class InitInfo(val classesCount: Int, val message: String)
+@SerialName("CLASS_BYTES")
+@Serializable
+data class ClassBytes(
+        val className: String,
+        val bytes: List<Byte>
+) : CoverMessage()
 
-@kotlinx.serialization.Serializable
-data class ClassBytes(val className: String, val bytes: List<Byte>)
+@SerialName("INITIALIZED")
+@Serializable
+data class Initialized(val msg: String) : CoverMessage()
 
-@kotlinx.serialization.Serializable
+@SerialName("SESSION_STARTED")
+@Serializable
+data class SessionStarted(val ts: Long) : CoverMessage()
+
+@SerialName("SESSION_CANCELLED")
+@Serializable
+data class SessionCancelled(val ts: Long) : CoverMessage()
+
+@SerialName("COVERAGE_DATA_PART")
+@Serializable
+data class CoverDataPart(val data: List<ExDataTemp>) : CoverMessage()
+
+@SerialName("SESSION_FINISHED")
+@Serializable
+data class SessionFinished(val ts: Long) : CoverMessage()
+
+@Serializable
 data class ExDataTemp(
-    val id: Long,
-    val className: String,
-    val probes: List<Boolean>,
-    val testType: String,
-    val testName: String? = null
+        val id: Long,
+        val className: String,
+        val probes: List<Boolean>,
+        val testType: String,
+        val testName: String? = null
 )

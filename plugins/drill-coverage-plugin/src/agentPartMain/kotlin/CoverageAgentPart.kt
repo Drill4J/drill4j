@@ -3,7 +3,6 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.*
 import com.epam.drill.plugin.api.processing.*
 import com.epam.drill.session.*
-import kotlinx.serialization.*
 import org.jacoco.core.internal.data.*
 import java.util.concurrent.atomic.*
 
@@ -32,21 +31,21 @@ class CoverageAgentPart @JvmOverloads constructor(
             }
 
         val initInfo = InitInfo(filter.count(), initializingMessage)
-        sendMessage(CoverageEventType.INIT, InitInfo.serializer() stringify initInfo)
+        sendMessage(initInfo)
         val loadedClasses = filter.map { (resourceName, classInfo) ->
             val className = resourceName
                 .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                 .removeSuffix(".class")
             val bytes = classInfo.url(resourceName).readBytes()
 
-            sendClass(ClassBytes(className, bytes.toList()))
+            sendMessage(ClassBytes(className, bytes.toList()))
             val classId = CRC64.classId(bytes)
             className to classId
 
         }.toMap()
         loadedClassesRef.set(loadedClasses)
         val initializedStr = "Plugin $id initialized!"
-        sendMessage(CoverageEventType.INITIALIZED, initializedStr)
+        sendMessage(Initialized(msg = initializedStr))
         println(initializedStr)
         println("Loaded ${loadedClasses.count()} classes")
         retransform()
@@ -94,7 +93,7 @@ class CoverageAgentPart @JvmOverloads constructor(
                 val testType = action.payload.startPayload.testType
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId, testType)
-                sendMessage(CoverageEventType.SESSION_STARTED, sessionId)
+                sendMessage(SessionStarted(ts = System.currentTimeMillis()))
             }
             is StopSession -> {
                 val sessionId = action.payload.sessionId
@@ -112,34 +111,24 @@ class CoverageAgentPart @JvmOverloads constructor(
                     }
                     //send data in chunk of 10
                     dataToSend.chunked(10) { dataChunk ->
-                        sendExecutionData(dataChunk)
+                        sendMessage(CoverDataPart(dataChunk))
                     }
-                    sendMessage(CoverageEventType.SESSION_FINISHED, sessionId)
+                    sendMessage(SessionFinished(ts = System.currentTimeMillis()))
                 }
             }
             is CancelSession -> {
                 val sessionId = action.payload.sessionId
                 println("Cancellation of recording for session $sessionId")
                 instrContext.cancel(sessionId)
-                sendMessage(CoverageEventType.SESSION_CANCELLED, sessionId)
+                sendMessage(SessionCancelled(ts = System.currentTimeMillis()))
             }
             else -> Unit
         }
 
     }
 
-    private fun sendClass(classBytes: ClassBytes) {
-        val classJson = ClassBytes.serializer() stringify classBytes
-        sendMessage(CoverageEventType.CLASS_BYTES, classJson)
-    }
-
-    private fun sendExecutionData(exData: List<ExDataTemp>) {
-        val exDataJson = ExDataTemp.serializer().list stringify exData
-        sendMessage(CoverageEventType.COVERAGE_DATA_PART, exDataJson)
-    }
-
-    private fun sendMessage(type: CoverageEventType, str: String) {
-        val message = CoverageMessage.serializer() stringify CoverageMessage(type, str)
-        Sender.sendMessage("coverage", message)
+    private fun sendMessage(message: CoverMessage) {
+        val messageStr = CoverMessage.serializer() stringify message
+        Sender.sendMessage(id, messageStr)
     }
 }

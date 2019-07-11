@@ -3,14 +3,13 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.common.*
 import com.epam.drill.plugin.api.end.*
 import com.epam.drill.plugin.api.message.*
-import com.epam.drill.plugins.coverage.CoverageEventType.*
 import com.epam.drill.plugins.coverage.test.bar.*
 import com.epam.drill.plugins.coverage.test.foo.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlin.test.*
 
-class CoverageControllerTest {
+class CoverageAdminPartTest {
     private val agentInfo = AgentInfo(
         id = "id",
         name = "test",
@@ -34,9 +33,8 @@ class CoverageControllerTest {
     @Test
     fun `should switch agent data ref to ClassDataBuilder on init`() = runBlocking {
         val initInfo = InitInfo(1, "hello")
-        val message = CoverageMessage(INIT, InitInfo.serializer() stringify initInfo)
 
-        sendMessage(message)
+        sendMessage(initInfo)
 
         assertEquals(1, agentStates.count())
         val agentData = agentStates[agentInfo.id]?.data
@@ -62,14 +60,8 @@ class CoverageControllerTest {
     @Test
     fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
-        val message = CoverageMessage(SESSION_FINISHED, "")
-
-
-        runBlocking {
-            coverageController.processData(
-                DrillMessage("", CoverageMessage.serializer() stringify message)
-            )
-        }
+        val message = SessionFinished(ts = System.currentTimeMillis())
+        sendMessage(message)
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
         assertTrue { ws.sent.any { it.first == "/coverage" } }
         assertTrue { ws.sent.any { it.first == "/coverage-by-packages" } }
@@ -87,13 +79,9 @@ class CoverageControllerTest {
         val countAllMethods = 6
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
-        val message = CoverageMessage(SESSION_FINISHED, "")
+        val message = SessionFinished(ts = System.currentTimeMillis())
 
-        runBlocking {
-            coverageController.processData(
-                DrillMessage("", CoverageMessage.serializer() stringify message)
-            )
-        }
+        sendMessage(message)
 
         assertNotNull(JavaPackageCoverage)
 
@@ -112,27 +100,26 @@ class CoverageControllerTest {
             for (clazz in classes) {
                 sendClass(clazz)
             }
-            sendMessage(CoverageMessage(INITIALIZED, "Initialized!"))
+            sendMessage(Initialized("Initialized!"))
         }
     }
 
-    private suspend fun sendClass(clazz: Class<*>) {
+    private fun sendClass(clazz: Class<*>) {
         val bytes = clazz.readBytes()
         val classBytes = ClassBytes(clazz.path, bytes.toList())
-        val messageString = ClassBytes.serializer() stringify classBytes
-        val message = CoverageMessage(CLASS_BYTES, messageString)
-        sendMessage(message)
+        sendMessage(classBytes)
     }
 
-    private suspend fun sendInit(vararg classes: Class<*>) {
+    private fun sendInit(vararg classes: Class<*>) {
         val initInfo = InitInfo(classes.count(), "Start initialization")
-        sendMessage(CoverageMessage(INIT, InitInfo.serializer() stringify initInfo))
+        sendMessage(initInfo)
     }
 
-    private suspend fun sendMessage(message: CoverageMessage) {
-        coverageController.processData(
-            DrillMessage("", CoverageMessage.serializer() stringify message)
-        )
+    private fun sendMessage(message: CoverMessage) {
+        val messageStr = commonSerDe.stringify(CoverMessage.serializer(), message)
+        runBlocking {
+            coverageController.processData(DrillMessage("", messageStr))
+        }
     }
 }
 
