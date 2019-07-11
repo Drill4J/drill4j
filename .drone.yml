@@ -2,17 +2,15 @@ kind: pipeline
 name: admin
 
 steps:
-  - name: build
-    image: gradle:5.4.1-jdk8
-    commands:
-      - gradle :drill-admin:build
   - name: check
     image: gradle:5.4.1-jdk8
     environment:
       KONAN_DATA_DIR: /home/gradle/.gradle/konan
       GRADLE_OPTS: -Dorg.gradle.daemon=false
-      USERNAME: from_secret: drill_username
-      PASSWORD: from_secret: drill_password
+      USERNAME:
+        from_secret: drill_username
+      PASSWORD:
+        from_secret: drill_password
     commands:
       - gradle :drill-admin:check
       - gradle :drill-admin:jib -Djib.to.auth.username=$USERNAME -Djib.to.auth.password=$PASSWORD
