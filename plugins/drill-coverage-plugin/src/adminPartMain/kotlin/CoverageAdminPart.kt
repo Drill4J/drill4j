@@ -14,10 +14,10 @@ import java.util.concurrent.*
 internal val agentStates = ConcurrentHashMap<String, AgentState>()
 
 //TODO This is a temporary storage API. It will be removed when the core API has been developed
-internal val agentStorages = ConcurrentHashMap<String, Storage>()
+private val agentStorages = ConcurrentHashMap<String, Storage>()
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-class CoverageController(sender: Sender, agentInfo: AgentInfo, id: String) :
+class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
 
     override val serDe: SerDe<Action> = commonSerDe
