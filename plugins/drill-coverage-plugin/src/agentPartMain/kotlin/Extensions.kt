@@ -9,8 +9,3 @@ fun convertClassPathToBytecodeView(classPath: String) = classPath
     .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
     .removeSuffix(".class")
     .replace(".", "/")
-
-fun TestTypeString.toTestType() = when (this) {
-    null -> TestType.UNDEFINED
-    else -> TestType.values().firstOrNull { it.name == this } ?: TestType.UNDEFINED
-}

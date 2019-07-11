@@ -31,13 +31,6 @@ data class ExDataTemp(
     val id: Long,
     val className: String,
     val probes: List<Boolean>,
-    val testName: String? = null,
-    val testType: TestType
+    val testType: String,
+    val testName: String? = null
 )
-
-enum class TestType {
-    AUTO,
-    MANUAL,
-    PERFORMANCE,
-    UNDEFINED;
-}

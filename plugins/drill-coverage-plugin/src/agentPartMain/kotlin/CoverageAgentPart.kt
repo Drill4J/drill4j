@@ -7,20 +7,13 @@ import kotlinx.serialization.*
 import org.jacoco.core.internal.data.*
 import java.util.concurrent.atomic.*
 
-private val instrContext = object : InstrContext {
-    override fun invoke(): String? = DrillRequest.currentSession()
-    override fun get(key: String): String? = DrillRequest[key.toLowerCase()]
-}
-
-object DrillProbeArrayProvider : SimpleSessionProbeArrayProvider(instrContext)
-
 @Suppress("unused")
-class CoveragePlugin @JvmOverloads constructor(
+class CoverageAgentPart @JvmOverloads constructor(
     override val id: String,
     private val instrContext: SessionProbeArrayProvider = DrillProbeArrayProvider
 ) : AgentPart<CoverConfig, Action>(), InstrumentationPlugin {
 
-    override val confSerializer: kotlinx.serialization.KSerializer<CoverConfig> = CoverConfig.serializer()
+    override val confSerializer = CoverConfig.serializer()
 
     override val serDe = commonSerDe
 
@@ -113,8 +106,8 @@ class CoveragePlugin @JvmOverloads constructor(
                             id = datum.id,
                             className = datum.name,
                             probes = datum.probes.toList(),
-                            testName = datum.testName,
-                            testType = datum.testType.toTestType()
+                            testType = datum.testType,
+                            testName = datum.testName
                         )
                     }
                     //send data in chunk of 10
