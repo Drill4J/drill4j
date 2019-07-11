@@ -1,0 +1,20 @@
+kind: pipeline
+name: admin
+
+steps:
+  - name: build-and-publish
+    image: gradle:5.4.1-jdk8
+    secrets: [ drill_username, drill_password ]
+    environment:
+      USERNAME:
+        from_secret: drill_username
+      PASSWORD:
+        from_secret: drill_password
+      KONAN_DATA_DIR: /home/gradle/.gradle/konan
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+    commands:
+      - gradle :drill-admin:check
+      - gradle :drill-admin:jib -Djib.to.auth.username=$USERNAME -Djib.to.auth.password=$PASSWORD
+    when:
+      branch:
+        - feature/EPMDJ-398-drone-io
