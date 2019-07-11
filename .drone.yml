@@ -12,5 +12,6 @@ steps:
       PASSWORD:
         from_secret: drill_password
     commands:
+      - echo $USERNAME
       - gradle :drill-admin:check
       - gradle :drill-admin:jib -Djib.to.image=drill4j/drill-admin:latest -Djib.to.auth.username=$USERNAME -Djib.to.auth.password=$PASSWORD
