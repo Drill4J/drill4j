@@ -34,7 +34,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     @Volatile
     private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
-    
+
     private val scopesKey = ScopesKey(agentInfo.buildVersion)
 
     override suspend fun doAction(action: Action): Any {
@@ -72,7 +72,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             }
             is ClassBytes -> {
                 val className = coverMsg.className
-                val bytes = coverMsg.bytes.toByteArray()
+                val bytes = coverMsg.bytes.decode()
                 agentState.addClass(className, bytes)
             }
             is Initialized -> {
@@ -119,7 +119,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal fun calculateCoverageData(scopeProbes: List<ExDataTemp>): CoverageInfoSet {
-        val classesData = agentState.classesData()  
+        val classesData = agentState.classesData()
         // Analyze all existing classes
         val coverageBuilder = CoverageBuilder()
         val dataStore = ExecutionDataStore()

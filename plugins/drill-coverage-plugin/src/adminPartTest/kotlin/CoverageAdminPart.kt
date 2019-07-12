@@ -7,6 +7,7 @@ import com.epam.drill.plugins.coverage.test.bar.*
 import com.epam.drill.plugins.coverage.test.foo.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
+import java.util.*
 import kotlin.test.*
 
 class CoverageAdminPartTest {
@@ -106,7 +107,7 @@ class CoverageAdminPartTest {
 
     private fun sendClass(clazz: Class<*>) {
         val bytes = clazz.readBytes()
-        val classBytes = ClassBytes(clazz.path, bytes.toList())
+        val classBytes = ClassBytes(clazz.path, Base64.getEncoder().encodeToString(bytes))
         sendMessage(classBytes)
     }
 

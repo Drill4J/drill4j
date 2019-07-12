@@ -19,12 +19,13 @@ data class InitInfo(
         val message: String
 ) : CoverMessage()
 
+typealias EncodedString = String
 
 @SerialName("CLASS_BYTES")
 @Serializable
 data class ClassBytes(
         val className: String,
-        val bytes: List<Byte>
+        val bytes: EncodedString
 ) : CoverMessage()
 
 @SerialName("INITIALIZED")
