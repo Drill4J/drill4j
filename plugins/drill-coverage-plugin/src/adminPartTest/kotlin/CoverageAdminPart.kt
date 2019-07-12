@@ -137,7 +137,4 @@ class SenderStub : Sender {
 }
 
 
-fun Class<*>.readBytes() = this.getResourceAsStream("/${this.path}.class").readBytes()
-
-val Class<*>.path get() = this.name.replace('.', '/')
 
