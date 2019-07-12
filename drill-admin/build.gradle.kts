@@ -1,4 +1,5 @@
 import com.epam.drill.build.*
+import com.google.cloud.tools.jib.plugins.common.*
 import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
@@ -61,13 +62,19 @@ dependencies {
 
 }
 
+println(jib.extraDirectories.paths.map { it.toAbsolutePath().toString() })
+println(project.getProperties()["jib.extraDirectories.paths"])
+println( System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS))
+println( System.getProperty(PropertyNames.TO_TAGS))
+
 jib {
     from {
         image = "gcr.io/distroless/java:8"
     }
     to {
         image = "drill4j/${project.name}"
-        tags = mutableSetOf("latest")
+        auth.username="drill4j"
+        auth.password="ZBoDXn4t1"
     }
     container {
         ports = listOf("8090", "5006")
