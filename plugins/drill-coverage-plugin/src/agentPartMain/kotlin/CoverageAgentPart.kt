@@ -4,6 +4,7 @@ import com.epam.drill.*
 import com.epam.drill.plugin.api.processing.*
 import com.epam.drill.session.*
 import org.jacoco.core.internal.data.*
+import java.util.*
 import java.util.concurrent.atomic.*
 
 @Suppress("unused")
@@ -37,8 +38,7 @@ class CoverageAgentPart @JvmOverloads constructor(
                 .removePrefix("BOOT-INF/classes/") //fix from Spring Boot Executable jar
                 .removeSuffix(".class")
             val bytes = classInfo.url(resourceName).readBytes()
-
-            sendMessage(ClassBytes(className, bytes.toList()))
+            sendMessage(ClassBytes(className, bytes.encode()))
             val classId = CRC64.classId(bytes)
             className to classId
 
