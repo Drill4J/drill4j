@@ -24,12 +24,12 @@ data class Scope(
     }
 
     fun start() {
-        started = System.currentTimeMillis()
+        started = currentTimeMillis()
         finished = null
     }
 
     fun finish() {
-        val t = System.currentTimeMillis()
+        val t = currentTimeMillis()
         finished = t
         duration += t - started
     }

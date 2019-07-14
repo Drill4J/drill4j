@@ -7,7 +7,6 @@ import com.epam.drill.plugins.coverage.test.bar.*
 import com.epam.drill.plugins.coverage.test.foo.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
-import java.util.*
 import kotlin.test.*
 
 class CoverageAdminPartTest {
@@ -52,7 +51,7 @@ class CoverageAdminPartTest {
 
         agentStates[agentInfo.id]!!.run {
             val agentData = data as ClassDataBuilder
-            val (name, bytes) = agentData.classData.poll()!!
+            val (name, bytes) = agentData.classData.first()
             assertEquals(dummyClass.path, name)
             assertTrue { dummyBytes.contentEquals(bytes) }
         }
@@ -61,7 +60,7 @@ class CoverageAdminPartTest {
     @Test
     fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
-        val message = SessionFinished(ts = System.currentTimeMillis())
+        val message = SessionFinished(ts = currentTimeMillis())
         sendMessage(message)
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
         assertTrue { ws.sent.any { it.first == "/coverage" } }
@@ -80,7 +79,7 @@ class CoverageAdminPartTest {
         val countAllMethods = 6
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
-        val message = SessionFinished(ts = System.currentTimeMillis())
+        val message = SessionFinished(ts = currentTimeMillis())
 
         sendMessage(message)
 
@@ -107,7 +106,7 @@ class CoverageAdminPartTest {
 
     private fun sendClass(clazz: Class<*>) {
         val bytes = clazz.readBytes()
-        val classBytes = ClassBytes(clazz.path, Base64.getEncoder().encodeToString(bytes))
+        val classBytes = ClassBytes(clazz.path, bytes.encode())
         sendMessage(classBytes)
     }
 

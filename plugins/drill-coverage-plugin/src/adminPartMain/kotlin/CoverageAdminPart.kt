@@ -8,13 +8,11 @@ import com.epam.drill.plugin.api.message.*
 import kotlinx.serialization.*
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
-import java.util.*
-import java.util.concurrent.*
 
-internal val agentStates = ConcurrentHashMap<String, AgentState>()
+internal val agentStates = AtomicCache<String, AgentState>()
 
 //TODO This is a temporary storage API. It will be removed when the core API has been developed
-private val agentStorages = ConcurrentHashMap<String, Storage>()
+private val agentStorages = AtomicCache<String, Storage>()
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
@@ -22,10 +20,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override val serDe: SerDe<Action> = commonSerDe
 
+    private val buildVersion = agentInfo.buildVersion
+
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
     private val storage: Storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
 
-    private val agentState: AgentState = agentStates.compute(agentInfo.id) { _, state ->
+    private val agentState: AgentState = agentStates(agentInfo.id) { state ->
         when (state?.agentInfo) {
             agentInfo -> state
             else -> AgentState(agentInfo, state)
@@ -33,9 +33,9 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }!!
 
     @Volatile
-    private var scopeKey = ScopeKey(agentInfo.buildVersion, "")
+    private var scopeKey = ScopeKey(buildVersion, "")
 
-    private val scopesKey = ScopesKey(agentInfo.buildVersion)
+    private val scopesKey = ScopesKey(buildVersion)
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
@@ -45,7 +45,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             is StartNewSession -> {
                 val startAgentSession = StartSession(
                     payload = StartSessionPayload(
-                        sessionId = UUID.randomUUID().toString(),
+                        sessionId = genUuid(),
                         startPayload = action.payload
                     )
                 )
@@ -83,7 +83,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                     classesData.execData.start()
                     val defaultScope = Scope()
                     storage.store(ScopeKey(agentInfo.buildVersion), defaultScope)
-                    processData(sessionId, SessionFinished(ts = System.currentTimeMillis()))
+                    processData(sessionId, SessionFinished(ts = currentTimeMillis()))
                 }
             }
             is SessionStarted -> {
