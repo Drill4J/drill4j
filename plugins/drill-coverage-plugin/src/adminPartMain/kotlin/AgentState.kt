@@ -1,13 +1,12 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.common.*
+import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
 import org.javers.core.*
 import org.javers.core.diff.changetype.*
-import java.util.concurrent.*
-import java.util.concurrent.atomic.*
 
 /**
  * Agent state.
@@ -42,7 +41,7 @@ class AgentState(
     fun addClass(key: String, bytes: ByteArray) {
         //throw ClassCastException if the ref value is in the wrong state
         val agentData = data as ClassDataBuilder
-        agentData.classData.offer(key to bytes)
+        agentData.addClass(key, bytes)
     }
 
     fun initialized() {
@@ -51,12 +50,9 @@ class AgentState(
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
         val classBytes = LinkedHashMap<String, ByteArray>(agentData.count)
-        while (true) {
-            val pair = agentData.classData.poll()
-            if (pair != null) {
-                classBytes[pair.first] = pair.second
-                analyzer.analyzeClass(pair.second, pair.first)
-            } else break
+        for (pair in agentData.classData) {
+            classBytes[pair.first] = pair.second
+            analyzer.analyzeClass(pair.second, pair.first)
         }
         val bundleCoverage = coverageBuilder.getBundle("")
         val javaClasses = bundleCoverage.packages
@@ -110,7 +106,15 @@ class ClassDataBuilder(
     val count: Int,
     val prevData: ClassesData?
 ) : AgentData() {
-    internal val classData = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
+
+
+    private val _classData = atomic(list<Pair<String, ByteArray>>())
+    
+    val classData get() = _classData.value
+
+    fun addClass(name: String, body: ByteArray) {
+        _classData.update { it.append(name to body) }
+    }
 }
 
 class ClassesData(
@@ -125,17 +129,18 @@ class ClassesData(
 
 class ExecData {
 
-    private val dataRef = AtomicReference<MutableCollection<ExDataTemp>>()
+    private val _data = atomic(list<ExDataTemp>())
 
     @Volatile
     var coverage: Double? = null
 
-    fun start() = dataRef.set(ConcurrentLinkedQueue())
-
-    fun add(probe: ExDataTemp) {
-        dataRef.get()!!.add(probe)
+    fun start() {
+        _data.value = list()
     }
 
-    fun stop() = dataRef.getAndSet(null) as Collection<ExDataTemp>? ?: emptyList()
-}
+    fun add(probe: ExDataTemp) {
+        _data.update { it.append(probe) }
+    }
 
+    fun stop() = _data.getAndUpdate { list() }
+}

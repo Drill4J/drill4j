@@ -3,9 +3,8 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.*
 import com.epam.drill.plugin.api.processing.*
 import com.epam.drill.session.*
+import kotlinx.atomicfu.*
 import org.jacoco.core.internal.data.*
-import java.util.*
-import java.util.concurrent.atomic.*
 
 @Suppress("unused")
 class CoverageAgentPart @JvmOverloads constructor(
@@ -19,7 +18,7 @@ class CoverageAgentPart @JvmOverloads constructor(
 
     val instrumenter = instrumenter(instrContext)
 
-    private val loadedClassesRef = AtomicReference<Map<String, Long?>>(emptyMap())
+    private val _loadedClasses = atomic(emptyMap<String, Long?>())
 
     override fun on() {
         val initializingMessage = "Initializing plugin $id...\nConfig: ${config.message}"
@@ -43,7 +42,7 @@ class CoverageAgentPart @JvmOverloads constructor(
             className to classId
 
         }.toMap()
-        loadedClassesRef.set(loadedClasses)
+        _loadedClasses.value = loadedClasses
         val initializedStr = "Plugin $id initialized!"
         sendMessage(Initialized(msg = initializedStr))
         println(initializedStr)
@@ -58,7 +57,7 @@ class CoverageAgentPart @JvmOverloads constructor(
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
         if (!enabled) return null
-        return loadedClassesRef.get()[className]?.let { classId ->
+        return _loadedClasses.value[className]?.let { classId ->
             instrumenter(className, classId, initialBytes)
         }
     }
@@ -82,6 +81,7 @@ class CoverageAgentPart @JvmOverloads constructor(
     }
 
     override fun initPlugin() {
+        println("Plugin $id initialized")
 
     }
 
@@ -93,14 +93,14 @@ class CoverageAgentPart @JvmOverloads constructor(
                 val testType = action.payload.startPayload.testType
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId, testType)
-                sendMessage(SessionStarted(ts = System.currentTimeMillis()))
+                sendMessage(SessionStarted(ts = currentTimeMillis()))
             }
             is StopSession -> {
                 val sessionId = action.payload.sessionId
                 println("End of recording for session $sessionId")
-                val runtimeData = instrContext.stop(sessionId)
-                runtimeData?.apply {
-                    val dataToSend = map { datum ->
+                val runtimeData = instrContext.stop(sessionId) ?: emptySequence()
+                if (runtimeData.any()) {
+                    runtimeData.map { datum ->
                         ExDataTemp(
                             id = datum.id,
                             className = datum.name,
@@ -108,19 +108,19 @@ class CoverageAgentPart @JvmOverloads constructor(
                             testType = datum.testType,
                             testName = datum.testName
                         )
-                    }
-                    //send data in chunk of 10
-                    dataToSend.chunked(10) { dataChunk ->
-                        sendMessage(CoverDataPart(dataChunk))
-                    }
-                    sendMessage(SessionFinished(ts = System.currentTimeMillis()))
+                    }.chunked(10)
+                        .forEach { dataChunk ->
+                            //send data in chunks of 10
+                            sendMessage(CoverDataPart(dataChunk))
+                        }
+                    sendMessage(SessionFinished(ts = currentTimeMillis()))
                 }
             }
             is CancelSession -> {
                 val sessionId = action.payload.sessionId
                 println("Cancellation of recording for session $sessionId")
                 instrContext.cancel(sessionId)
-                sendMessage(SessionCancelled(ts = System.currentTimeMillis()))
+                sendMessage(SessionCancelled(ts = currentTimeMillis()))
             }
             else -> Unit
         }

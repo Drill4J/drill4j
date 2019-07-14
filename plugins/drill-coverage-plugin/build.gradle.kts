@@ -10,25 +10,32 @@ val jacocoVersion = "0.8.3"
 val javersVersion = "5.3.4"
 val vavrVersion = "0.10.0"
 
-val agentJarDeps by configurations.creating {}
+val commonJarDeps by configurations.creating {}
 
-val adminJarDeps by configurations.creating {}
+val agentJarDeps by configurations.creating {
+    extendsFrom(commonJarDeps)
+}
+
+val adminJarDeps by configurations.creating {
+    extendsFrom(commonJarDeps)
+}
 
 dependencies {
-    agentJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
-    agentJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
+    commonJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
+    commonJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
 
-    adminJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
-    adminJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
     adminJarDeps("org.javers:javers-core:$javersVersion")
 }
 
 
 kotlin {
     val jvms = listOf(
+        jvm(),
         jvm("adminPart"),
         jvm("agentPart")
     )
+    
+    
 
     sourceSets {
         named("commonMain") {
@@ -44,15 +51,22 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        named("agentPartMain") {
+        val jvmMain by getting {
+            project.configurations.named(implementationConfigurationName) {
+                extendsFrom(commonJarDeps)
+            }
+        }
+        val agentPartMain by getting {
             project.configurations.named(implementationConfigurationName) {
                 extendsFrom(agentJarDeps)
             }
             dependencies {
+                
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
         }
-        named("adminPartMain") {
+        agentPartMain.dependsOn(jvmMain)
+        val adminPartMain by getting {
             project.configurations.named(implementationConfigurationName) {
                 extendsFrom(adminJarDeps)
             }
@@ -60,6 +74,7 @@ kotlin {
                 implementation(project(":drill-plugin-api:drill-admin-part"))
             }
         }
+        adminPartMain.dependsOn(jvmMain)
 
         //common jvm deps
         jvms.forEach {
@@ -79,6 +94,10 @@ kotlin {
                 }
             }
         }
+
+        
+        
+        
     }
 }
 
