@@ -17,11 +17,12 @@ data class CoverageKey(
 
 val String.crc64: String get() = CRC64.classId(toByteArray()).toString(Character.MAX_RADIX)
 
-val ICoverageNode.coverage: Double?
-    get() {
-        val ratio = this.instructionCounter.coveredRatio
-        return if (ratio.isFinite()) ratio * 100.0 else null
-    }
+val ICoverageNode.coverage get() = coverage(instructionCounter.totalCount)
+
+fun ICoverageNode.coverage(total: Int) = when(total) {
+    0 -> null
+    else -> instructionCounter.coveredCount * 100.0 / total
+}
 
 fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when (this) {
     is IMethodCoverage -> CoverageKey(

@@ -8,7 +8,7 @@ data class CoverConfig(
         val message: String
 )
 
-@kotlinx.serialization.Polymorphic
+@Polymorphic
 @Serializable
 abstract class CoverMessage
 

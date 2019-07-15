@@ -50,7 +50,7 @@ class ExecRuntime : (Long, String, Int, String) -> BooleanArray {
         )
     }.probes
 
-    fun collect() = execData.values().flatMap { it.values() }
+    fun collect() = execData.values.flatMap { it.values }
 }
 
 /**
