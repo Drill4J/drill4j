@@ -23,7 +23,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     private val buildVersion = agentInfo.buildVersion
 
     //TODO This is a temporary storage API. It will be removed when the core API has been developed
-    private val storage: Storage = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
+    private val storage: Storage get() = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
 
     private val agentState: AgentState = agentStates(agentInfo.id) { state ->
         when (state?.agentInfo) {
@@ -32,15 +32,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
     }!!
 
-    @Volatile
-    private var scopeKey = ScopeKey(buildVersion, "")
-
     private val scopesKey = ScopesKey(buildVersion)
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
             is SwitchScope -> checkoutScope(action.payload.scopeName)
-            is IgnoreScope -> toggleScope(action.payload.scopeName, action.payload.enabled)
+            is IgnoreScope -> toggleScope(action.payload.scopeId, action.payload.enabled)
             is DropScope -> dropScope(action.payload.scopeName)
             is StartNewSession -> {
                 val startAgentSession = StartSession(
@@ -58,10 +55,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     override suspend fun processData(dm: DrillMessage): Any {
         val content = dm.content
         val message = CoverMessage.serializer() parse content!!
-        return processData(dm.sessionId, message)
+        return processData(message)
     }
 
-    internal suspend fun processData(sessionId: String?, coverMsg: CoverMessage): Any {
+    internal suspend fun processData(coverMsg: CoverMessage): Any {
         when (coverMsg) {
             is InitInfo -> {
                 val scopes = storage.retrieve(scopesKey) ?: emptyMap()
@@ -80,45 +77,42 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 agentState.initialized()
                 val classesData = agentState.classesData()
                 if (classesData.changed) {
-                    classesData.execData.start()
-                    val defaultScope = Scope()
-                    storage.store(ScopeKey(agentInfo.buildVersion), defaultScope)
-                    processData(sessionId, SessionFinished(ts = currentTimeMillis()))
+                    //TODO send package tree
                 }
             }
             is SessionStarted -> {
-                val classesData = agentState.classesData()
-                classesData.execData.start()
-                println("Session $sessionId started.")
+                agentState.startSession(coverMsg)
+                println("Session ${coverMsg.sessionId} started.")
                 updateGatheringState(true)
             }
             is SessionCancelled -> {
-                val classesData = agentState.classesData()
-                classesData.execData.stop()
-                println("Session $sessionId cancelled.")
+                agentState.cancelSession(coverMsg)
+                println("Session ${coverMsg.sessionId} cancelled.")
                 updateGatheringState(false)
             }
             is CoverDataPart -> {
-                val classesData = agentState.classesData()
-                coverMsg.data.forEach {
-                    classesData.execData.add(it)
-                }
+                agentState.addProbes(coverMsg)
             }
             is SessionFinished -> {
-                val scope = storage.retrieve(scopeKey)!!
-                scope.incSessionCount()
-                val classesData = agentState.classesData()
-                scope.probes.addAll(classesData.execData.stop())
-                val cis = calculateCoverageData(scope.probes)
-                updateGatheringState(false)
-                sendCalcResults(cis)
-                println("Session $sessionId finished.")
+                val scope = agentState.activeScope
+                when(val session = agentState.finishSession(coverMsg)) {
+                    null -> println("No active session for sessionId ${coverMsg.sessionId}")
+                    else -> {
+                        if (session.any()) {
+                            scope.append(session)
+                        } else println("Session ${session.id} is empty, it won't be added to the active scope")
+                        val cis = calculateCoverageData(scope)
+                        updateGatheringState(false)
+                        sendCalcResults(cis)
+                        println("Session ${session.id} finished.")
+                    }
+                }
             }
         }
         return ""
     }
 
-    internal fun calculateCoverageData(scopeProbes: List<ExDataTemp>): CoverageInfoSet {
+    internal fun calculateCoverageData(scope: ActiveScope): CoverageInfoSet {
         val classesData = agentState.classesData()
         // Analyze all existing classes
         val coverageBuilder = CoverageBuilder()
@@ -126,6 +120,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val initialClassBytes = classesData.classesBytes
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
+        val scopeProbes = scope.toList()
         val assocTestsMap = getAssociatedTestMap(scopeProbes, dataStore, initialClassBytes)
         val associatedTests = assocTestsMap.getAssociatedTests()
 
@@ -133,15 +128,15 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             analyzer.analyzeClass(bytes, name)
         }
         val bundleCoverage = coverageBuilder.getBundle("all")
-        val totalCoveragePercent = bundleCoverage.coverage
+        val totalCoveragePercent =
+            bundleCoverage.instructionCounter.coveredCount * 100.0  / classesData.instructionsCount
         // change arrow indicator (increase, decrease)
-        val arrow = arrowType(totalCoveragePercent, classesData)
+        val arrow = arrowType(totalCoveragePercent, scope)
+        scope.lastCoverage = totalCoveragePercent
 
-        classesData.execData.coverage = totalCoveragePercent
-
-        val classesCount = bundleCoverage.classCounter.totalCount
-        val methodsCount = bundleCoverage.methodCounter.totalCount
-        val uncoveredMethodsCount = bundleCoverage.methodCounter.missedCount
+        val classesCount = classesData.classesCount
+        val methodsCount = classesData.methodsCount
+        val uncoveredMethodsCount = methodsCount - bundleCoverage.methodCounter.coveredCount
         val coverageBlock = CoverageBlock(
             coverage = totalCoveragePercent,
             classesCount = classesCount,
@@ -187,7 +182,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         sender.send(
             agentInfo,
             "/active-scope",
-            scopeKey.name
+            agentState.activeScope.name
         )
     }
 
@@ -199,38 +194,26 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal suspend fun toggleScope(scopeName: String, enabled: Boolean) {
-        val toggleScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
+    internal suspend fun toggleScope(scopeId: String, enabled: Boolean) {
+        val toggleScopeKey = ScopeKey(agentInfo.buildVersion, scopeId)
         val scope = storage.retrieve(toggleScopeKey)
         scope?.enabled = enabled
     }
 
+    @Suppress("UNUSED_PARAMETER")
     internal suspend fun dropScope(scopeName: String) {
-        val currentScopeSet = storage.retrieve(scopesKey) ?: emptyMap()
-        if (scopeName in currentScopeSet) {
-            val processedScopes = currentScopeSet - scopeName
-            storage.store(scopesKey, processedScopes)
-            sendScopes(processedScopes)
-            val dropScopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
-            storage.delete(dropScopeKey)
-        }
+        //todo drop scope
         checkoutScope("")
     }
 
     private suspend fun checkoutScope(scopeName: String) {
-        if (scopeName != scopeKey.name) {
-            val oldScope = storage.retrieve(scopeKey)
-            oldScope?.finish()
-            scopeKey = ScopeKey(agentInfo.buildVersion, scopeName)
-            //TODO Replace this!!!
-            val scope = storage.retrieve(scopeKey) ?: Scope().apply { storage.store(scopeKey, this) }
-            val scopes = storage.retrieve(scopesKey) ?: emptyMap()
-            updateScopeMessages(scopes)
-
-            scope.start()
-
-            val cis = calculateCoverageData(scope.probes)
-            sendCalcResults(cis)
+        when (@Suppress("UNUSED_VARIABLE") val finishedScope = agentState.changeScope(scopeName)) {
+            null -> Unit
+            else -> {
+                //TODO Finished Scope storage
+                val cis = calculateCoverageData(agentState.activeScope)
+                sendCalcResults(cis)
+            }
         }
     }
 

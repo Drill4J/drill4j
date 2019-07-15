@@ -47,4 +47,4 @@ data class SessionPayload(val sessionId: String)
 data class ScopePayload(val scopeName: String = "")
 
 @Serializable
-data class ToggleScopePayload(val scopeName: String = "", val enabled: Boolean)
+data class ToggleScopePayload(val scopeId: String = "", val enabled: Boolean)

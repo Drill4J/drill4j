@@ -1,47 +1,61 @@
 package com.epam.drill.plugins.coverage
 
+import io.vavr.kotlin.*
+import kotlinx.atomicfu.*
+
 typealias Scopes = Map<String, ScopeSummary>
 
-data class Scope(
-    val name: String = "",
-    val probes: MutableList<ExDataTemp> = mutableListOf(),
+class ActiveScope(
+        val name: String = ""
+) : Sequence<ExDataTemp> {
+
+    private val _sessions = atomic(list<FinishedSession>())
+    
+    private val _lastCoverage = atomic(0.0)
+
+    var lastCoverage: Double
+        get() = _lastCoverage.value
+        set(value) = _lastCoverage.update { value }
+    
+    val started: Long = currentTimeMillis()
+
+    val sessionCount get() = _sessions.value.count()
+
+    
+    fun append(session: FinishedSession) {
+        _sessions.update { it.append(session) }
+    }
+
+    fun finish() = FinishedScope(
+        id = genUuid(),
+        name = name,
+        started = started,
+        finished = currentTimeMillis(),
+        probes = _sessions.value.asIterable().groupBy { it.testType }
+    )
+
+    override fun iterator(): Iterator<ExDataTemp> = _sessions.value.asSequence().flatten().iterator()
+}
+
+class FinishedScope(
+    val id: String,
+    val name: String,
+    val started: Long,
+    val finished: Long,
+    val probes: Map<String, List<FinishedSession>>,
     var enabled: Boolean = true
-) {
-    var started: Long = 0L
-        private set
+)  : Sequence<FinishedSession> {
+    val duration = finished - started
 
-    var finished: Long? = null
-        private set
-
-    var duration: Long = 0L
-        private set
-
-    var sessionCount: Int = 0
-        private set
-
-    init {
-        start()
-    }
-
-    fun start() {
-        started = currentTimeMillis()
-        finished = null
-    }
-
-    fun finish() {
-        val t = currentTimeMillis()
-        finished = t
-        duration += t - started
-    }
-
-    fun incSessionCount() = sessionCount++
+    override fun iterator() = probes.values.flatten().iterator()
 }
 
 data class ScopesKey(
-    val buildVersion: String
+        val buildVersion: String
 ) : StoreKey<Scopes>
 
 data class ScopeKey(
-    val buildVersion: String,
-    val name: String = ""
-) : StoreKey<Scope>
+        val buildVersion: String,
+        val id: String = ""
+) : StoreKey<FinishedScope>
+

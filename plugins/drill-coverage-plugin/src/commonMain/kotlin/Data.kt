@@ -34,25 +34,24 @@ data class Initialized(val msg: String) : CoverMessage()
 
 @SerialName("SESSION_STARTED")
 @Serializable
-data class SessionStarted(val ts: Long) : CoverMessage()
+data class SessionStarted(val sessionId: String, val testType: String, val ts: Long) : CoverMessage()
 
 @SerialName("SESSION_CANCELLED")
 @Serializable
-data class SessionCancelled(val ts: Long) : CoverMessage()
+data class SessionCancelled(val sessionId: String, val ts: Long) : CoverMessage()
 
 @SerialName("COVERAGE_DATA_PART")
 @Serializable
-data class CoverDataPart(val data: List<ExDataTemp>) : CoverMessage()
+data class CoverDataPart(val sessionId: String, val data: List<ExDataTemp>) : CoverMessage()
 
 @SerialName("SESSION_FINISHED")
 @Serializable
-data class SessionFinished(val ts: Long) : CoverMessage()
+data class SessionFinished(val sessionId: String, val ts: Long) : CoverMessage()
 
 @Serializable
 data class ExDataTemp(
         val id: Long,
         val className: String,
         val probes: List<Boolean>,
-        val testType: String,
-        val testName: String? = null
+        val testName: String = ""
 )

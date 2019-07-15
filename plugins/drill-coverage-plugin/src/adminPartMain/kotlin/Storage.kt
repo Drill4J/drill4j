@@ -30,9 +30,13 @@ class MapStorage : Storage {
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun <T : Any> update(key: StoreKey<T>, function: (T?) -> T?): T? {
-        return _map.getAndUpdate {
-            val oldValue = it.getOrNull(key) as T?
-            it.put(key, function(oldValue))
+        return _map.getAndUpdate { map ->
+            val oldValue = map.getOrNull(key) as T?
+            when (val newValue = function(oldValue)) {
+                null -> map.remove(key)
+                oldValue -> map
+                else -> map.put(key, newValue)
+            }
         }.getOrNull(key) as T?
     }
 
