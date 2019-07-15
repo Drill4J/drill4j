@@ -1,4 +1,5 @@
 pipeline:
+
   build:
     image: gradle:5.4.1-jdk8
     environment:
@@ -11,7 +12,13 @@ pipeline:
     image: gradle:5.4.1-jdk8
     secrets: [ drill_username, drill_password ]
     commands:
-      - gradle :drill-admin:jib -Djib.to.auth.username=$${DRILL_USERNAME} -Djib.to.auth.password=$${DRILL_PASSWORD}
+      - gradle buildCoveragePluginDev
+      - >
+        gradle :drill-admin:jib
+        -Djib.to.auth.username=$${DRILL_USERNAME}
+        -Djib.to.auth.password=$${DRILL_PASSWORD}
+        -Djib.to.tags=coverage-latest
+        -Djib.extraDirectories.paths=/drone/src/distr
     when:
       branch:
         - develop
