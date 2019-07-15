@@ -29,9 +29,11 @@ class AtomicCache<K, V> : (K, (V?) -> V?) -> V? {
     override fun toString(): String = map.toString()
 }
 
-fun <K, V> AtomicCache<K, V>.getOrPut(key: K, producer: () -> V): V = this(key) { it ?: producer() }!!
+val <K, V> AtomicCache<K, V>.keys get() = map.keySet().asSequence().toSet()
 
-fun <K, V> AtomicCache<K, V>.values(): Sequence<V> = map.values().asSequence()
+val <K, V> AtomicCache<K, V>.values get() = map.values().asSequence()
+
+fun <K, V> AtomicCache<K, V>.getOrPut(key: K, producer: () -> V): V = this(key) { it ?: producer() }!!
 
 fun <K, V> AtomicCache<K, V>.count() = map.count()
 

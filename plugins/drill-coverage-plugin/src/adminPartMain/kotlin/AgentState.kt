@@ -33,6 +33,8 @@ class AgentState(
     val activeScope get() = _activeScope.value
     
     val activeSessions = AtomicCache<String, ActiveSession>()
+    
+    val scopes = AtomicCache<String, FinishedScope>()
 
     fun init(initInfo: InitInfo) {
         _data.updateAndGet { prevData ->
@@ -105,12 +107,12 @@ class AgentState(
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
     
-    fun changeScope(name: String): FinishedScope? = when(name) {
-        activeScope.name -> null
-        else -> {
+    fun changeScope(name: String): FinishedScope? = when {
+        name.isEmpty() || name != activeScope.name -> {
             val scope = _activeScope.getAndUpdate { ActiveScope(name) }
             scope.finish()
         }
+        else -> null
     }
 
     fun startSession(msg: SessionStarted) {

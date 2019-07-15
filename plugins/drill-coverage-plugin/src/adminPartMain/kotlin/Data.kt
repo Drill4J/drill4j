@@ -98,7 +98,9 @@ data class TestUsagesInfo(
 )
 
 @Serializable
-data class GatheringState(val state: Boolean)
+data class ActiveSessions(
+    val count: Int,
+    val testTypes: Set<String>)
 
 @Serializable
 data class ScopeSummary(

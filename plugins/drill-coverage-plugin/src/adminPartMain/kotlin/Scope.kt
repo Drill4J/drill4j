@@ -7,7 +7,7 @@ typealias Scopes = Map<String, ScopeSummary>
 
 class ActiveScope(
         val name: String = ""
-) : Sequence<ExDataTemp> {
+) : Sequence<FinishedSession> {
 
     private val _sessions = atomic(list<FinishedSession>())
     
@@ -20,6 +20,8 @@ class ActiveScope(
     val started: Long = currentTimeMillis()
 
     val sessionCount get() = _sessions.value.count()
+    
+    val probes get() = _sessions.value.asSequence().flatten()
 
     
     fun append(session: FinishedSession) {
@@ -34,7 +36,7 @@ class ActiveScope(
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 
-    override fun iterator(): Iterator<ExDataTemp> = _sessions.value.asSequence().flatten().iterator()
+    override fun iterator(): Iterator<FinishedSession> = _sessions.value.iterator()
 }
 
 class FinishedScope(
@@ -53,9 +55,3 @@ class FinishedScope(
 data class ScopesKey(
         val buildVersion: String
 ) : StoreKey<Scopes>
-
-data class ScopeKey(
-        val buildVersion: String,
-        val id: String = ""
-) : StoreKey<FinishedScope>
-
