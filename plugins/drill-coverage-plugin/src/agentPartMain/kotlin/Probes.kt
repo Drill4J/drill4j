@@ -19,46 +19,42 @@ interface InstrContext : () -> String? {
 const val DRIlL_TEST_NAME = "drill-test-name"
 
 class ExecDatum(
-    val id: Long,
-    val name: String,
-    val probes: BooleanArray,
-    val testType: String,
-    val testName: String = ""
+        val id: Long,
+        val name: String,
+        val probes: BooleanArray,
+        val testName: String = ""
 )
+
+
+typealias ExecData = AtomicCache<Long, ExecDatum>
 
 /**
  * A container for session runtime data and optionally runtime data of tests
  * TODO ad hoc implementation, rewrite to something more descent
  */
-class ExecRuntime(
-    val testType: String,
-    val testName: String = ""
-) : ProbeArrayProvider {
+class ExecRuntime : (Long, String, Int, String) -> BooleanArray {
 
-    val execData = AtomicCache<Long, ExecDatum>()
+    private val execData = AtomicCache<String, ExecData>()
 
-    val testRuntimes = AtomicCache<String, ExecRuntime>()
-
-    fun with(testName: String?): ExecRuntime = when (testName) {
-        null -> this
-        else -> testRuntimes.getOrPut(testName) { ExecRuntime(testType, testName) }
-    }
-
-    override fun invoke(id: Long, name: String, probeCount: Int) = execData.getOrPut(id) {
+    override fun invoke(
+            id: Long,
+            name: String,
+            probeCount: Int,
+            testName: String
+    ) = execData.getOrPut(testName) { ExecData() }.getOrPut(id) {
         ExecDatum(
-            id = id,
-            name = name,
-            probes = BooleanArray(probeCount),
-            testType = testType,
-            testName = testName
+                id = id,
+                name = name,
+                probes = BooleanArray(probeCount),
+                testName = testName
         )
     }.probes
 
-    fun collect() = execData.values() + testRuntimes.values().flatMap { it.execData.values() }
+    fun collect() = execData.values().flatMap { it.values() }
 }
 
 /**
- * Simple probe array provider that employs ConcurrentHashMap for runtime data storage.
+ * Simple probe array provider that employs a lock-free map for runtime data storage.
  * This class is intended to be an ancestor for a concrete probe array provider object.
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
@@ -67,16 +63,17 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = instrContext()
-        val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null
-        return if (sessionRuntime != null) {
-            val testName = instrContext[DRIlL_TEST_NAME]
-            val runtime = sessionRuntime.with(testName)
-            runtime(id, name, probeCount)
-        } else BooleanArray(probeCount)
+        return when(val sessionRuntime = if (sessionId != null) sessionRuntimes[sessionId] else null) {
+            null -> BooleanArray(probeCount)
+            else -> {
+                val testName = instrContext[DRIlL_TEST_NAME] ?: ""
+                sessionRuntime(id, name, probeCount, testName)
+            }
+        }
     }
 
     override fun start(sessionId: String, testType: String) {
-        sessionRuntimes[sessionId] = ExecRuntime(testType)
+        sessionRuntimes[sessionId] = ExecRuntime()
     }
 
     override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()

@@ -1,7 +1,6 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.common.*
-import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
@@ -19,7 +18,7 @@ class AgentState(
     prevState: AgentState?
 ) {
     @Suppress("PropertyName")
-    internal val _data = atomic(prevState?.data ?: NoData)
+    private val _data = atomic(prevState?.data ?: NoData)
 
     internal var data: AgentData
         get() = _data.value
@@ -28,6 +27,12 @@ class AgentState(
         }
 
     private val javers = JaversBuilder.javers().build()
+    
+    private val _activeScope = atomic(ActiveScope(""))
+
+    val activeScope get() = _activeScope.value
+    
+    val activeSessions = AtomicCache<String, ActiveSession>()
 
     fun init(initInfo: InitInfo) {
         _data.updateAndGet { prevData ->
@@ -88,6 +93,9 @@ class AgentState(
         data = ClassesData(
             agentInfo = agentInfo,
             classesBytes = classBytes,
+            classesCount = bundleCoverage.classCounter.totalCount,
+            methodsCount = bundleCoverage.methodCounter.totalCount,
+            instructionsCount = bundleCoverage.instructionCounter.totalCount,
             javaClasses = javaClasses,
             newMethods = newMethods,
             changed = changed
@@ -96,51 +104,33 @@ class AgentState(
 
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
-}
-
-sealed class AgentData
-
-object NoData : AgentData()
-
-class ClassDataBuilder(
-    val count: Int,
-    val prevData: ClassesData?
-) : AgentData() {
-
-
-    private val _classData = atomic(list<Pair<String, ByteArray>>())
     
-    val classData get() = _classData.value
-
-    fun addClass(name: String, body: ByteArray) {
-        _classData.update { it.append(name to body) }
-    }
-}
-
-class ClassesData(
-    val agentInfo: AgentInfo,
-    val classesBytes: Map<String, ByteArray>,
-    val javaClasses: Map<String, JavaClass>,
-    val newMethods: List<JavaMethod>,
-    val changed: Boolean
-) : AgentData() {
-    val execData = ExecData()
-}
-
-class ExecData {
-
-    private val _data = atomic(list<ExDataTemp>())
-
-    @Volatile
-    var coverage: Double? = null
-
-    fun start() {
-        _data.value = list()
+    fun changeScope(name: String): FinishedScope? = when(name) {
+        activeScope.name -> null
+        else -> {
+            val scope = _activeScope.getAndUpdate { ActiveScope(name) }
+            scope.finish()
+        }
     }
 
-    fun add(probe: ExDataTemp) {
-        _data.update { it.append(probe) }
+    fun startSession(msg: SessionStarted) {
+        activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }
+    }
+    
+    fun addProbes(msg: CoverDataPart) {
+        activeSessions[msg.sessionId]?.let { activeSession ->
+            for (probe in msg.data) {
+                activeSession.append(probe)
+            }
+        }
     }
 
-    fun stop() = _data.getAndUpdate { list() }
+    fun cancelSession(msg: SessionCancelled) = activeSessions.remove(msg.sessionId)
+
+    fun finishSession(msg: SessionFinished): FinishedSession? {
+        return when (val activeSession = activeSessions.remove(msg.sessionId)) {
+            null -> null
+            else -> activeSession.finish()
+        }
+    }
 }

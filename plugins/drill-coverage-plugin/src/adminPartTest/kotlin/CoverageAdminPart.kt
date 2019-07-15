@@ -60,8 +60,10 @@ class CoverageAdminPartTest {
     @Test
     fun `should send messages to WebSocket on empty data`() {
         prepareClasses(Dummy::class.java)
-        val message = SessionFinished(ts = currentTimeMillis())
-        sendMessage(message)
+        val sessionId = "xxx"
+        sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
+        val finished = SessionFinished(sessionId, currentTimeMillis())
+        sendMessage(finished)
         assertTrue { ws.sent.any { it.first == "/coverage-new" } }
         assertTrue { ws.sent.any { it.first == "/coverage" } }
         assertTrue { ws.sent.any { it.first == "/coverage-by-packages" } }
@@ -79,9 +81,15 @@ class CoverageAdminPartTest {
         val countAllMethods = 6
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
-        val message = SessionFinished(ts = currentTimeMillis())
+        val sessionId = "xxx"
+        
+        val started = SessionStarted(sessionId, "", currentTimeMillis())
 
-        sendMessage(message)
+        sendMessage(started)
+
+        val finished = SessionFinished(sessionId, currentTimeMillis())
+
+        sendMessage(finished)
 
         assertNotNull(JavaPackageCoverage)
 

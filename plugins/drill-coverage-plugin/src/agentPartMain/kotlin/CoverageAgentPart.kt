@@ -93,7 +93,7 @@ class CoverageAgentPart @JvmOverloads constructor(
                 val testType = action.payload.startPayload.testType
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId, testType)
-                sendMessage(SessionStarted(ts = currentTimeMillis()))
+                sendMessage(SessionStarted(sessionId, testType, currentTimeMillis()))
             }
             is StopSession -> {
                 val sessionId = action.payload.sessionId
@@ -105,22 +105,21 @@ class CoverageAgentPart @JvmOverloads constructor(
                             id = datum.id,
                             className = datum.name,
                             probes = datum.probes.toList(),
-                            testType = datum.testType,
                             testName = datum.testName
                         )
                     }.chunked(10)
                         .forEach { dataChunk ->
                             //send data in chunks of 10
-                            sendMessage(CoverDataPart(dataChunk))
+                            sendMessage(CoverDataPart(sessionId, dataChunk))
                         }
-                    sendMessage(SessionFinished(ts = currentTimeMillis()))
-                }
+                } else println("No data for session $sessionId")
+                sendMessage(SessionFinished(sessionId, currentTimeMillis()))
             }
             is CancelSession -> {
                 val sessionId = action.payload.sessionId
                 println("Cancellation of recording for session $sessionId")
                 instrContext.cancel(sessionId)
-                sendMessage(SessionCancelled(ts = currentTimeMillis()))
+                sendMessage(SessionCancelled(sessionId, currentTimeMillis()))
             }
             else -> Unit
         }

@@ -13,8 +13,7 @@ fun testUsageBundles(
     initialClassBytes: Map<String, ByteArray>,
     probes: Collection<ExDataTemp>
 ): Map<String, IBundleCoverage> = probes
-    .filter { it.testName != null }
-    .groupBy { it.testName!! }
+    .groupBy { it.testName }
     .mapValues { (_, v) ->
         val dataStore = ExecutionDataStore()
         v.forEach {
@@ -105,11 +104,6 @@ fun classCoverage(
         )
     }.toList()
 
-fun methodCoverageId(
-    classCoverage: IClassCoverage,
-    methodCoverage: IMethodCoverage
-) = "${classCoverage.name}.${methodCoverage.name}${methodCoverage.desc}".crc64
-
 fun getAssociatedTestMap(
     scopeProbes: List<ExDataTemp>,
     dataStore: ExecutionDataStore,
@@ -119,14 +113,11 @@ fun getAssociatedTestMap(
         val probeArray = exData.probes.toBooleanArray()
         val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
         dataStore.put(executionData)
-        when (exData.testName) {
-            null -> emptyList()
-            else -> collectAssocTestPairs(
+        collectAssocTestPairs(
                 initialClassBytes,
                 ExecutionData(exData.id, exData.className, probeArray.copyOf()),
                 exData.testName
-            )
-        }
+        )
     }.groupBy({ it.first }) { it.second } //group by test names
         .mapValues { (_, tests) -> tests.distinct() }
 }
@@ -143,11 +134,10 @@ fun Map<CoverageKey, List<String>>.getAssociatedTests() = map { (key, tests) ->
 
 fun arrowType(
     totalCoveragePercent: Double?,
-    classesData: ClassesData
+    scope: ActiveScope
 ): ArrowType? {
     return if (totalCoveragePercent != null) {
-        val prevCoverage = classesData.execData.coverage ?: 0.0
-        classesData.execData.coverage = totalCoveragePercent
+        val prevCoverage = scope.lastCoverage
         val diff = totalCoveragePercent - prevCoverage
         when {
             abs(diff) < 1E-7 -> null
