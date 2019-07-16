@@ -1,7 +1,15 @@
 package com.epam.drill.plugins.coverage
 
 import org.jacoco.core.analysis.*
+import org.jacoco.core.data.*
 import org.jacoco.core.internal.data.*
+
+fun ExecutionDataStore.with(execData: Sequence<ExDataTemp>): ExecutionDataStore {
+    for (execDatum in execData) {
+        put(ExecutionData(execDatum.id, execDatum.className, execDatum.probes.toBooleanArray()))
+    }
+    return this
+}
 
 data class CoverageKey(
     val id: String,
@@ -20,7 +28,7 @@ val String.crc64: String get() = CRC64.classId(toByteArray()).toString(Character
 val ICoverageNode.coverage get() = coverage(instructionCounter.totalCount)
 
 fun ICoverageNode.coverage(total: Int) = when(total) {
-    0 -> null
+    0 -> 0.0
     else -> instructionCounter.coveredCount * 100.0 / total
 }
 
@@ -44,7 +52,7 @@ fun ICoverageNode.coverageKey(parent: ICoverageNode? = null): CoverageKey = when
     else -> CoverageKey(this.name.crc64)
 }
 
-fun IMethodCoverage.simpleMethodCoverage(ownerClass: String): SimpleJavaMethodCoverage = SimpleJavaMethodCoverage(
+fun IMethodCoverage.simpleMethodCoverage(ownerClass: String) = SimpleJavaMethodCoverage(
     name = name,
     desc = declaration(desc),
     coverage = coverage,

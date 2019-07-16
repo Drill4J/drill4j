@@ -4,6 +4,8 @@ import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
 import kotlin.math.*
 
+//TODO Rewrite all of this, remove the file
+
 fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
     bundleMap.map { (k, v) ->
         TestUsagesInfo(k, v.methodCounter.coveredCount, "Test type", "30.02.2019")
@@ -106,13 +108,10 @@ fun classCoverage(
 
 fun getAssociatedTestMap(
     scopeProbes: List<ExDataTemp>,
-    dataStore: ExecutionDataStore,
     initialClassBytes: Map<String, ByteArray>
 ): Map<CoverageKey, List<String>> {
     return scopeProbes.flatMap { exData ->
         val probeArray = exData.probes.toBooleanArray()
-        val executionData = ExecutionData(exData.id, exData.className, probeArray.copyOf())
-        dataStore.put(executionData)
         collectAssocTestPairs(
                 initialClassBytes,
                 ExecutionData(exData.id, exData.className, probeArray.copyOf()),

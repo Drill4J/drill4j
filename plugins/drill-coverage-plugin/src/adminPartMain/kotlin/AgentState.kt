@@ -107,13 +107,7 @@ class AgentState(
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
     
-    fun changeScope(name: String): FinishedScope? = when {
-        name.isEmpty() || name != activeScope.name -> {
-            val scope = _activeScope.getAndUpdate { ActiveScope(name) }
-            scope.finish()
-        }
-        else -> null
-    }
+    fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(name) }
 
     fun startSession(msg: SessionStarted) {
         activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }

@@ -11,9 +11,6 @@ import org.jacoco.core.data.*
 
 internal val agentStates = AtomicCache<String, AgentState>()
 
-//TODO This is a temporary storage API. It will be removed when the core API has been developed
-private val agentStorages = AtomicCache<String, Storage>()
-
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     AdminPluginPart<Action>(sender, agentInfo, id) {
@@ -21,9 +18,6 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     override val serDe: SerDe<Action> = commonSerDe
 
     private val buildVersion = agentInfo.buildVersion
-
-    //TODO This is a temporary storage API. It will be removed when the core API has been developed
-    private val storage: Storage get() = agentStorages.getOrPut(agentInfo.id) { MapStorage() }
 
     private val agentState: AgentState = agentStates(agentInfo.id) { state ->
         when (state?.agentInfo) {
@@ -34,9 +28,9 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
-            is SwitchScope -> changeScope(action.payload.scopeName)
-            is IgnoreScope -> toggleScope(action.payload.scopeId, action.payload.enabled)
-            is DropScope -> dropScope(action.payload.scopeName)
+            is SwitchActiveScope -> changeActiveScope(action.payload)
+            is ToggleScope -> toggleScope(action.payload.scopeId)
+            is DropScope -> dropScope(action.payload.scopeId)
             is StartNewSession -> {
                 val startAgentSession = StartSession(
                     payload = StartSessionPayload(
@@ -112,20 +106,19 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val classesData = agentState.classesData()
         // Analyze all existing classes
         val coverageBuilder = CoverageBuilder()
-        val dataStore = ExecutionDataStore()
+        val dataStore = ExecutionDataStore().with(scope.probes)
         val initialClassBytes = classesData.classesBytes
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
         val scopeProbes = scope.probes.toList()
-        val assocTestsMap = getAssociatedTestMap(scopeProbes, dataStore, initialClassBytes)
+        val assocTestsMap = getAssociatedTestMap(scopeProbes, initialClassBytes)
         val associatedTests = assocTestsMap.getAssociatedTests()
 
         initialClassBytes.forEach { (name, bytes) ->
             analyzer.analyzeClass(bytes, name)
         }
-        val bundleCoverage = coverageBuilder.getBundle("all")
-        val totalCoveragePercent =
-            bundleCoverage.instructionCounter.coveredCount * 100.0  / classesData.instructionsCount
+        val bundleCoverage = coverageBuilder.getBundle("")
+        val totalCoveragePercent = bundleCoverage.coverage(classesData.instructionsCount)
         // change arrow indicator (increase, decrease)
         val arrow = arrowType(totalCoveragePercent, scope)
         scope.lastCoverage = totalCoveragePercent
@@ -196,12 +189,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal fun toggleScope(scopeId: String, enabled: Boolean) {
+    internal fun toggleScope(scopeId: String) {
         agentState.scopes[scopeId]?.let { scope ->
-            if (scope.enabled != enabled) {
-                scope.enabled = enabled
-                //todo send build coverage
-            }
+            scope.enabled = !scope.enabled
+            //todo send build coverage
         }
     }
 
@@ -212,53 +203,72 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
     }
 
-    private suspend fun changeScope(scopeName: String) {
-        when (val finishedScope = agentState.changeScope(scopeName)) {
-            null -> Unit
-            else -> {
+    internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) {
+        val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
+        sendActiveScopeName()
+        if (scopeChange.savePrevScope) {
+            if (prevScope.any()) {
+                val finishedScope = prevScope.finish()
                 agentState.scopes[finishedScope.id] = finishedScope
-                sendScopeMessages()
-                val cis = calculateCoverageData(agentState.activeScope)
-                sendCalcResults(cis)
+                sendActiveScopeName()
+                //todo send finished scope coverage
+                sendScopes()
                 //todo send build coverage
+            } else {
+                println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
             }
         }
     }
 
-    internal suspend fun sendCalcResults(cis: CoverageInfoSet, prefix: String = "") {
+    internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
             sender.send(
                 agentInfo,
-                "/${prefix}associated-tests",
+                "$path/associated-tests",
                 AssociatedTests.serializer().list stringify cis.associatedTests
             )
         }
+        sendCoverageBlock(cis.coverageBlock, path)
         sender.send(
             agentInfo,
-            "/${prefix}coverage",
-            CoverageBlock.serializer() stringify cis.coverageBlock
-        )
-        sender.send(
-            agentInfo,
-            "/${prefix}coverage-new",
+            "$path/coverage-new",
             NewCoverageBlock.serializer() stringify cis.newCoverageBlock
         )
         sender.send(
             agentInfo,
-            "/${prefix}new-methods",
+            "$path/new-methods",
             SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
         )
+        val packageCoverage = cis.packageCoverage
+        sendPackageCoverage(packageCoverage, path)
         sender.send(
             agentInfo,
-            "/${prefix}coverage-by-packages",
-            JavaPackageCoverage.serializer().list stringify cis.packageCoverage
-        )
-        sender.send(
-            agentInfo,
-            "/${prefix}tests-usages",
+            "$path/tests-usages",
             TestUsagesInfo.serializer().list stringify cis.testUsages
+        )
+    }
+
+    internal suspend fun sendPackageCoverage(
+        packageCoverage: List<JavaPackageCoverage>,
+        path: String = ""
+    ) {
+        sender.send(
+            agentInfo,
+            "$path/coverage-by-packages",
+            JavaPackageCoverage.serializer().list stringify packageCoverage
+        )
+    }
+
+    internal suspend fun sendCoverageBlock(
+        coverageBlock: CoverageBlock,
+        path: String = ""
+    ) {
+        sender.send(
+            agentInfo,
+            "$path/coverage",
+            CoverageBlock.serializer() stringify coverageBlock
         )
     }
 

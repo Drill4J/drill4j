@@ -16,12 +16,12 @@ class JacocoExtTest {
     }
 
     @Test
-    fun `coverage should return null for non-finite ratiios`() {
+    fun `coverage should return zero for non-finite ratios`() {
         val coverageNode = CoverageNodeImpl(ICoverageNode.ElementType.METHOD, "test")
         val counter = coverageNode.methodCounter
         assertEquals(0, counter.totalCount)
         assertFalse { counter.coveredRatio.isFinite() }
-        assertNull(coverageNode.coverage)
+        assertEquals(0.0, coverageNode.coverage)
     }
 
     @Test
