@@ -90,6 +90,7 @@ class CoverageAgentPart @JvmOverloads constructor(
         when (action) {
             is StartSession -> {
                 val sessionId = action.payload.sessionId
+                println(println("The recieved session ID is $sessionId"))
                 val testType = action.payload.startPayload.testType
                 println("Start recording for session $sessionId")
                 instrContext.start(sessionId, testType)

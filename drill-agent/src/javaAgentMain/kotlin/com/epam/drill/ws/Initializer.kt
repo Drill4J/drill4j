@@ -12,7 +12,7 @@ object Initializer {
         val scanItPlease = ClassPath().scanItPlease(ClassLoader.getSystemClassLoader())
         val chunked = scanItPlease.toList().chunked(scanItPlease.size / 3)
         var buildVersion = 0
-        println("calculate build version took ${measureTimeMillis {
+        println("Build version calculating took ${measureTimeMillis {
             val map = chunked.map {
                 async {
                     it.sumBy { (k, v) ->
@@ -25,8 +25,9 @@ object Initializer {
 
                 }
             }
-            println("Calculate the build version...")
+            println("Calculating the build version...")
             buildVersion = map.sumBy { it.await() }
+            println("Calculated build version: $buildVersion")
         }
         } milliseconds ")
         buildVersion
