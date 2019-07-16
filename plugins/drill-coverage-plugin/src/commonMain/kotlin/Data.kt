@@ -42,14 +42,14 @@ data class SessionCancelled(val sessionId: String, val ts: Long) : CoverMessage(
 
 @SerialName("COVERAGE_DATA_PART")
 @Serializable
-data class CoverDataPart(val sessionId: String, val data: List<ExDataTemp>) : CoverMessage()
+data class CoverDataPart(val sessionId: String, val data: List<ExecClassData>) : CoverMessage()
 
 @SerialName("SESSION_FINISHED")
 @Serializable
 data class SessionFinished(val sessionId: String, val ts: Long) : CoverMessage()
 
 @Serializable
-data class ExDataTemp(
+data class ExecClassData(
         val id: Long,
         val className: String,
         val probes: List<Boolean>,

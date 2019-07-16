@@ -2,8 +2,7 @@ package com.epam.drill.plugins.coverage
 
 import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
-
-typealias Scopes = Map<String, ScopeSummary>
+import kotlin.math.*
 
 class ActiveScope(
         val name: String = ""
@@ -11,21 +10,35 @@ class ActiveScope(
 
     private val _sessions = atomic(list<FinishedSession>())
     
-    private val _lastCoverage = atomic(0.0)
-
-    var lastCoverage: Double
-        get() = _lastCoverage.value
-        set(value) = _lastCoverage.update { value }
-    
     val started: Long = currentTimeMillis()
+
+    private val _summary = atomic(ScopeSummary(
+        name = name,
+        started = started
+    ))
+    
+    val summary get() = _summary.value
 
     val sessionCount get() = _sessions.value.count()
     
     val probes get() = _sessions.value.asSequence().flatten()
 
-    
-    fun append(session: FinishedSession) {
+
+    fun update(session: FinishedSession, classesData: ClassesData): ScopeSummary {
         _sessions.update { it.append(session) }
+        return _summary.updateAndGet {
+            ScopeSummary(
+                name = name,
+                started = started,
+                coverage = classesData.coverage(this.flatten()),
+                coveragesByType = this.groupBy { it.testType }.mapValues { (_, l) ->
+                    TestTypeSummary(
+                        coverage = classesData.coverage(l.asSequence().flatten()),
+                        testCount = l.flatMap { it.testNames }.toSet().count()
+                    )
+                }
+            )
+        }
     }
 
     fun finish() = FinishedScope(
@@ -33,10 +46,20 @@ class ActiveScope(
         name = name,
         started = started,
         finished = currentTimeMillis(),
+        summary = summary,
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 
     override fun iterator(): Iterator<FinishedSession> = _sessions.value.iterator()
+}
+
+fun ActiveScope.arrowType(totalCoveragePercent: Double): ArrowType? {
+    val diff = totalCoveragePercent - summary.coverage
+    return when {
+        abs(diff) < 1E-7 -> null
+        diff > 0.0 -> ArrowType.INCREASE
+        else -> ArrowType.DECREASE
+    }
 }
 
 class FinishedScope(
@@ -44,14 +67,15 @@ class FinishedScope(
     val name: String,
     val started: Long,
     val finished: Long,
+    val summary: ScopeSummary,
     val probes: Map<String, List<FinishedSession>>,
     var enabled: Boolean = true
 )  : Sequence<FinishedSession> {
-    val duration = finished - started
-
+    
+    fun toggle() {
+        enabled = !enabled
+        summary.enabled = enabled
+    }
+    
     override fun iterator() = probes.values.flatten().iterator()
 }
-
-data class ScopesKey(
-        val buildVersion: String
-) : StoreKey<Scopes>

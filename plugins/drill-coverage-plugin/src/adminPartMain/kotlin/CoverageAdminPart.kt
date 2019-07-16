@@ -89,7 +89,9 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                     null -> println("No active session for sessionId ${coverMsg.sessionId}")
                     else -> {
                         if (session.any()) {
-                            scope.append(session)
+                            val classesData = agentState.classesData()
+                            scope.update(session, classesData)
+                            sendScopeMessages()
                         } else println("Session ${session.id} is empty, it won't be added to the active scope")
                         val cis = calculateCoverageData(scope)
                         sendActiveSessions()
@@ -118,13 +120,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             analyzer.analyzeClass(bytes, name)
         }
         val bundleCoverage = coverageBuilder.getBundle("")
-        val totalCoveragePercent = bundleCoverage.coverage(classesData.instructionsCount)
+        val totalCoveragePercent = bundleCoverage.coverage(classesData.totals.instructionCounter.totalCount)
         // change arrow indicator (increase, decrease)
-        val arrow = arrowType(totalCoveragePercent, scope)
-        scope.lastCoverage = totalCoveragePercent
+        val arrow = scope.arrowType(totalCoveragePercent)
 
-        val classesCount = classesData.classesCount
-        val methodsCount = classesData.methodsCount
+        val classesCount = classesData.totals.classCounter.totalCount
+        val methodsCount = classesData.totals.methodCounter.totalCount
         val uncoveredMethodsCount = methodsCount - bundleCoverage.methodCounter.coveredCount
         val coverageBlock = CoverageBlock(
             coverage = totalCoveragePercent,
@@ -155,7 +156,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun sendScopeMessages() {
-        sendActiveScopeName()
+        sendActiveScope()
         sendScopes()
     }
 
@@ -173,11 +174,11 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal suspend fun sendActiveScopeName() {
+    internal suspend fun sendActiveScope() {
         sender.send(
             agentInfo,
             "/active-scope",
-            agentState.activeScope.name
+            ScopeSummary.serializer() stringify agentState.activeScope.summary
         )
     }
 
@@ -185,13 +186,14 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         sender.send(
             agentInfo,
             "/scopes",
-            String.serializer().set stringify agentState.scopes.keys.toSet()
+            ScopeSummary.serializer().list stringify agentState.scopeSummaries
         )
     }
 
-    internal fun toggleScope(scopeId: String) {
+    internal suspend fun toggleScope(scopeId: String) {
         agentState.scopes[scopeId]?.let { scope ->
-            scope.enabled = !scope.enabled
+            scope.toggle()
+            sendScopes()
             //todo send build coverage
         }
     }
@@ -205,19 +207,17 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) {
         val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
-        sendActiveScopeName()
         if (scopeChange.savePrevScope) {
             if (prevScope.any()) {
                 val finishedScope = prevScope.finish()
                 agentState.scopes[finishedScope.id] = finishedScope
-                sendActiveScopeName()
                 //todo send finished scope coverage
-                sendScopes()
                 //todo send build coverage
             } else {
                 println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
             }
         }
+        sendScopeMessages()
     }
 
     internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {

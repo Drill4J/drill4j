@@ -6,7 +6,7 @@ import kotlinx.atomicfu.*
 
 class AtomicCache<K, V> : (K, (V?) -> V?) -> V? {
 
-    private val _map = atomic(HashMap.empty<K, V>())
+    private val _map = atomic(LinkedHashMap .empty<K, V>())
 
     val map get() = _map.value!!
 

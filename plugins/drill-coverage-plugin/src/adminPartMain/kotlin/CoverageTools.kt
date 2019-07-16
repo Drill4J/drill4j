@@ -2,7 +2,6 @@ package com.epam.drill.plugins.coverage
 
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
-import kotlin.math.*
 
 //TODO Rewrite all of this, remove the file
 
@@ -13,7 +12,7 @@ fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
 
 fun testUsageBundles(
     initialClassBytes: Map<String, ByteArray>,
-    probes: Collection<ExDataTemp>
+    probes: Collection<ExecClassData>
 ): Map<String, IBundleCoverage> = probes
     .groupBy { it.testName }
     .mapValues { (_, v) ->
@@ -107,7 +106,7 @@ fun classCoverage(
     }.toList()
 
 fun getAssociatedTestMap(
-    scopeProbes: List<ExDataTemp>,
+    scopeProbes: List<ExecClassData>,
     initialClassBytes: Map<String, ByteArray>
 ): Map<CoverageKey, List<String>> {
     return scopeProbes.flatMap { exData ->
@@ -129,21 +128,6 @@ fun Map<CoverageKey, List<String>>.getAssociatedTests() = map { (key, tests) ->
         methodName = key.methodName,
         tests = tests
     )
-}
-
-fun arrowType(
-    totalCoveragePercent: Double?,
-    scope: ActiveScope
-): ArrowType? {
-    return if (totalCoveragePercent != null) {
-        val prevCoverage = scope.lastCoverage
-        val diff = totalCoveragePercent - prevCoverage
-        when {
-            abs(diff) < 1E-7 -> null
-            diff > 0.0 -> ArrowType.INCREASE
-            else -> ArrowType.DECREASE
-        }
-    } else null
 }
 
 fun calculateNewCoverageBlock(

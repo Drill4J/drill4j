@@ -35,6 +35,8 @@ class AgentState(
     val activeSessions = AtomicCache<String, ActiveSession>()
     
     val scopes = AtomicCache<String, FinishedScope>()
+    
+    val scopeSummaries get() = listOf(activeScope.summary) + scopes.values.map { it.summary }
 
     fun init(initInfo: InitInfo) {
         _data.updateAndGet { prevData ->
@@ -56,28 +58,12 @@ class AgentState(
         val agentData = data as ClassDataBuilder
         val coverageBuilder = CoverageBuilder()
         val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
-        val classBytes = LinkedHashMap<String, ByteArray>(agentData.count)
-        for (pair in agentData.classData) {
-            classBytes[pair.first] = pair.second
-            analyzer.analyzeClass(pair.second, pair.first)
-        }
+        agentData.classData.toMap()
+        val classBytes = agentData.classData.asSequence()
+            .map { analyzer.analyzeClass(it.second, it.first); it }
+            .toMap()
         val bundleCoverage = coverageBuilder.getBundle("")
-        val javaClasses = bundleCoverage.packages
-            .flatMap { it.classes }
-            .map { cc ->
-                cc.name to JavaClass(
-                    name = cc.name.substringAfterLast('/'),
-                    path = cc.name,
-                    methods = cc.methods.map {
-                        JavaMethod(
-                            ownerClass = cc.name,
-                            name = it.name,
-                            desc = it.desc
-                        )
-                    }.toSet()
-
-                )
-            }.toMap()
+        val javaClasses = bundleCoverage.javaClasses
         val prevData = agentData.prevData
         val prevClassesSet = prevData?.javaClasses?.values?.toSet().orEmpty()
         val currClassesSet = javaClasses.values.toSet()
@@ -95,9 +81,8 @@ class AgentState(
         data = ClassesData(
             agentInfo = agentInfo,
             classesBytes = classBytes,
-            classesCount = bundleCoverage.classCounter.totalCount,
-            methodsCount = bundleCoverage.methodCounter.totalCount,
-            instructionsCount = bundleCoverage.instructionCounter.totalCount,
+            totals = bundleCoverage.plainCopy,
+            totalsMap = bundleCoverage.totalsMap,
             javaClasses = javaClasses,
             newMethods = newMethods,
             changed = changed
