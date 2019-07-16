@@ -101,7 +101,7 @@ class CoverageAgentPart @JvmOverloads constructor(
                 val runtimeData = instrContext.stop(sessionId) ?: emptySequence()
                 if (runtimeData.any()) {
                     runtimeData.map { datum ->
-                        ExDataTemp(
+                        ExecClassData(
                             id = datum.id,
                             className = datum.name,
                             probes = datum.probes.toList(),

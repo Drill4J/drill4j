@@ -3,6 +3,7 @@ package com.epam.drill.plugins.coverage
 import com.epam.drill.common.*
 import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
+import org.jacoco.core.analysis.*
 
 sealed class AgentData
 
@@ -23,12 +24,11 @@ class ClassDataBuilder(
 }
 
 class ClassesData(
-        val agentInfo: AgentInfo,
-        val classesBytes: Map<String, ByteArray>,
-        val classesCount: Int,
-        val methodsCount: Int,
-        val instructionsCount: Int,
-        val javaClasses: Map<String, JavaClass>,
-        val newMethods: List<JavaMethod>,
-        val changed: Boolean
+    val agentInfo: AgentInfo,
+    val classesBytes: Map<String, ByteArray>,
+    val totals: ICoverageNode,
+    val totalsMap: Map<String, ICoverageNode>,
+    val javaClasses: Map<String, JavaClass>,
+    val newMethods: List<JavaMethod>,
+    val changed: Boolean
 ) : AgentData()
