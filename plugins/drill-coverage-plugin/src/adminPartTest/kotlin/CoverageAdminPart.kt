@@ -25,6 +25,8 @@ class CoverageAdminPartTest {
 
     private val coverageController = CoverageAdminPart(ws, agentInfo, "test")
 
+    private val agentState = agentStates[agentInfo.id]!!
+
     @Test
     fun `should have some state before init`() {
         assertTrue { agentStates.isNotEmpty() }
@@ -100,6 +102,49 @@ class CoverageAdminPartTest {
         assertEquals(countPackages, ws.javaPackagesCoverage.size)
         assertEquals(countAllClasses, ws.javaPackagesCoverage.count { it.classes.isNotEmpty() })
         assertEquals(countAllMethods, methods.size)
+    }
+
+    @Test
+    fun `empty activeScope should not be saved during switch to new scope`() {
+        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        assertEquals("testScope", agentState.activeScope.name)
+        runBlocking {
+            coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2", true))
+        }
+        assertNull(agentState.scopes["testScope"])
+    }
+
+    @Test
+    fun `not empty activeScope should switch to a specified one with previous scope deletion`() {
+        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        assertEquals("testScope", agentState.activeScope.name)
+        prepareClasses()
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2")) }
+        assertNull(agentState.scopes["testScope"])
+    }
+
+    @Test
+    fun `not empty activeScope should switch to a specified one with saving previous scope`() {
+        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        assertEquals("testScope", agentState.activeScope.name)
+        prepareClasses()
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking {
+            coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2", true))
+        }
+        assertTrue { agentState.scopes.values.any { it.name == "testScope" } }
+    }
+
+    private fun appendSessionStub(agentState: AgentState, classesData: ClassesData) {
+        agentState.activeScope.update(
+            FinishedSession(
+                "testSession",
+                "MANUAL",
+                mapOf()
+            ),
+            classesData
+        )
     }
 
     private fun prepareClasses(vararg classes: Class<*>) {
