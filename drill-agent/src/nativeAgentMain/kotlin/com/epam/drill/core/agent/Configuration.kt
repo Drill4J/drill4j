@@ -1,7 +1,8 @@
 package com.epam.drill.core.agent
 
-import com.epam.drill.common.AgentConfig
-import com.epam.drill.core.exec
+import com.epam.drill.common.*
+import com.epam.drill.core.*
+import com.epam.drill.logger.*
 import jvmapi.*
 
 fun performAgentInitialization(initialParams: Map<String, String>) {
@@ -16,13 +17,16 @@ fun performAgentInitialization(initialParams: Map<String, String>) {
 }
 
 fun calculateBuildVersion() {
-    if (exec { agentConfig.buildVersion }.isEmpty()) {
+    val agentConfig = exec { agentConfig }
+    if (agentConfig.buildVersion.isEmpty()) {
         val initializerClass = FindClass("com/epam/drill/ws/Initializer")
         val selfMethodId: jfieldID? =
-                GetStaticFieldID(initializerClass, "INSTANCE", "Lcom/epam/drill/ws/Initializer;")
+            GetStaticFieldID(initializerClass, "INSTANCE", "Lcom/epam/drill/ws/Initializer;")
         val initializer: jobject? = GetStaticObjectField(initializerClass, selfMethodId)
         val calculateBuild: jmethodID? = GetMethodID(initializerClass, "calculateBuild", "()I")
         val buildVersion = CallIntMethod(initializer, calculateBuild)
-        exec { agentConfig.buildVersion = buildVersion.toString() }
+
+        agentConfig.buildVersion = buildVersion.toString()
     }
+    DLogger("BuildVersionLogger").info { "Calculated build version: ${agentConfig.buildVersion}" }
 }
