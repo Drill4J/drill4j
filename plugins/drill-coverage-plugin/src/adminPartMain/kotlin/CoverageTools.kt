@@ -5,6 +5,15 @@ import org.jacoco.core.data.*
 
 //TODO Rewrite all of this, remove the file
 
+data class CoverageInfoSet(
+    val associatedTests: List<AssociatedTests>,
+    val coverageBlock: CoverageBlock,
+    val newCoverageBlock: NewCoverageBlock,
+    val newMethodsCoverages: List<SimpleJavaMethodCoverage>,
+    val packageCoverage: List<JavaPackageCoverage>,
+    val testUsages: List<TestUsagesInfo>
+)
+
 fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
     bundleMap.map { (k, v) ->
         TestUsagesInfo(k, v.methodCounter.coveredCount, "Test type", "30.02.2019")

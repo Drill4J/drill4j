@@ -273,12 +273,3 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
 }
-
-data class CoverageInfoSet(
-    val associatedTests: List<AssociatedTests>,
-    val coverageBlock: CoverageBlock,
-    val newCoverageBlock: NewCoverageBlock,
-    val newMethodsCoverages: List<SimpleJavaMethodCoverage>,
-    val packageCoverage: List<JavaPackageCoverage>,
-    val testUsages: List<TestUsagesInfo>
-)
