@@ -116,9 +116,9 @@ class CoverageAdminPartTest {
 
     @Test
     fun `not empty activeScope should switch to a specified one with previous scope deletion`() {
+        prepareClasses()
         runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
         assertEquals("testScope", agentState.activeScope.name)
-        prepareClasses()
         appendSessionStub(agentState, agentState.classesData())
         runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2")) }
         assertNull(agentState.scopes["testScope"])
@@ -126,9 +126,9 @@ class CoverageAdminPartTest {
 
     @Test
     fun `not empty activeScope should switch to a specified one with saving previous scope`() {
+        prepareClasses()
         runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
         assertEquals("testScope", agentState.activeScope.name)
-        prepareClasses()
         appendSessionStub(agentState, agentState.classesData())
         runBlocking {
             coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2", true))
@@ -183,9 +183,11 @@ class SenderStub : Sender {
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
-        sent.add(destination to message)
-        if (destination.endsWith("/coverage-by-packages"))
-            javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
+        if (!message.isEmpty()) {
+            sent.add(destination to message)
+            if (destination.endsWith("/coverage-by-packages"))
+                javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
+        }
     }
 }
 
