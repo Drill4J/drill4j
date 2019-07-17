@@ -188,7 +188,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         sender.send(
             agentInfo,
             "/scopes",
-            ScopeSummary.serializer().list stringify agentState.scopeSummaries
+            ScopeSummary.serializer().list stringify agentState.scopeSummaries.toList()
         )
     }
 

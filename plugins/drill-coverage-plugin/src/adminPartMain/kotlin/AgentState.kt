@@ -36,7 +36,7 @@ class AgentState(
 
     val scopes = AtomicCache<String, FinishedScope>()
 
-    val scopeSummaries get() = scopes.values.map { it.summary } 
+    val scopeSummaries get() = scopes.values.map { it.summary }
 
     fun init(initInfo: InitInfo) {
         _data.updateAndGet { prevData ->
