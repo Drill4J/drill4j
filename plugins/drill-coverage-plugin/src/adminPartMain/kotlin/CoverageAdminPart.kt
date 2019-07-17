@@ -210,6 +210,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     internal suspend fun dropScope(scopeId: String) {
         agentState.scopes.remove(scopeId)?.let {
+            cleanTopics(id)
             sendScopes()
             calculateAndSendBuildCoverage()
         }
@@ -222,14 +223,15 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 val finishedScope = prevScope.finish()
                 println("Scope \"${finishedScope.name}\" have been saved with id \"${finishedScope.id}\"")
                 agentState.scopes[finishedScope.id] = finishedScope
-                calculateAndSendActiveScopeCoverage()
                 calculateAndSendBuildCoverage()
             } else {
                 println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
+                cleanTopics(prevScope.id)
             }
         }
         val activeScope = agentState.activeScope
         println("Current active scope: name = \"${activeScope.name}\", id = \"${activeScope.id}\".")
+        calculateAndSendActiveScopeCoverage()
         sendScopeMessages()
     }
 
@@ -299,6 +301,15 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val coverageInfoSet = calculateCoverageData(activeScope)
         sendActiveSessions()
         sendCalcResults(coverageInfoSet, "/scope/${activeScope.id}")
+    }
+
+    internal suspend fun cleanTopics(id: String) {
+        sender.send(agentInfo, "/scope/$id/associated-tests", "")
+        sender.send(agentInfo, "/scope/$id/coverage-new", "")
+        sender.send(agentInfo, "/scope/$id/new-methods", "")
+        sender.send(agentInfo, "/scope/$id/tests-usages", "")
+        sender.send(agentInfo, "/scope/$id/coverage-by-packages", "")
+        sender.send(agentInfo, "/scope/$id/coverage", "")
     }
 
 }

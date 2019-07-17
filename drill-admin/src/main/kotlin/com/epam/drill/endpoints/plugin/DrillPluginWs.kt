@@ -30,18 +30,21 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
 
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
-        val messageForSend = Message.serializer() stringify Message(MessageType.MESSAGE, destination, message)
-
         val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
-        logger.debug { "send data to $id destination" }
-        eventStorage[id] = messageForSend
+        if (message.isEmpty()) {
+            eventStorage.remove(id)
+        } else {
+            val messageForSend = Message.serializer() stringify Message(MessageType.MESSAGE, destination, message)
+            logger.debug { "send data to $id destination" }
+            eventStorage[id] = messageForSend
 
-        sessionStorage[destination]?.let { sessionSet ->
-            for (session in sessionSet) {
-                try {
-                    session.send(Frame.Text(messageForSend))
-                } catch (ex: Exception) {
-                    sessionSet.remove(session)
+            sessionStorage[destination]?.let { sessionSet ->
+                for (session in sessionSet) {
+                    try {
+                        session.send(Frame.Text(messageForSend))
+                    } catch (ex: Exception) {
+                        sessionSet.remove(session)
+                    }
                 }
             }
         }
