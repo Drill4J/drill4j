@@ -26,6 +26,10 @@ data class CancelSession(val payload: SessionPayload) : Action()
 @Serializable
 data class SwitchActiveScope(val payload: ActiveScopeChangePayload) : Action()
 
+@SerialName("RENAME_ACTIVE_SCOPE")
+@Serializable
+data class RenameActiveScope(val payload: ActiveScopePayload) : Action()
+
 @SerialName("TOGGLE_SCOPE")
 @Serializable
 data class ToggleScope(val payload: ScopePayload) : Action()
@@ -44,7 +48,10 @@ data class StartSessionPayload(val sessionId: String, val startPayload: StartPay
 data class SessionPayload(val sessionId: String)
 
 @Serializable
-data class ActiveScopeChangePayload(val scopeName: String = "", val savePrevScope: Boolean = false)
+data class ActiveScopeChangePayload(val scopeName: String, val savePrevScope: Boolean = false)
+
+@Serializable
+data class ActiveScopePayload(val scopeName: String)
 
 @Serializable
 data class ScopePayload(val scopeId: String = "")

@@ -28,7 +28,7 @@ class AgentState(
 
     private val javers = JaversBuilder.javers().build()
 
-    private val _activeScope = atomic(ActiveScope(""))
+    private val _activeScope = atomic(ActiveScope())
 
     val activeScope get() = _activeScope.value
 

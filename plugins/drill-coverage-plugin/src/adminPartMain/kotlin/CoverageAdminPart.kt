@@ -25,10 +25,13 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             else -> AgentState(agentInfo, state)
         }
     }!!
+    
+    private val activeScope get() = agentState.activeScope
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
             is SwitchActiveScope -> changeActiveScope(action.payload)
+            is RenameActiveScope -> renameActiveScope(action.payload)
             is ToggleScope -> toggleScope(action.payload.scopeId)
             is DropScope -> dropScope(action.payload.scopeId)
             is StartNewSession -> {
@@ -42,6 +45,11 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             }
             else -> Unit
         }
+    }
+
+    internal suspend fun renameActiveScope(payload: ActiveScopePayload) {
+        activeScope.name = payload.scopeName
+        sendActiveScope()
     }
 
     override suspend fun processData(dm: DrillMessage): Any {

@@ -4,18 +4,26 @@ import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
 
 class ActiveScope(
-    val name: String = ""
+    name: String? = null
 ) : Sequence<FinishedSession> {
+
+    val id = genUuid()
 
     private val _sessions = atomic(list<FinishedSession>())
 
-    val id = genUuid()
+    private val _name = atomic(name ?: id)
+
+    var name: String
+        get() = _name.value
+        set(value) {
+            _name.value = value
+        } 
 
     val started: Long = currentTimeMillis()
 
     private val _summary = atomic(ScopeSummary(
         id = id,
-        name = name,
+        name = this.name,
         started = started
     ))
     
@@ -43,9 +51,7 @@ class ActiveScope(
     fun finish() = FinishedScope(
         id = id,
         name = name,
-        started = started,
-        finished = currentTimeMillis(),
-        summary = summary,
+        summary = summary.copy(finished = currentTimeMillis()),
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 
@@ -55,8 +61,6 @@ class ActiveScope(
 class FinishedScope(
     val id: String,
     val name: String,
-    val started: Long,
-    val finished: Long,
     val summary: ScopeSummary,
     val probes: Map<String, List<FinishedSession>>,
     var enabled: Boolean = true
