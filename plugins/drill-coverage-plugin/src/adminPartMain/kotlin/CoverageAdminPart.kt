@@ -210,6 +210,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         if (scopeChange.savePrevScope) {
             if (prevScope.any()) {
                 val finishedScope = prevScope.finish()
+                println("Scope \"${finishedScope.name}\" have been saved with id \"${finishedScope.id}\"")
                 agentState.scopes[finishedScope.id] = finishedScope
                 //todo send finished scope coverage
                 //todo send build coverage
@@ -217,6 +218,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
             }
         }
+        println("Current active scope name is \"${agentState.activeScope.name}\"")
         sendScopeMessages()
     }
 
