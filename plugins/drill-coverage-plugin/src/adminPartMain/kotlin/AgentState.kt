@@ -60,7 +60,7 @@ class AgentState(
         val analyzer = Analyzer(ExecutionDataStore(), coverageBuilder)
         agentData.classData.toMap()
         val classBytes = agentData.classData.asSequence()
-            .map { analyzer.analyzeClass(it.second, it.first); it }
+            .onEach { analyzer.analyzeClass(it.second, it.first) }
             .toMap()
         val bundleCoverage = coverageBuilder.getBundle("")
         val javaClasses = bundleCoverage.javaClasses
