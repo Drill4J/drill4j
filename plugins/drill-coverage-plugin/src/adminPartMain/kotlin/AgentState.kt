@@ -6,6 +6,7 @@ import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
 import org.javers.core.*
 import org.javers.core.diff.changetype.*
+import kotlin.math.*
 
 /**
  * Agent state.
@@ -26,16 +27,18 @@ class AgentState(
             _data.value = value
         }
 
+    private var lastBuildCoverage = 0.0
+
     private val javers = JaversBuilder.javers().build()
-    
-    private val _activeScope = atomic(ActiveScope(""))
+
+    private val _activeScope = atomic(ActiveScope(name = ""))
 
     val activeScope get() = _activeScope.value
-    
+
     val activeSessions = AtomicCache<String, ActiveSession>()
-    
+
     val scopes = AtomicCache<String, FinishedScope>()
-    
+
     val scopeSummaries get() = listOf(activeScope.summary) + scopes.values.map { it.summary }
 
     fun init(initInfo: InitInfo) {
@@ -91,13 +94,13 @@ class AgentState(
 
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
-    
-    fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(name) }
+
+    fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(name = name) }
 
     fun startSession(msg: SessionStarted) {
         activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }
     }
-    
+
     fun addProbes(msg: CoverDataPart) {
         activeSessions[msg.sessionId]?.let { activeSession ->
             for (probe in msg.data) {
@@ -112,6 +115,19 @@ class AgentState(
         return when (val activeSession = activeSessions.remove(msg.sessionId)) {
             null -> null
             else -> activeSession.finish()
+        }
+    }
+
+    fun getAllEnabledScopesSessions() =
+        scopes.values.filter { it.enabled }.flatMap { it.probes.values.flatten().asSequence() }
+
+    fun arrowType(totalCoveragePercent: Double): ArrowType? {
+        val diff = totalCoveragePercent - lastBuildCoverage
+        lastBuildCoverage = totalCoveragePercent
+        return when {
+            abs(diff) < 1E-7 -> null
+            diff > 0.0 -> ArrowType.INCREASE
+            else -> ArrowType.DECREASE
         }
     }
 }

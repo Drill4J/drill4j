@@ -152,7 +152,7 @@ fun calculateNewCoverageBlock(
     val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
     val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
     //bytecode instruction coverage
-    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else null
+    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else 0.0
 
     val coverages = newMethodsCoverages.map { (jm, mc) ->
         mc.simpleMethodCoverage(jm.ownerClass)

@@ -2,10 +2,10 @@ package com.epam.drill.plugins.coverage
 
 import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
-import kotlin.math.*
 
 class ActiveScope(
-        val name: String = ""
+    private val id: String = genUuid(),
+    val name: String = ""
 ) : Sequence<FinishedSession> {
 
     private val _sessions = atomic(list<FinishedSession>())
@@ -13,6 +13,7 @@ class ActiveScope(
     val started: Long = currentTimeMillis()
 
     private val _summary = atomic(ScopeSummary(
+        id = id,
         name = name,
         started = started
     ))
@@ -25,6 +26,7 @@ class ActiveScope(
         _sessions.update { it.append(session) }
         return _summary.updateAndGet {
             ScopeSummary(
+                id = id,
                 name = name,
                 started = started,
                 coverage = classesData.coverage(this.flatten()),
@@ -40,7 +42,7 @@ class ActiveScope(
     }
 
     fun finish() = FinishedScope(
-        id = genUuid(),
+        id = id,
         name = name,
         started = started,
         finished = currentTimeMillis(),
@@ -49,15 +51,6 @@ class ActiveScope(
     )
 
     override fun iterator(): Iterator<FinishedSession> = _sessions.value.iterator()
-}
-
-fun ActiveScope.arrowType(totalCoveragePercent: Double): ArrowType? {
-    val diff = totalCoveragePercent - summary.coverage
-    return when {
-        abs(diff) < 1E-7 -> null
-        diff > 0.0 -> ArrowType.INCREASE
-        else -> ArrowType.DECREASE
-    }
 }
 
 class FinishedScope(

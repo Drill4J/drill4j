@@ -67,7 +67,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 agentState.initialized()
                 val classesData = agentState.classesData()
                 if (classesData.changed) {
-                    //TODO send package tree
+                    calculateAndSendActiveScopeCoverage()
+                    calculateAndSendBuildCoverage()
                 }
             }
             is SessionStarted -> {
@@ -93,9 +94,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                             scope.update(session, classesData)
                             sendScopeMessages()
                         } else println("Session ${session.id} is empty, it won't be added to the active scope")
-                        val cis = calculateCoverageData(scope)
-                        sendActiveSessions()
-                        sendCalcResults(cis)
+                        calculateAndSendActiveScopeCoverage()
                         println("Session ${session.id} finished.")
                     }
                 }
@@ -192,14 +191,14 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         agentState.scopes[scopeId]?.let { scope ->
             scope.toggle()
             sendScopes()
-            //todo send build coverage
+            calculateAndSendBuildCoverage()
         }
     }
 
     internal suspend fun dropScope(scopeId: String) {
         agentState.scopes.remove(scopeId)?.let {
             sendScopes()
-            //todo send build coverage
+            calculateAndSendBuildCoverage()
         }
     }
 
@@ -210,8 +209,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 val finishedScope = prevScope.finish()
                 println("Scope \"${finishedScope.name}\" have been saved with id \"${finishedScope.id}\"")
                 agentState.scopes[finishedScope.id] = finishedScope
-                //todo send finished scope coverage
-                //todo send build coverage
+                calculateAndSendActiveScopeCoverage()
+                calculateAndSendBuildCoverage()
             } else {
                 println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
             }
@@ -272,4 +271,16 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
+    internal suspend fun calculateAndSendBuildCoverage() {
+        val sessions = agentState.getAllEnabledScopesSessions()
+        val cis = calculateCoverageData(sessions)
+        cis.coverageBlock.arrow = agentState.arrowType(cis.coverageBlock.coverage)
+        sendCalcResults(cis, "/build")
+    }
+
+    internal suspend fun calculateAndSendActiveScopeCoverage() {
+        val cis = calculateCoverageData(agentState.activeScope)
+        sendActiveSessions()
+        sendCalcResults(cis)
+    }
 }
