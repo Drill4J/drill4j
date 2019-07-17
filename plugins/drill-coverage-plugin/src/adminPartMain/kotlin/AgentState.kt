@@ -27,15 +27,15 @@ class AgentState(
         }
 
     private val javers = JaversBuilder.javers().build()
-    
+
     private val _activeScope = atomic(ActiveScope(""))
 
     val activeScope get() = _activeScope.value
-    
+
     val activeSessions = AtomicCache<String, ActiveSession>()
-    
+
     val scopes = AtomicCache<String, FinishedScope>()
-    
+
     val scopeSummaries get() = listOf(activeScope.summary) + scopes.values.map { it.summary }
 
     fun init(initInfo: InitInfo) {
@@ -85,19 +85,20 @@ class AgentState(
             totalsMap = bundleCoverage.totalsMap,
             javaClasses = javaClasses,
             newMethods = newMethods,
+            prevBuildCoverage = prevData?.lastBuildCoverage ?: 0.0,
             changed = changed
         )
     }
 
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
-    
+
     fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(name) }
 
     fun startSession(msg: SessionStarted) {
         activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }
     }
-    
+
     fun addProbes(msg: CoverDataPart) {
         activeSessions[msg.sessionId]?.let { activeSession ->
             for (probe in msg.data) {

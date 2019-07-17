@@ -30,5 +30,15 @@ class ClassesData(
     val totalsMap: Map<String, ICoverageNode>,
     val javaClasses: Map<String, JavaClass>,
     val newMethods: List<JavaMethod>,
+    val prevBuildCoverage: Double,
     val changed: Boolean
-) : AgentData()
+) : AgentData() {
+
+    private val _lastBuildCoverage = atomic(0.0)
+
+    var lastBuildCoverage
+        get() = _lastBuildCoverage.value
+        set(value) {
+            _lastBuildCoverage.value = value
+        }
+}
