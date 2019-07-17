@@ -66,9 +66,9 @@ class CoverageAdminPartTest {
         sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
         val finished = SessionFinished(sessionId, currentTimeMillis())
         sendMessage(finished)
-        assertTrue { ws.sent.any { it.first == "/coverage-new" } }
-        assertTrue { ws.sent.any { it.first == "/coverage" } }
-        assertTrue { ws.sent.any { it.first == "/coverage-by-packages" } }
+        assertTrue { ws.sent.any { it.first.endsWith("/coverage-new") } }
+        assertTrue { ws.sent.any { it.first.endsWith("/coverage") } }
+        assertTrue { ws.sent.any { it.first.endsWith("/coverage-by-packages") } }
     }
 
     @Test
@@ -184,7 +184,7 @@ class SenderStub : Sender {
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         sent.add(destination to message)
-        if (destination == "/coverage-by-packages")
+        if (destination.endsWith("/coverage-by-packages"))
             javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
     }
 }
