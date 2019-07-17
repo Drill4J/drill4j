@@ -19,10 +19,7 @@ class ActiveScope(
     
     val summary get() = _summary.value
 
-    val sessionCount get() = _sessions.value.count()
-    
     val probes get() = _sessions.value.asSequence().flatten()
-
 
     fun update(session: FinishedSession, classesData: ClassesData): ScopeSummary {
         _sessions.update { it.append(session) }

@@ -12,6 +12,7 @@ class ActiveSession(
         id: String,
         testType: String
 ) : Session(id, testType) {
+
     private val _probes = atomic(list<ExecClassData>())
 
     fun append(probe: ExecClassData) {
@@ -21,7 +22,7 @@ class ActiveSession(
     fun finish() = FinishedSession(
             id = id,
             testType = testType,
-            probes = _probes.value.asIterable().groupBy { "$testType::${it.testName}" }
+            probes = _probes.value.asSequence().groupBy { "$testType::${it.testName}" }
     )
 }
 
@@ -30,8 +31,10 @@ class FinishedSession(
         testType: String,
         val probes: Map<String, List<ExecClassData>>
 ) : Session(id, testType), Sequence<ExecClassData> {
-    
+
     val testNames = probes.keys
-    
-    override fun iterator() = probes.values.flatten().iterator()
+
+    override fun iterator() = probes.asSequence()
+        .flatMap { it.value.asSequence() }
+        .iterator()
 }
