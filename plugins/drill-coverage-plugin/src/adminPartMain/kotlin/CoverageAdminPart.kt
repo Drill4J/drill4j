@@ -93,7 +93,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                             scope.update(session, classesData)
                             sendScopeMessages()
                         } else println("Session ${session.id} is empty, it won't be added to the active scope")
-                        val cis = calculateCoverageData(scope)
+                        val cis = calculateCoverageData(scope.sessions.asSequence(), scope)
                         sendActiveSessions()
                         sendCalcResults(cis)
                         println("Session ${session.id} finished.")
@@ -104,15 +104,19 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         return ""
     }
 
-    internal fun calculateCoverageData(scope: ActiveScope): CoverageInfoSet {
+    internal fun calculateCoverageData(
+        finishedSessions: Sequence<FinishedSession>,
+        scope: ActiveScope? = null
+    ): CoverageInfoSet {
+        val probes = finishedSessions.flatten()
         val classesData = agentState.classesData()
         // Analyze all existing classes
         val coverageBuilder = CoverageBuilder()
-        val dataStore = ExecutionDataStore().with(scope.probes)
+        val dataStore = ExecutionDataStore().with(probes)
         val initialClassBytes = classesData.classesBytes
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
-        val scopeProbes = scope.probes.toList()
+        val scopeProbes = probes.toList()
         val assocTestsMap = getAssociatedTestMap(scopeProbes, initialClassBytes)
         val associatedTests = assocTestsMap.getAssociatedTests()
 
@@ -122,7 +126,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val bundleCoverage = coverageBuilder.getBundle("")
         val totalCoveragePercent = bundleCoverage.coverage(classesData.totals.instructionCounter.totalCount)
         // change arrow indicator (increase, decrease)
-        val arrow = scope.arrowType(totalCoveragePercent)
+        val arrow = scope?.arrowType(totalCoveragePercent)
 
         val classesCount = classesData.totals.classCounter.totalCount
         val methodsCount = classesData.totals.methodCounter.totalCount

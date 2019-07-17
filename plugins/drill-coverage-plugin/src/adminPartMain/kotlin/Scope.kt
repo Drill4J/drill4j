@@ -19,6 +19,8 @@ class ActiveScope(
     
     val summary get() = _summary.value
 
+    val sessions get() = _sessions.value
+
     val sessionCount get() = _sessions.value.count()
     
     val probes get() = _sessions.value.asSequence().flatten()
