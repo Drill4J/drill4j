@@ -104,17 +104,18 @@ data class ActiveSessions(
 
 @Serializable
 data class ScopeSummary(
-        val name: String,
-        val id: String? = null,
-        val started: Long,
-        val finished: Long? = null,
-        val coverage: Double = 0.0,
-        var enabled: Boolean = true,
-        val coveragesByType: Map<String, TestTypeSummary> = emptyMap()
+    val name: String,
+    val id: String? = null,
+    val started: Long,
+    val finished: Long? = null,
+    val coverage: Double = 0.0,
+    var enabled: Boolean = true,
+    val coveragesByType: Map<String, TestTypeSummary> = emptyMap()
 )
 
 @Serializable
 data class TestTypeSummary(
-        val coverage: Double = 0.0,
-        val testCount: Int = 0
+    val testType: String,
+    val coverage: Double = 0.0,
+    val testCount: Int = 0
 )

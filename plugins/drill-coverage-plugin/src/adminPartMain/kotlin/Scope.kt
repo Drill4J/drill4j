@@ -31,10 +31,11 @@ class ActiveScope(
                 name = name,
                 started = started,
                 coverage = classesData.coverage(this.flatten()),
-                coveragesByType = this.groupBy { it.testType }.mapValues { (_, l) ->
+                coveragesByType = this.groupBy { it.testType }.mapValues { (testType, finishedSessions) ->
                     TestTypeSummary(
-                        coverage = classesData.coverage(l.asSequence().flatten()),
-                        testCount = l.flatMap { it.testNames }.toSet().count()
+                        testType = testType,
+                        coverage = classesData.coverage(finishedSessions.asSequence().flatten()),
+                        testCount = finishedSessions.flatMap { it.testNames }.toSet().count()
                     )
                 }
             )
