@@ -27,14 +27,8 @@ class ActiveScope(
         _sessions.update { it.append(session) }
         return _summary.updateAndGet { summary ->
             summary.copy(
-                coverage = classesData.coverage(this.flatten()),
-                coveragesByType = this.groupBy { it.testType }.mapValues { (testType, finishedSessions) ->
-                    TestTypeSummary(
-                        testType = testType,
-                        coverage = classesData.coverage(finishedSessions.asSequence().flatten()),
-                        testCount = finishedSessions.flatMap { it.testNames }.toSet().count()
-                    )
-                }
+                coverage = classesData.coverage(this),
+                coveragesByType = classesData.coveragesByTestType(this)
             )
         }
     }

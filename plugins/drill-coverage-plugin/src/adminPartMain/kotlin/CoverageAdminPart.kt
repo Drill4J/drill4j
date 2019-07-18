@@ -146,6 +146,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             arrow = if (isBuildCvg) classesData.arrowType(totalCoveragePercent) else null
         )
         println(coverageBlock)
+        val coverageByType = if (isBuildCvg) {
+            classesData.coveragesByTestType(finishedSessions)
+        } else activeScope.summary.coveragesByType
+        println(coverageByType)
 
         val newMethods = classesData.newMethods
         val (newCoverageBlock, newMethodsCoverages)
@@ -155,10 +159,11 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
         val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
         val testUsages = testUsages(testRelatedBundles)
-
+        
         return CoverageInfoSet(
             associatedTests,
             coverageBlock,
+            coverageByType,
             newCoverageBlock,
             newMethodsCoverages,
             packageCoverage,
@@ -248,6 +253,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {
+        sendCoverageBlock(cis.coverageBlock, path)
+        sender.send(
+            agentInfo,
+            "$path/coverage-by-types",
+            (String.serializer() to TestTypeSummary.serializer()).map stringify cis.coverageByType
+        )
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
@@ -257,7 +268,6 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 AssociatedTests.serializer().list stringify cis.associatedTests
             )
         }
-        sendCoverageBlock(cis.coverageBlock, path)
         sender.send(
             agentInfo,
             "$path/coverage-new",

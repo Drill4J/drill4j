@@ -14,8 +14,18 @@ fun ClassesData.coverageBundle(data: Sequence<ExecClassData>): IBundleCoverage {
     return coverageBuilder.getBundle("")
 }
 
-fun ClassesData.coverage(data: Sequence<ExecClassData>) =
-    coverageBundle(data).coverage(totals.instructionCounter.totalCount)
+fun ClassesData.coverage(data: Sequence<FinishedSession>) =
+    coverageBundle(data.flatten()).coverage(totals.instructionCounter.totalCount)
+
+fun ClassesData.coveragesByTestType(data: Sequence<FinishedSession>): Map<String, TestTypeSummary> {
+    return data.groupBy { it.testType }.mapValues { (testType, finishedSessions) ->
+        TestTypeSummary(
+            testType = testType,
+            coverage = coverage(finishedSessions.asSequence()),
+            testCount = finishedSessions.flatMap { it.testNames }.distinct().count()
+        )
+    }
+}
 
 fun ClassesData.arrowType(totalCoveragePercent: Double): ArrowType? {
     val diff = totalCoveragePercent - prevBuildCoverage
