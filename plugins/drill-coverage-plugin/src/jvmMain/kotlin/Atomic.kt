@@ -6,7 +6,7 @@ import kotlinx.atomicfu.*
 
 class AtomicCache<K, V> : (K, (V?) -> V?) -> V? {
 
-    private val _map = atomic(LinkedHashMap .empty<K, V>())
+    private val _map = atomic(LinkedHashMap.empty<K, V>())
 
     val map get() = _map.value!!
 
@@ -35,8 +35,8 @@ val <K, V> AtomicCache<K, V>.values get() = map.values().asSequence()
 
 fun <K, V> AtomicCache<K, V>.getOrPut(key: K, producer: () -> V): V = this(key) { it ?: producer() }!!
 
-fun <K, V> AtomicCache<K, V>.count() = map.count()
+fun <K, V> AtomicCache<K, V>.count() = map.size()
 
-fun <K, V> AtomicCache<K, V>.isEmpty() = map.count() == 0
+fun <K, V> AtomicCache<K, V>.isEmpty() = map.isEmpty
 
 fun <K, V> AtomicCache<K, V>.isNotEmpty() = !isEmpty()
