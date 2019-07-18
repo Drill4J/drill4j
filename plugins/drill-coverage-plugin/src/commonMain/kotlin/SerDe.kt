@@ -7,6 +7,7 @@ import kotlinx.serialization.modules.*
 private val serialModule = SerializersModule {
     polymorphic<Action> {
         addSubclass(SwitchActiveScope.serializer())
+        addSubclass(RenameActiveScope.serializer())
         addSubclass(ToggleScope.serializer())
         addSubclass(DropScope.serializer())
 
