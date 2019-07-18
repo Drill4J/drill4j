@@ -51,7 +51,7 @@ class ActiveScope(
     fun finish() = FinishedScope(
         id = id,
         name = name,
-        summary = summary.copy(finished = currentTimeMillis()),
+        summary = summary.copy(finished = currentTimeMillis(), active = false),
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 

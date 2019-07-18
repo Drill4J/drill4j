@@ -185,10 +185,20 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun sendActiveScope() {
+        val activeScopeSummary = agentState.activeScope.summary
         sender.send(
             agentInfo,
             "/active-scope",
-            ScopeSummary.serializer() stringify agentState.activeScope.summary
+            ScopeSummary.serializer() stringify activeScopeSummary
+        )
+        sendScopeSummary(activeScopeSummary)
+    }
+
+    internal suspend fun sendScopeSummary(scopeSummary: ScopeSummary) {
+        sender.send(
+            agentInfo,
+            "/scope/${scopeSummary.id}",
+            ScopeSummary.serializer() stringify scopeSummary
         )
     }
 
@@ -221,6 +231,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         if (scopeChange.savePrevScope) {
             if (prevScope.any()) {
                 val finishedScope = prevScope.finish()
+                sendScopeSummary(finishedScope.summary)
                 println("Scope \"${finishedScope.name}\" have been saved with id \"${finishedScope.id}\"")
                 agentState.scopes[finishedScope.id] = finishedScope
                 calculateAndSendBuildCoverage()
