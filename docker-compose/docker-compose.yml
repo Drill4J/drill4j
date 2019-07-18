@@ -4,7 +4,7 @@ services:
   #usage
   #$docker-compose run --rm gradle buildAgent buildCoveragePluginDev
   gradle:
-    image: gradle:5.4.1-jdk8
+    image: gradle:5.5.1-jdk8
     volumes:
       - ../:/home/gradle/project
       - drill_gradle_data:/home/gradle/.gradle
