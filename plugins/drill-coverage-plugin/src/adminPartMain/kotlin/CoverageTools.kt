@@ -47,27 +47,6 @@ fun generateBundleForTestUsages(
     return coverageBuilder.getBundle("all")
 }
 
-fun collectAssocTestPairs(
-    initialClassBytes: Map<String, ByteArray>,
-    executionData: ExecutionData,
-    testName: String
-): List<Pair<CoverageKey, String>> {
-    val cb = CoverageBuilder()
-    Analyzer(ExecutionDataStore().apply { put(executionData) }, cb).analyzeClass(
-        initialClassBytes[executionData.name],
-        executionData.name
-    )
-    return cb.getBundle("").packages.flatMap { p ->
-        listOf(p.coverageKey() to testName) + p.classes.flatMap { c ->
-            listOf(c.coverageKey() to testName) + c.methods.flatMap { m ->
-                if (m.instructionCounter.coveredCount > 0) {
-                    listOf(m.coverageKey(c) to testName)
-                } else emptyList()
-            }
-        }
-    }
-}
-
 fun packageCoverage(
     bundleCoverage: IBundleCoverage,
     assocTestsMap: Map<CoverageKey, List<String>>
@@ -114,21 +93,6 @@ fun classCoverage(
             }.toList()
         )
     }.toList()
-
-fun getAssociatedTestMap(
-    scopeProbes: List<ExecClassData>,
-    initialClassBytes: Map<String, ByteArray>
-): Map<CoverageKey, List<String>> {
-    return scopeProbes.flatMap { exData ->
-        val probeArray = exData.probes.toBooleanArray()
-        collectAssocTestPairs(
-                initialClassBytes,
-                ExecutionData(exData.id, exData.className, probeArray.copyOf()),
-                exData.testName
-        )
-    }.groupBy({ it.first }) { it.second } //group by test names
-        .mapValues { (_, tests) -> tests.distinct() }
-}
 
 fun Map<CoverageKey, List<String>>.getAssociatedTests() = map { (key, tests) ->
     AssociatedTests(

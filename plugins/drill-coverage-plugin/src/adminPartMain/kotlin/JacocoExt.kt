@@ -20,6 +20,16 @@ val String.crc64: String get() = CRC64.classId(toByteArray()).toString(Character
 
 val ICoverageNode.coverage get() = coverage(instructionCounter.totalCount)
 
+fun IBundleCoverage.collectAssocTestPairs(testName: String): List<Pair<CoverageKey, String>> = packages.flatMap { p ->
+    listOf(p.coverageKey() to testName) + p.classes.flatMap { c ->
+        listOf(c.coverageKey() to testName) + c.methods.flatMap { m ->
+            if (m.instructionCounter.coveredCount > 0) {
+                listOf(m.coverageKey(c) to testName)
+            } else emptyList()
+        }
+    }
+}
+
 val IBundleCoverage.javaClasses
     get() = packages
         .flatMap { it.classes }
