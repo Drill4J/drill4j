@@ -48,7 +48,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun renameActiveScope(payload: ActiveScopePayload) {
-        activeScope.name = payload.scopeName
+        val oldSummary = activeScope.rename(payload.scopeName)
+        println("Renamed $activeScope: ${oldSummary.name} -> ${activeScope.name}")
         sendActiveScope()
     }
 
@@ -232,16 +233,16 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             if (prevScope.any()) {
                 val finishedScope = prevScope.finish()
                 sendScopeSummary(finishedScope.summary)
-                println("Scope \"${finishedScope.name}\" have been saved with id \"${finishedScope.id}\"")
+                println("$finishedScope have been saved.")
                 agentState.scopes[finishedScope.id] = finishedScope
                 calculateAndSendBuildCoverage()
             } else {
-                println("Scope \"${prevScope.name}\" is empty, it won't be added to the build.")
+                println("$prevScope is empty, it won't be added to the build.")
                 cleanTopics(prevScope.id)
             }
         }
         val activeScope = agentState.activeScope
-        println("Current active scope: name = \"${activeScope.name}\", id = \"${activeScope.id}\".")
+        println("Current active scope $activeScope")
         calculateAndSendActiveScopeCoverage()
         sendScopeMessages()
     }

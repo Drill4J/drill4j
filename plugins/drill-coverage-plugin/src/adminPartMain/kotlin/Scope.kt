@@ -11,31 +11,22 @@ class ActiveScope(
 
     private val _sessions = atomic(list<FinishedSession>())
 
-    private val _name = atomic(name ?: id)
-
-    var name: String
-        get() = _name.value
-        set(value) {
-            _name.value = value
-        } 
-
     val started: Long = currentTimeMillis()
 
     private val _summary = atomic(ScopeSummary(
         id = id,
-        name = this.name,
+        name = name ?: id,
         started = started
     ))
     
     val summary get() = _summary.value
+    
+    val name = summary.name
 
     fun update(session: FinishedSession, classesData: ClassesData): ScopeSummary {
         _sessions.update { it.append(session) }
-        return _summary.updateAndGet {
-            ScopeSummary(
-                id = id,
-                name = name,
-                started = started,
+        return _summary.updateAndGet { summary ->
+            summary.copy(
                 coverage = classesData.coverage(this.flatten()),
                 coveragesByType = this.groupBy { it.testType }.mapValues { (testType, finishedSessions) ->
                     TestTypeSummary(
@@ -48,14 +39,18 @@ class ActiveScope(
         }
     }
 
+    fun rename(name: String): ScopeSummary = _summary.getAndUpdate { it.copy(name = name) }
+
     fun finish() = FinishedScope(
         id = id,
-        name = name,
+        name = summary.name,
         summary = summary.copy(finished = currentTimeMillis(), active = false),
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 
     override fun iterator(): Iterator<FinishedSession> = _sessions.value.iterator()
+
+    override fun toString() = "act-scope($id, $name)"
 }
 
 class FinishedScope(
@@ -72,4 +67,6 @@ class FinishedScope(
     }
     
     override fun iterator() = probes.values.flatten().iterator()
+
+    override fun toString() = "fin-scope($id, $name)"
 }
