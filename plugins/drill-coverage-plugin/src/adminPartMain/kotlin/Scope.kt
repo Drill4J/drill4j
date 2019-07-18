@@ -4,7 +4,7 @@ import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
 
 class ActiveScope(
-    name: String = ""
+    name: String
 ) : Sequence<FinishedSession> {
 
     val id = genUuid()
@@ -15,13 +15,15 @@ class ActiveScope(
 
     private val _summary = atomic(ScopeSummary(
         id = id,
-        name = if (name.isBlank()) id else name,
+        name = name,
         started = started
     ))
     
     val summary get() = _summary.value
     
     val name = summary.name
+
+    val activeSessions = AtomicCache<String, ActiveSession>()
 
     fun update(session: FinishedSession, classesData: ClassesData): ScopeSummary {
         _sessions.update { it.append(session) }
@@ -43,6 +45,27 @@ class ActiveScope(
     )
 
     override fun iterator(): Iterator<FinishedSession> = _sessions.value.iterator()
+
+    fun startSession(msg: SessionStarted) {
+        activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }
+    }
+
+    fun addProbes(msg: CoverDataPart) {
+        activeSessions[msg.sessionId]?.let { activeSession ->
+            for (probe in msg.data) {
+                activeSession.append(probe)
+            }
+        }
+    }
+
+    fun cancelSession(msg: SessionCancelled) = activeSessions.remove(msg.sessionId)
+
+    fun finishSession(msg: SessionFinished): FinishedSession? {
+        return when (val activeSession = activeSessions.remove(msg.sessionId)) {
+            null -> null
+            else -> activeSession.finish()
+        }
+    }
 
     override fun toString() = "act-scope($id, $name)"
 }

@@ -82,21 +82,21 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 }
             }
             is SessionStarted -> {
-                agentState.startSession(coverMsg)
+                activeScope.startSession(coverMsg)
                 println("Session ${coverMsg.sessionId} started.")
                 sendActiveSessions()
             }
             is SessionCancelled -> {
-                agentState.cancelSession(coverMsg)
+                activeScope.cancelSession(coverMsg)
                 println("Session ${coverMsg.sessionId} cancelled.")
                 sendActiveSessions()
             }
             is CoverDataPart -> {
-                agentState.addProbes(coverMsg)
+                activeScope.addProbes(coverMsg)
             }
             is SessionFinished -> {
                 val scope = agentState.activeScope
-                when(val session = agentState.finishSession(coverMsg)) {
+                when(val session = scope.finishSession(coverMsg)) {
                     null -> println("No active session for sessionId ${coverMsg.sessionId}")
                     else -> {
                         if (session.any()) {
@@ -177,7 +177,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun sendActiveSessions() {
-        val activeSessions = agentState.activeSessions.run { 
+        val activeSessions = activeScope.activeSessions.run { 
             ActiveSessions(
                 count = count(),
                 testTypes = values.groupBy { it.testType }.keys 

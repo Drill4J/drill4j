@@ -28,13 +28,11 @@ class AgentState(
 
     private val javers = JaversBuilder.javers().build()
 
-    private val _activeScope = atomic(ActiveScope())
+    val scopes = AtomicCache<String, FinishedScope>()
+
+    private val _activeScope = atomic(ActiveScope(scopeName()))
 
     val activeScope get() = _activeScope.value
-
-    val activeSessions = AtomicCache<String, ActiveSession>()
-
-    val scopes = AtomicCache<String, FinishedScope>()
 
     val scopeSummaries get() = scopes.values.map { it.summary }
 
@@ -93,26 +91,7 @@ class AgentState(
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
 
-    fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(name) }
+    fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(scopeName(name)) }
 
-    fun startSession(msg: SessionStarted) {
-        activeSessions(msg.sessionId) { ActiveSession(msg.sessionId, msg.testType) }
-    }
-
-    fun addProbes(msg: CoverDataPart) {
-        activeSessions[msg.sessionId]?.let { activeSession ->
-            for (probe in msg.data) {
-                activeSession.append(probe)
-            }
-        }
-    }
-
-    fun cancelSession(msg: SessionCancelled) = activeSessions.remove(msg.sessionId)
-
-    fun finishSession(msg: SessionFinished): FinishedSession? {
-        return when (val activeSession = activeSessions.remove(msg.sessionId)) {
-            null -> null
-            else -> activeSession.finish()
-        }
-    }
+    private fun scopeName(name: String = "") = if (name.isBlank()) "New Scope ${scopes.count() + 1}" else name
 }
