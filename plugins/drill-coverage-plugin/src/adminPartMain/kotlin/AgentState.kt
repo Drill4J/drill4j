@@ -96,6 +96,8 @@ class AgentState(
 
     fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(scopeName(name)) }
 
-    private fun scopeName(name: String = "") =
-        if (name.isBlank()) "New Scope ${_scopeCounter.incrementAndGet()}" else name
+    private fun scopeName(name: String = "") = when (val trimmed = name.trim()) {
+        "" -> "New Scope ${_scopeCounter.incrementAndGet()}"
+        else -> trimmed
+    }
 }
