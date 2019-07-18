@@ -4,7 +4,7 @@ import io.vavr.kotlin.*
 import kotlinx.atomicfu.*
 
 class ActiveScope(
-    name: String? = null
+    name: String = ""
 ) : Sequence<FinishedSession> {
 
     val id = genUuid()
@@ -15,7 +15,7 @@ class ActiveScope(
 
     private val _summary = atomic(ScopeSummary(
         id = id,
-        name = name ?: id,
+        name = if (name.isBlank()) id else name,
         started = started
     ))
     
