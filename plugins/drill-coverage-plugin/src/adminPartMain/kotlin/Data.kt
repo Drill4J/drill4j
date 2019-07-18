@@ -110,6 +110,7 @@ data class ScopeSummary(
     val finished: Long? = null,
     val coverage: Double = 0.0,
     var enabled: Boolean = true,
+    val active: Boolean = true,
     val coveragesByType: Map<String, TestTypeSummary> = emptyMap()
 )
 
