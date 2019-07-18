@@ -29,6 +29,8 @@ class AgentState(
     private val javers = JaversBuilder.javers().build()
 
     val scopes = AtomicCache<String, FinishedScope>()
+    
+    private val _scopeCounter = atomic(0)
 
     private val _activeScope = atomic(ActiveScope(scopeName()))
 
@@ -94,5 +96,6 @@ class AgentState(
 
     fun changeActiveScope(name: String) = _activeScope.getAndUpdate { ActiveScope(scopeName(name)) }
 
-    private fun scopeName(name: String = "") = if (name.isBlank()) "New Scope ${scopes.count() + 1}" else name
+    private fun scopeName(name: String = "") =
+        if (name.isBlank()) "New Scope ${_scopeCounter.incrementAndGet()}" else name
 }
