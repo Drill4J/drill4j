@@ -82,6 +82,7 @@ class AgentState(
             totals = bundleCoverage.plainCopy,
             totalsMap = bundleCoverage.totalsMap,
             javaClasses = javaClasses,
+            prevAgentInfo = prevData?.agentInfo,
             newMethods = newMethods,
             prevBuildCoverage = prevData?.lastBuildCoverage ?: 0.0,
             changed = changed

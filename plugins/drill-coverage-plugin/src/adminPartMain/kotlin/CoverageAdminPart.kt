@@ -76,6 +76,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
                 agentState.initialized()
                 val classesData = agentState.classesData()
                 if (classesData.changed) {
+                    classesData.prevAgentInfo?.let { cleanActiveScope(it) }
                     calculateAndSendActiveScopeCoverage()
                     calculateAndSendBuildCoverage()
                     sendScopeMessages()
@@ -198,6 +199,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             ScopeSummary.serializer() stringify activeScopeSummary
         )
         sendScopeSummary(activeScopeSummary)
+    }
+
+    internal suspend fun cleanActiveScope(agentInfo: AgentInfo) {
+        sender.send(agentInfo, "/active-scope", "")
     }
 
     internal suspend fun sendScopeSummary(scopeSummary: ScopeSummary) {

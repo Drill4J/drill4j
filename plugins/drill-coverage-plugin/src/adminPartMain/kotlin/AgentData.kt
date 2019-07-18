@@ -29,6 +29,7 @@ class ClassesData(
     val totals: ICoverageNode,
     val totalsMap: Map<String, ICoverageNode>,
     val javaClasses: Map<String, JavaClass>,
+    val prevAgentInfo: AgentInfo?,
     val newMethods: List<JavaMethod>,
     val prevBuildCoverage: Double,
     val changed: Boolean
