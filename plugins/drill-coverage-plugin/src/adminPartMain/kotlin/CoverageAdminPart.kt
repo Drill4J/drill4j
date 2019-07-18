@@ -126,7 +126,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
         val scopeProbes = probes.toList()
-        val assocTestsMap = getAssociatedTestMap(scopeProbes, initialClassBytes)
+        val assocTestsMap = classesData.associatedTests(finishedSessions)
         val associatedTests = assocTestsMap.getAssociatedTests()
 
         initialClassBytes.forEach { (name, bytes) ->

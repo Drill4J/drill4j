@@ -35,3 +35,15 @@ fun ClassesData.arrowType(totalCoveragePercent: Double): ArrowType? {
         else -> ArrowType.DECREASE
     }
 }
+
+fun ClassesData.associatedTests(data: Sequence<FinishedSession>) = data.flatMap { it.probes.asSequence() }
+    .groupBy({ it.key }) { it.value }
+    .mapValues { it.value.asSequence().flatten() }
+    .mapValues { coverageBundle(it.value) }
+    .flatMap { (testName, bundle) ->
+        bundle.collectAssocTestPairs(testName)
+    }.groupBy({ it.first }) { it.second } //group by test names
+    .mapValues { it.value.distinct() }
+
+
+
