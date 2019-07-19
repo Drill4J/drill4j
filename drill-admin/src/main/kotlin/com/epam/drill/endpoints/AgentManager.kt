@@ -69,7 +69,6 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     }
 
-
     suspend fun updateAgent(agentId: String, au: AgentInfoWebSocketSingle) {
         get(agentId)?.apply {
             name = au.name
@@ -82,6 +81,20 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             update(this@AgentManager)
         }
 
+    }
+
+    suspend fun resetAgent(agInfo: AgentInfo) {
+        val au = AgentInfoWebSocketSingle(
+            id = agInfo.id,
+            name = "",
+            group = "",
+            status = AgentStatus.NOT_REGISTERED,
+            description = "",
+            buildVersion = agInfo.buildVersion,
+            buildAlias = INITIAL_BUILD_ALIAS
+        )
+            .apply { buildVersions.add(AgentBuildVersionJson(agInfo.buildVersion, INITIAL_BUILD_ALIAS)) }
+        updateAgent(agInfo.id, au)
     }
 
     suspend fun update() {
