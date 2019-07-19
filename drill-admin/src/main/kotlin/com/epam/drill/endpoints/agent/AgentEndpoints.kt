@@ -13,8 +13,7 @@ import io.ktor.locations.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.serialization.*
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
+import org.kodein.di.*
 import org.kodein.di.generic.*
 
 class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
@@ -36,7 +35,6 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                     }
                 }
             }
-
 
             authenticate {
                 post<Routes.Api.Agent.RegisterAgent> { ll ->
@@ -64,13 +62,25 @@ class AgentEndpoints(override val kodein: Kodein) : KodeinAware {
                             }
                         }
                         agentManager.updateAgent(agentId, au)
-                        call.respond(HttpStatusCode.OK, "Agent '$agentId' have been registered")
+                        call.respond(HttpStatusCode.OK, "Agent '$agentId' has been registered")
                     } else {
                         call.respond(HttpStatusCode.BadRequest, "Agent '$agentId' not found")
                     }
                 }
             }
 
+            authenticate {
+                post<Routes.Api.Agent.UnregisterAgent> { ll ->
+                    val agentId = ll.agentId
+                    val agInfo = agentManager[agentId]
+                    if (agInfo != null) {
+                        agentManager.resetAgent(agInfo)
+                        call.respond(HttpStatusCode.OK, "Agent '$agentId' has been unregistered")
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, "Agent '$agentId' not found")
+                    }
+                }
+            }
         }
     }
 }
