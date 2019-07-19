@@ -17,7 +17,7 @@ data class CoverageInfoSet(
 fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
     bundleMap.map { (k, v) ->
         //TODO !!!!!!!!!!!!s
-        val (name, type) = k.split("::").let { it[0] to it[1] }
+        val (name, type) = k.split("::").let { it[1] to it[0] }
         TestUsagesInfo(name, v.methodCounter.coveredCount, type, "30.02.2019")
     }
 
