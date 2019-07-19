@@ -48,7 +48,11 @@ data class StartSessionPayload(val sessionId: String, val startPayload: StartPay
 data class SessionPayload(val sessionId: String)
 
 @Serializable
-data class ActiveScopeChangePayload(val scopeName: String, val savePrevScope: Boolean = false)
+data class ActiveScopeChangePayload(
+    val scopeName: String,
+    val savePrevScope: Boolean = false,
+    val prevScopeEnabled: Boolean = true
+)
 
 @Serializable
 data class ActiveScopePayload(val scopeName: String)
