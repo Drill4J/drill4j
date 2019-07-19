@@ -239,11 +239,13 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
         if (scopeChange.savePrevScope) {
             if (prevScope.any()) {
-                val finishedScope = prevScope.finish()
+                val finishedScope = prevScope.finish(scopeChange.prevScopeEnabled)
                 sendScopeSummary(finishedScope.summary)
                 println("$finishedScope have been saved.")
                 agentState.scopes[finishedScope.id] = finishedScope
-                calculateAndSendBuildCoverage()
+                if (finishedScope.enabled) {
+                    calculateAndSendBuildCoverage()
+                }
             } else {
                 println("$prevScope is empty, it won't be added to the build.")
                 cleanTopics(prevScope.id)

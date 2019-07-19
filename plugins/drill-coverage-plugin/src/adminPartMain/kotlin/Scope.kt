@@ -37,10 +37,11 @@ class ActiveScope(
 
     fun rename(name: String): ScopeSummary = _summary.getAndUpdate { it.copy(name = name) }
 
-    fun finish() = FinishedScope(
+    fun finish(enabled: Boolean) = FinishedScope(
         id = id,
         name = summary.name,
-        summary = summary.copy(finished = currentTimeMillis(), active = false),
+        enabled = enabled,
+        summary = summary.copy(finished = currentTimeMillis(), active = false, enabled = enabled),
         probes = _sessions.value.asIterable().groupBy { it.testType }
     )
 
