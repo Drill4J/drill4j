@@ -1,7 +1,6 @@
 package com.epam.drill.plugins.coverage
 
 import org.jacoco.core.analysis.*
-import org.jacoco.core.data.*
 
 //TODO Rewrite all of this, remove the file
 
@@ -17,35 +16,10 @@ data class CoverageInfoSet(
 
 fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
     bundleMap.map { (k, v) ->
-        TestUsagesInfo(k, v.methodCounter.coveredCount, "Test type", "30.02.2019")
+        //TODO !!!!!!!!!!!!s
+        val (name, type) = k.split("::").let { it[0] to it[1] }
+        TestUsagesInfo(name, v.methodCounter.coveredCount, type, "30.02.2019")
     }
-
-fun testUsageBundles(
-    initialClassBytes: Map<String, ByteArray>,
-    probes: Collection<ExecClassData>
-): Map<String, IBundleCoverage> = probes
-    .groupBy { it.testName }
-    .mapValues { (_, v) ->
-        val dataStore = ExecutionDataStore()
-        v.forEach {
-            val probeArray = it.probes.toBooleanArray()
-            val executionData = ExecutionData(it.id, it.className, probeArray)
-            dataStore.put(executionData)
-        }
-        generateBundleForTestUsages(initialClassBytes, dataStore)
-    }
-
-fun generateBundleForTestUsages(
-    initialClassBytes: Map<String, ByteArray>,
-    dataStore: ExecutionDataStore
-): IBundleCoverage {
-    val coverageBuilder = CoverageBuilder()
-    val analyzer = Analyzer(dataStore, coverageBuilder)
-    dataStore.contents.forEach { execData ->
-        analyzer.analyzeClass(initialClassBytes[execData.name], execData.name)
-    }
-    return coverageBuilder.getBundle("all")
-}
 
 fun packageCoverage(
     bundleCoverage: IBundleCoverage,

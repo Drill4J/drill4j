@@ -126,7 +126,6 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val initialClassBytes = classesData.classesBytes
         val analyzer = Analyzer(dataStore, coverageBuilder)
 
-        val scopeProbes = probes.toList()
         val assocTestsMap = classesData.associatedTests(finishedSessions)
         val associatedTests = assocTestsMap.getAssociatedTests()
 
@@ -158,8 +157,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         println(newCoverageBlock)
 
         val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
-        val testRelatedBundles = testUsageBundles(initialClassBytes, scopeProbes)
-        val testUsages = testUsages(testRelatedBundles)
+        val testUsages = testUsages(classesData.bundlesByTests(finishedSessions))
         
         return CoverageInfoSet(
             associatedTests,
