@@ -52,7 +52,14 @@ class AgentHandler(override val kodein: Kodein) : KodeinAware {
                                     logger.debug(message.message)
                                     pd.processPluginData(message.message, agentInfo)
                                 }
-                                MessageType.DEBUG -> {
+                                MessageType.MESSAGE -> {
+                                    //TODO spinner hack
+                                    if(message.message == "OK") {
+                                        agentInfo.status = AgentStatus.READY
+                                        agentManager.update()
+                                        agentManager.singleUpdate(agentInfo.id)
+                                    }
+
 //                                    send(frame)
                                 }
                                 else -> {

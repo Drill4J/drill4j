@@ -41,8 +41,9 @@ data class AgentInfo(
 @Serializable
 data class AgentBuildVersionJson(val id: String, var name: String)
 
-enum class AgentStatus{
+enum class AgentStatus {
     NOT_REGISTERED,
     READY,
-    DISABLED;
+    DISABLED,
+    BUSY;
 }

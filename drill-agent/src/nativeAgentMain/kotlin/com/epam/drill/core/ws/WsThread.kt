@@ -159,7 +159,8 @@ suspend fun websocket(adminUrl: String) {
 
                     }
                     println("${plugMessage.pl.id} plugin loaded")
-
+                    //TODO spinner hack
+                    sendMessage(Message.serializer() stringify Message(MessageType.MESSAGE, "", "OK"))
                 }
             }
         }

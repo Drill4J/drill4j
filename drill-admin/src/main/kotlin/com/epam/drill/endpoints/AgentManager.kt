@@ -44,6 +44,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
                 AgentStatus.DISABLED -> {
                     //TODO: add some processing for disabled agents
                 }
+                else -> Unit
             }
             agentInfoDb.toAgentInfo()
         } else {
@@ -172,6 +173,10 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
                 session.send(Frame.Binary(false, Cbor.dump(PluginMessage.serializer(), pluginMessage)))
             }
+
+            agentInfo.status = AgentStatus.BUSY
+            update()
+            singleUpdate(agentInfo.id)
             //fixme raw hack for pluginLoading.
             delay(10000)
         }
