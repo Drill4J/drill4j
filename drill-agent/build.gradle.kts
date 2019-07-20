@@ -85,7 +85,6 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation(project(":nativeprojects:drill-kni"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
                 implementation(project(":drill-common"))
                 implementation(project(":platformDependent"))
