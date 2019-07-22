@@ -12,7 +12,7 @@ pipeline:
     image: gradle:5.5.1-jdk8
     secrets: [ drill_username, drill_password ]
     commands:
-      - gradle buildCoveragePluginDev
+      - gradle :plugins:drill-coverage-plugin:buildToDistr
       - >
         gradle :drill-admin:jib
         -Djib.to.auth.username=$${DRILL_USERNAME}
