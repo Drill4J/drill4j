@@ -93,8 +93,7 @@ data class AssociatedTests(
 data class TestUsagesInfo(
     val testName: String,
     val methodCalls: Int,
-    val testType: String,
-    val lastModified: String
+    val testType: String
 )
 
 @Serializable

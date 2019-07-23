@@ -14,16 +14,14 @@ data class CoverageInfoSet(
     val testUsages: List<TestUsagesInfo>
 )
 
-fun testUsages(bundleMap: Map<String, IBundleCoverage>): List<TestUsagesInfo> =
-    bundleMap.map { (k, v) ->
-        //TODO !!!!!!!!!!!!s
-        val (name, type) = k.split("::").let { it[1] to it[0] }
-        TestUsagesInfo(name, v.methodCounter.coveredCount, type, "30.02.2019")
+fun testUsages(bundleMap: Map<TypedTest, IBundleCoverage>): List<TestUsagesInfo> =
+    bundleMap.map { (test, bundle) ->
+        TestUsagesInfo(test.name, bundle.methodCounter.coveredCount, test.type)
     }
 
 fun packageCoverage(
     bundleCoverage: IBundleCoverage,
-    assocTestsMap: Map<CoverageKey, List<String>>
+    assocTestsMap: Map<CoverageKey, List<TypedTest>>
 ): List<JavaPackageCoverage> = bundleCoverage.packages
     .map { packageCoverage ->
         val packageKey = packageCoverage.coverageKey()
@@ -42,7 +40,7 @@ fun packageCoverage(
 
 fun classCoverage(
     classCoverages: Collection<IClassCoverage>,
-    assocTestsMap: Map<CoverageKey, List<String>>
+    assocTestsMap: Map<CoverageKey, List<TypedTest>>
 ): List<JavaClassCoverage> = classCoverages
     .map { classCoverage ->
         val classKey = classCoverage.coverageKey()
@@ -68,13 +66,13 @@ fun classCoverage(
         )
     }.toList()
 
-fun Map<CoverageKey, List<String>>.getAssociatedTests() = map { (key, tests) ->
+fun Map<CoverageKey, List<TypedTest>>.getAssociatedTests() = map { (key, tests) ->
     AssociatedTests(
         id = key.id,
         packageName = key.packageName,
         className = key.className,
         methodName = key.methodName,
-        tests = tests
+        tests = tests.map { it.toString() }
     )
 }
 
