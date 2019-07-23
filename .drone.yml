@@ -1,27 +1,15 @@
 pipeline:
 
-  build:
-    image: gradle:5.5.1-jdk8
-    environment:
-      KONAN_DATA_DIR: /home/gradle/.gradle/konan
-      GRADLE_OPTS: -Dorg.gradle.daemon=false
-    commands:
-      - gradle build check
-
   publish:
     image: gradle:5.5.1-jdk8
     secrets: [ drill_username, drill_password ]
     commands:
-      - gradle buildCoveragePluginDev
-      - >
-        gradle :drill-admin:jib
-        -Djib.to.auth.username=$${DRILL_USERNAME}
-        -Djib.to.auth.password=$${DRILL_PASSWORD}
-        -Djib.to.tags=coverage-latest
-        -Djib.extraDirectories.paths=/drone/src/distr
+      - gradle :plugins:drill-coverage-plugin:buildToDistr
+      - gradle :drill-admin:jib
+          -Djib.to.auth.username=$${DRILL_USERNAME}
+          -Djib.to.auth.password=$${DRILL_PASSWORD}
+          -Djib.to.tags=coverage-latest
+          -Djib.extraDirectories.paths=$${PWD}/distr
     when:
       branch:
-        - develop
-      event:
-        exclude:
-          - pull_request
+        - feature/EPMDJ-398-drone
