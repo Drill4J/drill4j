@@ -22,14 +22,14 @@ class ActiveSession(
     fun finish() = FinishedSession(
             id = id,
             testType = testType,
-            probes = _probes.value.asSequence().groupBy { "$testType::${it.testName}" }
+            probes = _probes.value.asSequence().groupBy { TypedTest(it.testName, testType) }
     )
 }
 
 class FinishedSession(
         id: String,
         testType: String,
-        val probes: Map<String, List<ExecClassData>>
+        val probes: Map<TypedTest, List<ExecClassData>>
 ) : Session(id, testType), Sequence<ExecClassData> {
 
     val testNames = probes.keys
@@ -37,4 +37,8 @@ class FinishedSession(
     override fun iterator() = probes.asSequence()
         .flatMap { it.value.asSequence() }
         .iterator()
+}
+
+data class TypedTest(val name: String, val type: String) {
+    override fun toString() = "$type::$name"
 }
