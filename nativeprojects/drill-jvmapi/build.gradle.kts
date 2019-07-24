@@ -1,5 +1,4 @@
 import com.epam.drill.build.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
 
 plugins {
     id("kotlin-multiplatform")
@@ -21,8 +20,10 @@ kotlin {
                         buildTypes = setOf(DEBUG)
                     )
                 }
+
                 val jvmapi by cinterops.creating
                 jvmapi.apply {
+                    defFile = file("src/nativeInterop/cinterop/jvmapi.def")
                     includeDirs(jvmPaths, "./src/nativeInterop/cpp", "./")
                 }
             }
@@ -40,28 +41,5 @@ kotlin {
     }
     sourceSets.all {
         languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-    }
-}
-
-tasks {
-    "copyCinteropJvmapiJvmapi"{
-        dependsOn("linkDrill-jvmapiDebugSharedJvmapi")
-        doFirst {
-            arrayOf(rootProject.file("drill-agent"), rootProject.file("drill-agent/subdep")).forEach {
-                copy {
-                    from(
-                        (kotlin.targets["jvmapi"] as KotlinNativeTarget)
-                            .binaries
-                            .findSharedLib(
-                                "drill-jvmapi",
-                                NativeBuildType.DEBUG
-                            )?.outputFile
-                    )
-                    into(it)
-                }
-            }
-        }
-
-
     }
 }

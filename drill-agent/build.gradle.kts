@@ -30,6 +30,12 @@ kotlin {
                 drillInternal.apply {
                 }
             }
+            compilations.getByName("test"){
+                val jvmapi by cinterops.creating
+                jvmapi.apply {
+                    defFile = file("src/nativeInterop/cinterop/testdrillinternal.def")
+                }
+            }
         }
 
         jvm("javaAgent")
@@ -137,16 +143,6 @@ tasks {
         dependsOn(javaAgentJar)
         dependsOn(deleteAndCopyAgent)
         group = "application"
-    }
-
-    "linkTestDebugExecutableNativeAgent"(KotlinNativeLink::class) {
-        doFirst {
-            copy {
-                binary.linkerOpts.add("subdep/$staticLibraryName")
-                from(staticLibraryName)
-                into(file("build/bin/nativeAgent/testDebugExecutable"))
-            }
-        }
     }
 
     "nativeAgentTestProcessResources"(ProcessResources::class) {
