@@ -12,7 +12,7 @@ object AgentInfos : IdTable<String>() {
     override val id: Column<EntityID<String>> = varchar("id", length = 50).primaryKey().entityId().uniqueIndex()
     val name = varchar("name", length = 50)
     val groupName = varchar("group_name", length = 50).nullable()
-    val description = varchar("description", length = 50)
+    val description = varchar("description", length = 256)
     var status = enumeration("status", AgentStatus::class)
     val adminUrl = varchar("admin_url", length = 50)
     val buildVersion = varchar("build_version", length = 50)
