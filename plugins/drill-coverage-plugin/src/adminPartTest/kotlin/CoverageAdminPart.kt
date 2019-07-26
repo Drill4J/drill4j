@@ -66,7 +66,7 @@ class CoverageAdminPartTest {
         sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
         val finished = SessionFinished(sessionId, currentTimeMillis())
         sendMessage(finished)
-        assertTrue { ws.sent.any { it.first.endsWith("/coverage-new") } }
+        assertTrue { ws.sent.any { it.first.endsWith("/build-methods") } }
         assertTrue { ws.sent.any { it.first.endsWith("/coverage") } }
         assertTrue { ws.sent.any { it.first.endsWith("/coverage-by-packages") } }
     }
@@ -84,7 +84,7 @@ class CoverageAdminPartTest {
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
         val sessionId = "xxx"
-        
+
         val started = SessionStarted(sessionId, "", currentTimeMillis())
 
         sendMessage(started)
@@ -206,6 +206,3 @@ class SenderStub : Sender {
         }
     }
 }
-
-
-

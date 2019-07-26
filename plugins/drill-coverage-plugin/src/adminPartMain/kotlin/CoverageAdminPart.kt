@@ -138,36 +138,28 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         val bundleCoverage = coverageBuilder.getBundle("")
         val totalCoveragePercent = bundleCoverage.coverage(classesData.totals.instructionCounter.totalCount)
 
-        val classesCount = classesData.totals.classCounter.totalCount
-        val methodsCount = classesData.totals.methodCounter.totalCount
-        val uncoveredMethodsCount = methodsCount - bundleCoverage.methodCounter.coveredCount
-        val coverageBlock = CoverageBlock(
-            coverage = totalCoveragePercent,
-            classesCount = classesCount,
-            methodsCount = methodsCount,
-            uncoveredMethodsCount = uncoveredMethodsCount,
-            arrow = if (isBuildCvg) classesData.arrowType(totalCoveragePercent) else null
-        )
-        println(coverageBlock)
         val coverageByType = if (isBuildCvg) {
             classesData.coveragesByTestType(finishedSessions)
         } else activeScope.summary.coveragesByType
         println(coverageByType)
 
-        val newMethods = classesData.newMethods
-        val (newCoverageBlock, newMethodsCoverages)
-                = calculateNewCoverageBlock(newMethods, bundleCoverage)
-        println(newCoverageBlock)
+        val coverageBlock = Coverage(
+            coverage = totalCoveragePercent,
+            coverageByType = coverageByType,
+            arrow = if (isBuildCvg) classesData.arrowType(totalCoveragePercent) else null
+        )
+        println(coverageBlock)
+
+        val methodsChanges = classesData.methodsChanges
+        val buildMethods = calculateBuildMethods(methodsChanges, bundleCoverage)
 
         val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
         val testUsages = testUsages(classesData.bundlesByTests(finishedSessions))
-        
+
         return CoverageInfoSet(
             associatedTests,
             coverageBlock,
-            coverageByType,
-            newCoverageBlock,
-            newMethodsCoverages,
+            buildMethods,
             packageCoverage,
             testUsages
         )
@@ -263,12 +255,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         } else ValidationResult("Failed to switch to a new scope: name ${scopeChange.scopeName} is already in use")
 
     internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {
-        sendCoverageBlock(cis.coverageBlock, path)
-        sender.send(
-            agentInfo,
-            "$path/coverage-by-types",
-            (String.serializer() to TestTypeSummary.serializer()).map stringify cis.coverageByType
-        )
+        sendCoverageBlock(cis.coverage, path)
+
         // TODO extend destination with plugin id
         if (cis.associatedTests.isNotEmpty()) {
             println("Assoc tests - ids count: ${cis.associatedTests.count()}")
@@ -280,14 +268,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
         sender.send(
             agentInfo,
-            "$path/coverage-new",
-            NewCoverageBlock.serializer() stringify cis.newCoverageBlock
+            "$path/build-methods",
+            BuildMethods.serializer() stringify cis.buildMethods
         )
-        sender.send(
-            agentInfo,
-            "$path/new-methods",
-            SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
-        )
+
         val packageCoverage = cis.packageCoverage
         sendPackageCoverage(packageCoverage, path)
         sender.send(
@@ -309,13 +293,13 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun sendCoverageBlock(
-        coverageBlock: CoverageBlock,
+        coverage: Coverage,
         path: String = ""
     ) {
         sender.send(
             agentInfo,
             "$path/coverage",
-            CoverageBlock.serializer() stringify coverageBlock
+            Coverage.serializer() stringify coverage
         )
     }
 
@@ -324,7 +308,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             .filter { it.enabled }
             .flatMap { it.probes.values.flatten().asSequence() }
         val coverageInfoSet = calculateCoverageData(sessions, true)
-        agentState.classesData().lastBuildCoverage = coverageInfoSet.coverageBlock.coverage
+        agentState.classesData().lastBuildCoverage = coverageInfoSet.coverage.coverage
         sendCalcResults(coverageInfoSet, "/build")
     }
 
