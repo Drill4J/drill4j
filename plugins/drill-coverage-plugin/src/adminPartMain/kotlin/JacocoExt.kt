@@ -30,24 +30,6 @@ fun <T> IBundleCoverage.collectAssocTestPairs(test: T): List<Pair<CoverageKey, T
     }
 }
 
-val IBundleCoverage.javaClasses
-    get() = packages
-        .flatMap { it.classes }
-        .map { cc ->
-            cc.name to JavaClass(
-                name = cc.name.substringAfterLast('/'),
-                path = cc.name,
-                methods = cc.methods.map {
-                    JavaMethod(
-                        ownerClass = cc.name,
-                        name = it.name,
-                        desc = it.desc
-                    )
-                }.toSet()
-
-            )
-        }.toMap()
-
 val IBundleCoverage.totalsMap: Map<String, ICoverageNode>
     get() = packages.flatMap { p ->
         listOf(p.plainPair()) + p.classes.flatMap { c ->

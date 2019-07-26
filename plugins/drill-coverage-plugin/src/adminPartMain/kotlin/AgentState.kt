@@ -4,8 +4,6 @@ import com.epam.drill.common.*
 import kotlinx.atomicfu.*
 import org.jacoco.core.analysis.*
 import org.jacoco.core.data.*
-import org.javers.core.*
-import org.javers.core.diff.changetype.*
 
 /**
  * Agent state.
@@ -25,8 +23,6 @@ class AgentState(
         private set(value) {
             _data.value = value
         }
-
-    private val javers = JaversBuilder.javers().build()
 
     val scopes = AtomicCache<String, FinishedScope>()
     
@@ -63,29 +59,22 @@ class AgentState(
             .onEach { analyzer.analyzeClass(it.second, it.first) }
             .toMap()
         val bundleCoverage = coverageBuilder.getBundle("")
-        val javaClasses = bundleCoverage.javaClasses
         val prevData = agentData.prevData
-        val prevClassesSet = prevData?.javaClasses?.values?.toSet().orEmpty()
-        val currClassesSet = javaClasses.values.toSet()
-        val diff = javers.compareCollections(
-            prevClassesSet,
-            currClassesSet,
-            JavaClass::class.java
-        )
-        val diffNewMethods = diff.getObjectsByChangeType(NewObject::class.java).filterIsInstance<JavaMethod>()
-        val prevAgentInfo = prevData?.agentInfo
-        val (newMethods, changed) = when {
-            agentInfo == prevAgentInfo && diffNewMethods.isEmpty() -> prevData.newMethods to false
-            else -> diffNewMethods to true
+        val currentMethods = classBytes.mapValues { (className, bytes) ->
+            BcelClassParser(bytes, className).parseToJavaMethods()
         }
+        val prevMethods = prevData?.javaMethods?: mapOf()
+        val diff = MethodsComparator(bundleCoverage).compareClasses(prevMethods, currentMethods)
+
+        val prevAgentInfo = prevData?.agentInfo
+        val changed = prevAgentInfo == agentInfo && diff.notEmpty()
         data = ClassesData(
             agentInfo = agentInfo,
             classesBytes = classBytes,
             totals = bundleCoverage.plainCopy,
-            totalsMap = bundleCoverage.totalsMap,
-            javaClasses = javaClasses,
+            javaMethods = currentMethods,
             prevAgentInfo = prevData?.agentInfo,
-            newMethods = newMethods,
+            methodsChanges = diff,
             prevBuildCoverage = prevData?.lastBuildCoverage ?: 0.0,
             changed = changed
         )

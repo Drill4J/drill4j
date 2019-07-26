@@ -3,25 +3,27 @@ package com.epam.drill.plugins.coverage
 import kotlinx.serialization.*
 
 @Serializable
-data class JavaClass(
-    val name: String,
-    val path: String,
-    val methods: Set<JavaMethod>
-)
-
-@Serializable
 data class JavaMethod(
     val ownerClass: String,
     val name: String,
-    val desc: String
-)
+    val desc: String,
+    val hash: String?
+) {
+
+    val sign = "$name$desc"
+
+    fun nameModified(otherMethod: JavaMethod) = hash == otherMethod.hash && desc == otherMethod.desc
+
+    fun descriptorModified(otherMethod: JavaMethod) = name == otherMethod.name && hash == otherMethod.hash
+
+    fun bodyModified(otherMethod: JavaMethod) = name == otherMethod.name && desc == otherMethod.desc
+
+}
 
 @Serializable
-data class CoverageBlock(
+data class Coverage(
     val coverage: Double,
-    val classesCount: Int = 0,
-    val methodsCount: Int = 0,
-    val uncoveredMethodsCount: Int = 0,
+    val coverageByType: Map<String, TestTypeSummary>,
     val arrow: ArrowType? = null
 )
 
@@ -31,10 +33,20 @@ enum class ArrowType {
 }
 
 @Serializable
-data class NewCoverageBlock(
-    val methodsCount: Int = 0,
-    val methodsCovered: Int = 0,
-    val coverage: Double = 0.0
+data class BuildMethods(
+    val totalMethods: MethodsInfo = MethodsInfo(),
+    val newMethods: MethodsInfo = MethodsInfo(),
+    val modifiedNameMethods: MethodsInfo = MethodsInfo(),
+    val modifiedDescMethods: MethodsInfo = MethodsInfo(),
+    val modifiedBodyMethods: MethodsInfo = MethodsInfo(),
+    val deletedMethods: MethodsInfo = MethodsInfo()
+)
+
+@Serializable
+data class MethodsInfo(
+    val totalCount: Int = 0,
+    val coveredCount: Int = 0,
+    val methods: Methods = emptyList()
 )
 
 @Serializable
