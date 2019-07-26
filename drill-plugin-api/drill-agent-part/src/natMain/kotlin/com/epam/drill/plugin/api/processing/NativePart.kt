@@ -26,8 +26,8 @@ actual abstract class NativePart<T> : Switchable, Lifecycle {
 
     actual abstract val confSerializer: KSerializer<T>
 
-    actual fun updateRawConfig(someText: PluginBean) {
-        rawConfig = someText.config.cstr.getPointer(Arena())
+    actual fun updateRawConfig(config: PluginConfig) {
+        rawConfig = config.data.cstr.getPointer(Arena())
     }
 
 }

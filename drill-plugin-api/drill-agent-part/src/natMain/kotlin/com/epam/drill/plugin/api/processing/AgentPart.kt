@@ -28,7 +28,7 @@ actual abstract class AgentPart<T, A> : DrillPlugin<A>, Switchable, Lifecycle {
 
     actual abstract val confSerializer: KSerializer<T>
 
-    abstract fun updateRawConfig(config: PluginBean)
+    abstract fun updateRawConfig(config: PluginConfig)
 
     actual fun rawConfig(): String {
         return if (np != null)

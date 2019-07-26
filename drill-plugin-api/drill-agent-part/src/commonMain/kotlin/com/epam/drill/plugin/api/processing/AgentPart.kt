@@ -40,7 +40,7 @@ interface Lifecycle {
 
 expect abstract class NativePart<T> {
     actual abstract val confSerializer: KSerializer<T>
-    fun updateRawConfig(someText: PluginBean)
+    fun updateRawConfig(config: PluginConfig)
 }
 
 enum class UnloadReason {

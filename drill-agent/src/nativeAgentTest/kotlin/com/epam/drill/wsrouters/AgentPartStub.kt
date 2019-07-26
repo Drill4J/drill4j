@@ -17,7 +17,7 @@ class AgentPartStub(var enabledx: Boolean, override val id: String) : PluginRepr
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun updateRawConfig(config: PluginBean) {
+    override fun updateRawConfig(config: PluginConfig) {
 
     }
 

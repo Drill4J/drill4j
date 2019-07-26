@@ -6,7 +6,7 @@ import kotlinx.serialization.*
 actual abstract class NativePart<T> {
 
     actual abstract val confSerializer: KSerializer<T>
-    actual fun updateRawConfig(someText: PluginBean) {
+    actual fun updateRawConfig(config: PluginConfig) {
     }
 
 }
