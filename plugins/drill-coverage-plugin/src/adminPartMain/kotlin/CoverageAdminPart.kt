@@ -151,10 +151,9 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         } else activeScope.summary.coveragesByType
         println(coverageByType)
 
-        val newMethods = classesData.newMethods
-        val (newCoverageBlock, newMethodsCoverages)
-                = calculateNewCoverageBlock(newMethods, bundleCoverage)
-        println(newCoverageBlock)
+        val methodsChanges = classesData.methodsChanges
+        val (changedCoverageBlock, changedCoverages)
+                = calculateNewCoverageBlock(methodsChanges, bundleCoverage)
 
         val packageCoverage = packageCoverage(bundleCoverage, assocTestsMap)
         val testUsages = testUsages(classesData.bundlesByTests(finishedSessions))
@@ -163,8 +162,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             associatedTests,
             coverageBlock,
             coverageByType,
-            newCoverageBlock,
-            newMethodsCoverages,
+            changedCoverageBlock,
+            changedCoverages,
             packageCoverage,
             testUsages
         )
@@ -276,12 +275,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         sender.send(
             agentInfo,
             "$path/coverage-new",
-            NewCoverageBlock.serializer() stringify cis.newCoverageBlock
+            ChangedCoverageBlock.serializer() stringify cis.changedCoverageBlock
         )
         sender.send(
             agentInfo,
             "$path/new-methods",
-            SimpleJavaMethodCoverage.serializer().list stringify cis.newMethodsCoverages
+            ChangedCoverages.serializer() stringify cis.changedCoverages
         )
         val packageCoverage = cis.packageCoverage
         sendPackageCoverage(packageCoverage, path)

@@ -84,7 +84,7 @@ class CoverageAdminPartTest {
 
         prepareClasses(Dummy::class.java, BarDummy::class.java, FooDummy::class.java)
         val sessionId = "xxx"
-        
+
         val started = SessionStarted(sessionId, "", currentTimeMillis())
 
         sendMessage(started)
@@ -190,6 +190,3 @@ class SenderStub : Sender {
         }
     }
 }
-
-
-

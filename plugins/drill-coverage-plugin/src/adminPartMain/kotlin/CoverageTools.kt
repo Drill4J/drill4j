@@ -8,8 +8,8 @@ data class CoverageInfoSet(
     val associatedTests: List<AssociatedTests>,
     val coverageBlock: CoverageBlock,
     val coverageByType: Map<String, TestTypeSummary>,
-    val newCoverageBlock: NewCoverageBlock,
-    val newMethodsCoverages: List<SimpleJavaMethodCoverage>,
+    val changedCoverageBlock: ChangedCoverageBlock,
+    val changedCoverages: ChangedCoverages,
     val packageCoverage: List<JavaPackageCoverage>,
     val testUsages: List<TestUsagesInfo>
 )
@@ -77,26 +77,54 @@ fun Map<CoverageKey, List<TypedTest>>.getAssociatedTests() = map { (key, tests) 
 }
 
 fun calculateNewCoverageBlock(
-    newMethods: List<JavaMethod>,
+    methodChanges: MethodChanges,
     bundleCoverage: IBundleCoverage
-) = if (newMethods.isNotEmpty()) {
-    println("New methods count: ${newMethods.count()}")
-    val newMethodSet = newMethods.toSet()
-    val newMethodsCoverages = bundleCoverage.packages
+) = if (methodChanges.methodsChanged) {
+    val methodsCoverages = bundleCoverage.packages
         .flatMap { it.classes }
-        .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
-        .filter { it.first in newMethodSet }
-    val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
-    val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
-    //bytecode instruction coverage
-    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else 0.0
+        .flatMap { c -> c.methods.map { (c.name to it.sign()) to it } }.toMap()
 
-    val coverages = newMethodsCoverages.map { (jm, mc) ->
-        mc.simpleMethodCoverage(jm.ownerClass)
+    val (newInstructionCounters, newCoverages) =
+            methodChanges.new.getInfo(methodsCoverages)
+    val (newCoverage, newCounter) = newInstructionCounters.calculateCoverage()
+
+    val (modifiedInstructionCounters, modifiedCoverages) =
+            methodChanges.modified.getInfo(methodsCoverages)
+    val (modifiedCoverage, modifiedCounter) = modifiedInstructionCounters.calculateCoverage()
+
+    ChangedCoverageBlock(
+        newCoverages.count(),
+        newCounter,
+        modifiedCoverages.count(),
+        modifiedCounter,
+        methodChanges.deleted.count(),
+        newCoverage,
+        modifiedCoverage
+    ) to
+            ChangedCoverages(
+                newCoverages,
+                modifiedCoverages,
+                methodChanges.deleted
+            )
+} else {
+    ChangedCoverageBlock() to ChangedCoverages()
+}
+
+
+fun List<JavaMethod>.getInfo(
+    data: Map<Pair<String, String>, IMethodCoverage>
+) = mapNotNull {
+    data[it.ownerClass to it.sign]?.run {
+        (instructionCounter.totalCount to instructionCounter.coveredCount) to simpleMethodCoverage(it.ownerClass)
     }
-    NewCoverageBlock(
-        methodsCount = newMethodsCoverages.count(),
-        methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
-        coverage = newCoverage
-    ) to coverages
-} else NewCoverageBlock() to emptyList()
+}.run { map { it.first } to map { it.second } }
+
+fun List<Pair<Int, Int>>.calculateCoverage() = if (isNotEmpty()) {
+    val total = map { it.first }.reduce { acc, el -> acc + el }
+    val covered = map { it.second }.reduce { acc, el -> acc + el }
+    val coveredCount = map { it.second }.count { it > 0 }
+    val coverage = if (total > 0) covered.toDouble() / total * 100 else 0.0
+    coverage to coveredCount
+} else 0.0 to 0
+
+fun IMethodCoverage.sign() = "$name$desc"

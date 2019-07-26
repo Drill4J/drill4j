@@ -3,18 +3,22 @@ package com.epam.drill.plugins.coverage
 import kotlinx.serialization.*
 
 @Serializable
-data class JavaClass(
-    val name: String,
-    val path: String,
-    val methods: Set<JavaMethod>
-)
-
-@Serializable
 data class JavaMethod(
     val ownerClass: String,
     val name: String,
-    val desc: String
-)
+    val desc: String,
+    val hash: String
+) {
+
+    val sign = "$name$desc"
+
+    fun nameIsModified(otherMethod: JavaMethod) = hash == otherMethod.hash && desc == otherMethod.desc
+
+    fun descriptorIsModified(otherMethod: JavaMethod) = name == otherMethod.name && hash == otherMethod.hash
+
+    fun bodyIsModified(otherMethod: JavaMethod) = name == otherMethod.name && desc == otherMethod.desc
+
+}
 
 @Serializable
 data class CoverageBlock(
@@ -31,10 +35,14 @@ enum class ArrowType {
 }
 
 @Serializable
-data class NewCoverageBlock(
-    val methodsCount: Int = 0,
-    val methodsCovered: Int = 0,
-    val coverage: Double = 0.0
+data class ChangedCoverageBlock(
+    val newMethodsCount: Int = 0,
+    val newMethodsCovered: Int = 0,
+    val modifiedMethodsCount: Int = 0,
+    val modifiedMethodsCovered: Int = 0,
+    val deletedMethodsCount: Int = 0,
+    val newCoverage: Double = 0.0,
+    val modifiedCoverage: Double = 0.0
 )
 
 @Serializable
@@ -118,4 +126,11 @@ data class TestTypeSummary(
     val testType: String,
     val coverage: Double = 0.0,
     val testCount: Int = 0
+)
+
+@Serializable
+data class ChangedCoverages(
+    val newCoverages: List<SimpleJavaMethodCoverage> = listOf(),
+    val modifiedCoverage: List<SimpleJavaMethodCoverage> = listOf(),
+    val deleted: List<JavaMethod> = listOf()
 )
