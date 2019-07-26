@@ -10,8 +10,8 @@ sealed class AgentData
 object NoData : AgentData()
 
 class ClassDataBuilder(
-        val count: Int,
-        val prevData: ClassesData?
+    val count: Int,
+    val prevData: ClassesData?
 ) : AgentData() {
 
     private val _classData = atomic(list<Pair<String, ByteArray>>())
@@ -27,10 +27,9 @@ class ClassesData(
     val agentInfo: AgentInfo,
     val classesBytes: Map<String, ByteArray>,
     val totals: ICoverageNode,
-    val totalsMap: Map<String, ICoverageNode>,
-    val javaClasses: Map<String, JavaClass>,
+    val javaMethods: Map<String, Methods>,
     val prevAgentInfo: AgentInfo?,
-    val newMethods: List<JavaMethod>,
+    val methodsChanges: MethodChanges,
     val prevBuildCoverage: Double,
     val changed: Boolean
 ) : AgentData() {
@@ -43,3 +42,11 @@ class ClassesData(
             _lastBuildCoverage.value = value
         }
 }
+
+typealias MethodChanges = Map<DiffType, Methods>
+
+fun MethodChanges.notEmpty() = keys
+    .filter { it != DiffType.UNAFFECTED }
+    .mapNotNull { this[it] }
+    .flatten()
+    .isNotEmpty()

@@ -7,7 +7,6 @@ plugins {
 }
 
 val jacocoVersion = "0.8.3"
-val javersVersion = "5.3.4"
 val vavrVersion = "0.10.0"
 
 val commonJarDeps by configurations.creating {}
@@ -23,8 +22,7 @@ val adminJarDeps by configurations.creating {
 dependencies {
     commonJarDeps("org.jacoco:org.jacoco.core:$jacocoVersion")
     commonJarDeps("io.vavr:vavr-kotlin:$vavrVersion")
-
-    adminJarDeps("org.javers:javers-core:$javersVersion")
+    commonJarDeps("org.ow2.asm:asm-util:7.0")
 }
 
 

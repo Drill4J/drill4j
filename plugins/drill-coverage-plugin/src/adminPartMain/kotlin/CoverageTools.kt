@@ -6,10 +6,8 @@ import org.jacoco.core.analysis.*
 
 data class CoverageInfoSet(
     val associatedTests: List<AssociatedTests>,
-    val coverageBlock: CoverageBlock,
-    val coverageByType: Map<String, TestTypeSummary>,
-    val newCoverageBlock: NewCoverageBlock,
-    val newMethodsCoverages: List<SimpleJavaMethodCoverage>,
+    val coverage: Coverage,
+    val buildMethods: BuildMethods,
     val packageCoverage: List<JavaPackageCoverage>,
     val testUsages: List<TestUsagesInfo>
 )
@@ -76,27 +74,51 @@ fun Map<CoverageKey, List<TypedTest>>.getAssociatedTests() = map { (key, tests) 
     )
 }
 
-fun calculateNewCoverageBlock(
-    newMethods: List<JavaMethod>,
-    bundleCoverage: IBundleCoverage
-) = if (newMethods.isNotEmpty()) {
-    println("New methods count: ${newMethods.count()}")
-    val newMethodSet = newMethods.toSet()
-    val newMethodsCoverages = bundleCoverage.packages
-        .flatMap { it.classes }
-        .flatMap { c -> c.methods.map { Pair(JavaMethod(c.name, it.name, it.desc), it) } }
-        .filter { it.first in newMethodSet }
-    val totalCount = newMethodsCoverages.sumBy { it.second.instructionCounter.totalCount }
-    val coveredCount = newMethodsCoverages.sumBy { it.second.instructionCounter.coveredCount }
-    //bytecode instruction coverage
-    val newCoverage = if (totalCount > 0) coveredCount.toDouble() / totalCount * 100 else 0.0
+fun IBundleCoverage.toDataMap() = packages
+    .flatMap { it.classes }
+    .flatMap { c -> c.methods.map { (c.name to it.sign()) to it } }.toMap()
 
-    val coverages = newMethodsCoverages.map { (jm, mc) ->
-        mc.simpleMethodCoverage(jm.ownerClass)
-    }
-    NewCoverageBlock(
-        methodsCount = newMethodsCoverages.count(),
-        methodsCovered = newMethodsCoverages.count { it.second.methodCounter.coveredCount > 0 },
-        coverage = newCoverage
-    ) to coverages
-} else NewCoverageBlock() to emptyList()
+fun calculateBuildMethods(
+    methodChanges: MethodChanges,
+    bundleCoverage: IBundleCoverage
+) = if (methodChanges.notEmpty()) {
+
+    val methodsCoverages = bundleCoverage.toDataMap()
+
+    val infos = DiffType.values().map { type ->
+        type to (methodChanges[type]?.getInfo(methodsCoverages) ?: MethodsInfo())
+    }.toMap()
+
+    val totalInfo = infos
+        .keys.filter { it != DiffType.DELETED }
+        .mapNotNull { infos[it] }
+        .reduce { totalInfo, info ->
+            MethodsInfo(
+                totalInfo.totalCount + info.totalCount,
+                totalInfo.coveredCount + info.coveredCount,
+                totalInfo.methods + info.methods
+            )
+        }
+
+    BuildMethods(
+        totalMethods = totalInfo,
+        newMethods = infos[DiffType.NEW]!!,
+        modifiedNameMethods = infos[DiffType.MODIFIED_NAME]!!,
+        modifiedDescMethods = infos[DiffType.MODIFIED_DESC]!!,
+        modifiedBodyMethods = infos[DiffType.MODIFIED_BODY]!!,
+        deletedMethods = infos[DiffType.DELETED]!!
+    )
+} else {
+    BuildMethods()
+}
+
+
+fun Methods.getInfo(
+    data: Map<Pair<String, String>, IMethodCoverage>
+) = MethodsInfo(
+    totalCount = this.count(),
+    coveredCount = mapNotNull { data[it.ownerClass to it.sign]?.instructionCounter?.coveredCount }.count(),
+    methods = this
+)
+
+fun IMethodCoverage.sign() = "$name$desc"
