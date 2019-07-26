@@ -5,7 +5,6 @@ import com.epam.drill.logger.*
 import com.epam.drill.plugin.*
 import com.epam.drill.plugin.api.processing.*
 import kotlinx.serialization.*
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 import kotlin.native.concurrent.*
 
@@ -33,13 +32,14 @@ fun topicRegister() =
             topicLogger.warn { "Agent is attached" }
         }
 
-        topic("/plugins/updatePluginConfig").withGenericTopic(PluginBean.serializer()) { config ->
+        topic("/plugins/updatePluginConfig").withGenericTopic(PluginConfig.serializer()) { config ->
             topicLogger.warn { "updatePluginConfig event: message is $config " }
             val agentPluginPart = PluginManager[config.id]
             if (agentPluginPart != null) {
                 agentPluginPart.updateRawConfig(config)
                 agentPluginPart.np?.updateRawConfig(config)
-                topicLogger.warn { "new settings for ${config.id} was save to file" }
+                agentPluginPart.on()
+                topicLogger.warn { "new settings for ${config.id} saved to file" }
             } else
                 topicLogger.warn { "Plugin ${config.id} not loaded to agent" }
 

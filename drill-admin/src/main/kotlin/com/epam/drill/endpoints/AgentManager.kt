@@ -83,6 +83,15 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     }
 
+    suspend fun updateAgentPluginConfig(agentId: String, pc: PluginConfig): Boolean = get(agentId)?.let { agentInfo ->
+        agentInfo.plugins.find { it.id == pc.id }?.let { plugin ->
+            if (plugin.config != pc.data) {
+                plugin.config = pc.data
+                agentInfo.update(this)
+            }
+        }
+    } != null
+
     suspend fun resetAgent(agInfo: AgentInfo) {
         val au = AgentInfoWebSocketSingle(
             id = agInfo.id,

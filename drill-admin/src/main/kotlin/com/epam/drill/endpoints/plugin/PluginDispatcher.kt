@@ -19,7 +19,6 @@ import io.ktor.routing.*
 import kotlinx.serialization.*
 import org.kodein.di.*
 import org.kodein.di.generic.*
-import kotlin.collections.contains
 import kotlin.collections.set
 
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
@@ -60,13 +59,12 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         app.routing {
             authenticate {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
-                    val pb = call.parse(PluginBean.serializer())
-                    val pluginId = pb.id
+                    val pc = call.parse(PluginConfig.serializer())
                     agentManager.agentSession(ll.agentId)
-                        ?.send(PluginBean.serializer().agentWsMessage("/plugins/updatePluginConfig", pb))
-                    val pluginBean = agentManager[ll.agentId]?.plugins?.first { it.id == pluginId }
-                    if (pluginBean != null) call.respond(HttpStatusCode.OK, "")
-                    else call.respond(HttpStatusCode.NotFound, "")
+                        ?.send(PluginConfig.serializer().agentWsMessage("/plugins/updatePluginConfig", pc))
+                    if (agentManager.updateAgentPluginConfig(ll.agentId, pc)) {
+                        call.respond(HttpStatusCode.OK, "")
+                    } else call.respond(HttpStatusCode.NotFound, "")
                 }
             }
             authenticate {

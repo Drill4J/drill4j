@@ -17,7 +17,7 @@ open class GenericNativePlugin(
     private val pluginLogger = DLogger("GenericNativePlugin")
 
     init {
-        updateRawConfig(pluginConfig)
+        updateRawConfig(pluginConfig.toPluginConfig())
         javaEnabled(pluginConfig.enabled)
         val agentIsEnabled = true
         load(pluginConfig.enabled && agentIsEnabled)
@@ -95,17 +95,17 @@ open class GenericNativePlugin(
         np?.unload(unloadReason)
     }
 
-    override fun updateRawConfig(config: PluginBean) {
+    override fun updateRawConfig(config: PluginConfig) {
         notifyJavaPart(config)
     }
 
-    private fun notifyJavaPart(config: PluginBean) {
+    private fun notifyJavaPart(config: PluginConfig) {
         CallVoidMethodA(
             userPlugin,
             GetMethodID(pluginApiClass, AgentPart<*, *>::updateRawConfig.name, "(Ljava/lang/String;)V"),
             nativeHeap.allocArray(1.toLong()) {
                 val newStringUTF =
-                    NewStringUTF(config.config)
+                    NewStringUTF(config.data)
                 l = newStringUTF
             })
     }
