@@ -2,7 +2,7 @@ package com.epam.drill.core.plugin.loader
 
 import com.epam.drill.common.*
 import com.epam.drill.plugin.api.processing.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.memScoped

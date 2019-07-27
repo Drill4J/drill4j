@@ -1,3 +1,4 @@
+package=com.epam.drill.jvmapi.gen
 headers = jvmti.h stdbool.h jmm.h management.h
 excludedFunctions = JNI_OnLoad Agent_OnLoad Agent_OnAttach Agent_OnUnload
 

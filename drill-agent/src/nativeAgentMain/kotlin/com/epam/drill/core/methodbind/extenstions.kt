@@ -1,6 +1,6 @@
 package com.epam.drill.core.methodbind
 
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 

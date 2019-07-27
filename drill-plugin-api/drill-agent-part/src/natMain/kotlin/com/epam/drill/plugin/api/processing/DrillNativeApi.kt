@@ -2,7 +2,7 @@
 
 package com.epam.drill.plugin.api.processing
 
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 //todo MOVE IT TO API KLIB:)
@@ -15,8 +15,8 @@ internal external fun jvmtiCallback(): jvmtiEventCallbacks?
 
 @SymbolName("SetEventCallbacksP")
 internal external fun SetEventCallbacksP(
-    callbacks: kotlinx.cinterop.CValuesRef<jvmapi.jvmtiEventCallbacks>?,
-    size_of_callbacks: jvmapi.jint /* = kotlin.Int */
+    callbacks: kotlinx.cinterop.CValuesRef<jvmtiEventCallbacks>?,
+    size_of_callbacks: jint /* = kotlin.Int */
 )
 
 @SymbolName("enableJvmtiEventExceptionCatch")

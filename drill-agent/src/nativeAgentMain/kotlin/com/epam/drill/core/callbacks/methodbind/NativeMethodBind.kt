@@ -2,7 +2,7 @@ package com.epam.drill.core.callbacks.methodbind
 
 import com.epam.drill.core.methodbind.*
 import com.epam.drill.jvmapi.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 @Suppress("unused", "UNUSED_PARAMETER")

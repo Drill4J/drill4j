@@ -2,10 +2,10 @@ package com.epam.drill
 
 import com.epam.drill.plugin.api.processing.NativePart
 import com.epam.drill.plugin.api.processing.initPlugin
-import jvmapi.JavaVMVar
-import jvmapi.gdata
-import jvmapi.gjavaVMGlob
-import jvmapi.jvmtiEventCallbacks
+import com.epam.drill.jvmapi.gen.JavaVMVar
+import com.epam.drill.jvmapi.gen.gdata
+import com.epam.drill.jvmapi.gen.gjavaVMGlob
+import com.epam.drill.jvmapi.gen.jvmtiEventCallbacks
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.CFunction
@@ -39,7 +39,7 @@ fun loadNativePlugin(
 
         val callbacks: jvmtiEventCallbacks? = gjavaVMGlob?.pointed?.callbackss
         val reinterpret =
-            initPlugin?.reinterpret<CFunction<(CPointer<ByteVar>, CPointer<jvmapi.jvmtiEnvVar>?, CPointer<JavaVMVar>?, CPointer<jvmtiEventCallbacks>?, CPointer<CFunction<(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) -> Unit>>) -> COpaquePointer>>()
+            initPlugin?.reinterpret<CFunction<(CPointer<ByteVar>, CPointer<com.epam.drill.jvmapi.gen.jvmtiEnvVar>?, CPointer<JavaVMVar>?, CPointer<jvmtiEventCallbacks>?, CPointer<CFunction<(pluginId: CPointer<ByteVar>, message: CPointer<ByteVar>) -> Unit>>) -> COpaquePointer>>()
         val id = pluginId.cstr.getPointer(this)
         val jvmti = gdata?.pointed?.jvmti
         val jvm = gjavaVMGlob?.pointed?.jvm

@@ -4,7 +4,7 @@ package com.epam.drill.core
 
 import com.epam.drill.api.*
 import com.epam.drill.jvmapi.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 @CName("currentEnvs")
@@ -48,7 +48,7 @@ fun RetransformClasses(env: JNIEnv, thiz: jobject, count: jint, classes: jobject
     val allocArray = allocArray<jclassVar>(count) { index ->
         value = GetObjectArrayElement(classes, index)
     }
-    jvmapi.RetransformClasses(count, allocArray)
+    RetransformClasses(count, allocArray)
 }
 
 @Suppress("UNUSED_PARAMETER")

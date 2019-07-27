@@ -3,7 +3,7 @@ package com.epam.drill.core.agent
 import com.epam.drill.common.*
 import com.epam.drill.core.*
 import com.epam.drill.logger.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 
 fun performAgentInitialization(initialParams: Map<String, String>) {
     val adminAddress = initialParams.getValue("adminAddress")
