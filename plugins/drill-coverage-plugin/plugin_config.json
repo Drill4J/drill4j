@@ -5,5 +5,5 @@
   "type": "Custom",
   "family": "INSTRUMENTATION",
   "enabled": true,
-  "config": "{\"pathPrefixes\": [], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+  "config": "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
 }
