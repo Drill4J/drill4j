@@ -3,8 +3,8 @@
 package com.epam.drill.plugin.exception
 
 import com.epam.drill.jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.api.processing.*
-import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.serialization.json.*
 import kotlin.native.concurrent.*
@@ -14,7 +14,7 @@ import kotlin.native.concurrent.*
  * These stuff should be generated for native plugins via compiler plugin API.
  * Will be implemented during design of drill hub*/
 
-@CName(com.epam.drill.plugin.api.processing.initPlugin)
+@CName(initPlugin)
 fun initPlugin(
     pluginId: String,
     jvmti: CPointer<jvmtiEnvVar>?,

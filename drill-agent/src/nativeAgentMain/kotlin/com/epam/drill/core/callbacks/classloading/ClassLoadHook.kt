@@ -2,27 +2,21 @@ package com.epam.drill.core.callbacks.classloading
 
 import com.epam.drill.core.*
 import com.epam.drill.core.plugin.loader.*
-import jvmapi.*
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.UByteVar
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.set
-import kotlinx.cinterop.value
+import com.epam.drill.jvmapi.gen.*
+import kotlinx.cinterop.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 @CName("jvmtiEventClassFileLoadHookEvent")
 fun classLoadEvent(
-    jvmtiEnv: CPointer<jvmapi.jvmtiEnvVar>?,
-    jniEnv: CPointer<jvmapi.JNIEnvVar>?,
-    classBeingRedefined: jvmapi.jclass?,
+    jvmtiEnv: CPointer<jvmtiEnvVar>?,
+    jniEnv: CPointer<JNIEnvVar>?,
+    classBeingRedefined: jclass?,
     loader: jobject?,
     kClassName: String?,
     protection_domain: jobject?,
     classDataLen: jint,
     classData: CPointer<UByteVar>?,
-    newClassDataLen: CPointer<jvmapi.jintVar>?,
+    newClassDataLen: CPointer<jintVar>?,
     newData: CPointer<CPointerVar<UByteVar>>?
 ) {
     if (isNotSuitableClass(kClassName, classData, loader, protection_domain)) return

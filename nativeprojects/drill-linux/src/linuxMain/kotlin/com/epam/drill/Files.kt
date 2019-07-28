@@ -1,7 +1,7 @@
 package com.epam.drill
 
-import platform.posix.mkdir
-import kotlinx.cinterop.convert
+import platform.posix.*
+import kotlinx.cinterop.*
 
 
 fun doMkdir(path:String){

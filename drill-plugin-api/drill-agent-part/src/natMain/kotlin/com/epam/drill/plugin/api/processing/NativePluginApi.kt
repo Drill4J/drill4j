@@ -1,6 +1,6 @@
 package com.epam.drill.plugin.api.processing
 
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.*
 

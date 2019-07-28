@@ -1,6 +1,6 @@
 package com.epam.drill.plugin.exception.datatypes
 
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 
 class ArrayType : JType() {
 

@@ -4,9 +4,9 @@ package com.epam.drill.api
 
 import com.epam.drill.core.messanger.*
 import com.epam.drill.jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.*
 import com.epam.drill.plugin.api.processing.*
-import jvmapi.*
 import kotlinx.cinterop.*
 
 /**
@@ -60,8 +60,8 @@ fun jvmtiCallback(): jvmtiEventCallbacks? {
 
 @CName("SetEventCallbacksP")
 fun jvmti(
-    callbacks: kotlinx.cinterop.CValuesRef<jvmtiEventCallbacks>?,
-    size_of_callbacks: jvmapi.jint /* = kotlin.Int */
+    callbacks: CValuesRef<jvmtiEventCallbacks>?,
+    size_of_callbacks: jint /* = kotlin.Int */
 ) {
     SetEventCallbacks(callbacks, size_of_callbacks)
 }

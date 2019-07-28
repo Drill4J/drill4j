@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.exception
 
 import com.epam.drill.jvmapi.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 fun jthrowable.getMessage() = memScoped {

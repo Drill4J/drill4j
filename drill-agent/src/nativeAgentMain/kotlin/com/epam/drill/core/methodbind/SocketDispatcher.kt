@@ -1,8 +1,8 @@
 package com.epam.drill.core.methodbind
 
 import com.epam.drill.core.*
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.*
-import jvmapi.*
 import kotlinx.cinterop.*
 import kotlinx.serialization.*
 import kotlin.math.*

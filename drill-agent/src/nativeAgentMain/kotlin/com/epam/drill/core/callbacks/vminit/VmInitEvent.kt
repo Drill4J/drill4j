@@ -4,7 +4,7 @@ package com.epam.drill.core.callbacks.vminit
 
 import com.epam.drill.core.agent.*
 import com.epam.drill.core.ws.*
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 import kotlin.native.concurrent.*
 
