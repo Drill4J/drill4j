@@ -3,9 +3,9 @@ package com.epam.drill.core.plugin.loader
 import com.epam.drill.common.*
 import com.epam.drill.core.plugin.*
 import com.epam.drill.jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.logger.*
 import com.epam.drill.plugin.api.processing.*
-import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 @Suppress("LeakingThis")

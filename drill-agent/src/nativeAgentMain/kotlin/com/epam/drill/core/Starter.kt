@@ -3,8 +3,8 @@ package com.epam.drill.core
 import com.epam.drill.api.*
 import com.epam.drill.core.agent.*
 import com.epam.drill.jvmapi.*
-import com.epam.drill.logger.*
 import com.epam.drill.jvmapi.gen.*
+import com.epam.drill.logger.*
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.native.concurrent.*

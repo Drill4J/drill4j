@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.exception.datatypes
 
 
-import jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 class BoolType : JType() {

@@ -1,6 +1,6 @@
 package com.epam.drill
 
-import platform.posix.mkdir
+import platform.posix.*
 
 fun doMkdir(path:String){
     mkdir(path)

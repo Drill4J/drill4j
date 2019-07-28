@@ -1,6 +1,6 @@
 package com.epam.drill.logger
 
-import io.ktor.util.date.GMTDate
+import io.ktor.util.date.*
 
 class DLogger(val name: String) {
 

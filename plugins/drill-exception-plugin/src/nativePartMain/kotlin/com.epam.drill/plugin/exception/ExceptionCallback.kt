@@ -1,7 +1,7 @@
 package com.epam.drill.plugin.exception
 
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.api.processing.*
-import jvmapi.*
 import kotlinx.cinterop.*
 
 

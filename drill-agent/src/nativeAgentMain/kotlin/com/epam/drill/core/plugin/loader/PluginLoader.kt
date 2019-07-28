@@ -4,8 +4,8 @@ import com.epam.drill.common.*
 import com.epam.drill.core.*
 import com.epam.drill.core.exceptions.*
 import com.epam.drill.jvmapi.*
-import com.epam.drill.logger.*
 import com.epam.drill.jvmapi.gen.*
+import com.epam.drill.logger.*
 import kotlinx.cinterop.*
 import kotlin.collections.set
 

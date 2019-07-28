@@ -1,11 +1,7 @@
 package com.epam.drill
 
-import com.epam.drill.plugin.api.processing.NativePart
-import com.epam.drill.plugin.api.processing.initPlugin
-import com.epam.drill.jvmapi.gen.JavaVMVar
-import com.epam.drill.jvmapi.gen.gdata
-import com.epam.drill.jvmapi.gen.gjavaVMGlob
-import com.epam.drill.jvmapi.gen.jvmtiEventCallbacks
+import com.epam.drill.jvmapi.gen.*
+import com.epam.drill.plugin.api.processing.*
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.CFunction
@@ -22,8 +18,7 @@ import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.set
-import platform.windows.GetProcAddress
-import platform.windows.LoadLibrary
+import platform.windows.*
 
 
 fun loadNativePlugin(

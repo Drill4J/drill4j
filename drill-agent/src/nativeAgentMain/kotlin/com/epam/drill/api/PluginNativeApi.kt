@@ -4,9 +4,9 @@ package com.epam.drill.api
 
 import com.epam.drill.core.messanger.*
 import com.epam.drill.jvmapi.*
+import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.*
 import com.epam.drill.plugin.api.processing.*
-import com.epam.drill.jvmapi.gen.*
 import kotlinx.cinterop.*
 
 /**
