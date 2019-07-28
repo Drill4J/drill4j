@@ -2,22 +2,7 @@ package com.epam.drill
 
 import com.epam.drill.jvmapi.gen.*
 import com.epam.drill.plugin.api.processing.*
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CArrayPointer
-import kotlinx.cinterop.CFunction
-import kotlinx.cinterop.COpaquePointer
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.UShortVar
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.asStableRef
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.invoke
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.set
+import kotlinx.cinterop.*
 import platform.windows.*
 
 

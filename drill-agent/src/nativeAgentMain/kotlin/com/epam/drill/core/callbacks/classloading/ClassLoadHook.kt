@@ -3,13 +3,7 @@ package com.epam.drill.core.callbacks.classloading
 import com.epam.drill.core.*
 import com.epam.drill.core.plugin.loader.*
 import com.epam.drill.jvmapi.gen.*
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.CPointerVar
-import kotlinx.cinterop.UByteVar
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.readBytes
-import kotlinx.cinterop.set
-import kotlinx.cinterop.value
+import kotlinx.cinterop.*
 
 @Suppress("unused", "UNUSED_PARAMETER")
 @CName("jvmtiEventClassFileLoadHookEvent")
