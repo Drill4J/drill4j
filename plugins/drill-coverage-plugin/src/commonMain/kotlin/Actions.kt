@@ -6,6 +6,10 @@ import kotlinx.serialization.*
 @Serializable
 abstract class Action
 
+@SerialName("VALIDATION")
+@Serializable
+data class Validate(val payload: String) : Action()
+
 @SerialName("START")
 @Serializable
 data class StartNewSession(val payload: StartPayload) : Action()

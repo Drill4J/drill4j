@@ -12,6 +12,7 @@ private val serialModule = SerializersModule {
         addSubclass(DropScope.serializer())
 
         addSubclass(StartNewSession.serializer())
+        addSubclass(Validate.serializer())
         addSubclass(StartSession.serializer())
         addSubclass(StopSession.serializer())
         addSubclass(CancelSession.serializer())
