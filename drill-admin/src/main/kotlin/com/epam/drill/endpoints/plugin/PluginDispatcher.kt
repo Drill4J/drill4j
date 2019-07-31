@@ -68,6 +68,23 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                 }
             }
             authenticate {
+                get<Routes.Api.Agent.GetPluginConfig> { ll ->
+                    val agentInfo = agentManager[ll.agentId]
+                    val pluginBean = agentInfo?.plugins?.find { it.id == ll.pluginId }
+                    when {
+                        agentInfo == null -> call.respond(
+                            HttpStatusCode.NotFound,
+                            "Agent with id ${ll.agentId} not found"
+                        )
+                        pluginBean == null -> call.respond(
+                            HttpStatusCode.NotFound,
+                            "Plugin with id ${ll.pluginId} not found"
+                        )
+                        else -> call.respond(pluginBean.config)
+                    }
+                }
+            }
+            authenticate {
                 post<Routes.Api.Agent.DispatchPluginAction> { ll ->
                     val action = call.receive<String>()
                     val agentId = ll.agentId
