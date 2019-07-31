@@ -34,7 +34,6 @@ kotlin {
         val jvmapiMain by getting
         jvmapiMain.apply {
             dependencies {
-                implementation(project(":nativeprojects:drill-logger"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
             }
         }

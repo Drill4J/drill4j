@@ -89,6 +89,7 @@ kotlin {
                     else -> implementation("com.soywiz:korio-linuxx64:$korioVersion")
                 }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
+                implementation("io.ktor:ktor-utils-native:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(project(":nativeprojects:drill-jvmapi"))
