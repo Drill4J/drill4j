@@ -5,7 +5,7 @@ import kotlinx.serialization.*
 @Serializable
 data class CoverConfig(
         val pathPrefixes: List<String>,
-        val message: String
+        val message: String = ""
 )
 
 @Polymorphic
