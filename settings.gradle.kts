@@ -15,7 +15,6 @@ if (Os.isFamily(Os.FAMILY_UNIX)) {
     include("platformDependent")
     project(":platformDependent").projectDir = file("nativeprojects/drill-win")
 }
-include(":nativeprojects:drill-logger")
 
 /**plugin's projects*/
 include(":plugins:drill-coverage-plugin")
