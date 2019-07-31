@@ -106,6 +106,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `empty activeScope should not be saved during switch to new scope`() {
+        prepareClasses()
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         runBlocking {
@@ -127,13 +128,13 @@ class CoverageAdminPartTest {
     @Test
     fun `not empty activeScope should switch to a specified one with saving previous scope`() {
         prepareClasses()
-        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
-        assertEquals("testScope", agentState.activeScope.name)
+        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope66")) }
+        assertEquals("testScope66", agentState.activeScope.name)
         appendSessionStub(agentState, agentState.classesData())
         runBlocking {
-            coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope2", true)))
+            coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope6", true)))
         }
-        assertTrue { agentState.scopes.values.any { it.name == "testScope" } }
+        assertTrue { agentState.scopes.values.any { it.name == "testScope66" } }
     }
 
     @Test

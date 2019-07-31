@@ -30,8 +30,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
-            is SwitchActiveScope -> changeActiveScope(action.payload)
-            is RenameActiveScope -> renameActiveScope(action.payload)
+            is SwitchActiveScope ->
+                serDe.actionSerializer stringify changeActiveScope(action.payload)
+            is RenameActiveScope ->
+                serDe.actionSerializer stringify renameActiveScope(action.payload)
             is ToggleScope -> toggleScope(action.payload.scopeId)
             is DropScope -> dropScope(action.payload.scopeId)
             is StartNewSession -> {
@@ -47,11 +49,12 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
     }
 
-    internal suspend fun renameActiveScope(payload: ActiveScopePayload) {
-        val oldSummary = activeScope.rename(payload.scopeName)
-        println("Renamed $activeScope: ${oldSummary.name} -> ${activeScope.name}")
-        sendActiveScope()
-    }
+    internal suspend fun renameActiveScope(payload: ActiveScopePayload) =
+        if (agentState.scopes.values.find { it.name == payload.scopeName } == null) {
+            val oldSummary = activeScope.rename(payload.scopeName)
+            sendActiveScope()
+            ValidationResult("Renamed $activeScope: ${oldSummary.name} -> ${payload.scopeName}")
+        } else ValidationResult("Failed to rename active scope: name ${payload.scopeName} is already in use")
 
     override suspend fun processData(dm: DrillMessage): Any {
         val content = dm.content
@@ -235,27 +238,29 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
     }
 
-    internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) {
-        val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
-        if (scopeChange.savePrevScope) {
-            if (prevScope.any()) {
-                val finishedScope = prevScope.finish(scopeChange.prevScopeEnabled)
-                sendScopeSummary(finishedScope.summary)
-                println("$finishedScope have been saved.")
-                agentState.scopes[finishedScope.id] = finishedScope
-                if (finishedScope.enabled) {
-                    calculateAndSendBuildCoverage()
+    internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) =
+        if (agentState.scopes.values.find { it.name == scopeChange.scopeName } == null) {
+            val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
+            if (scopeChange.savePrevScope) {
+                if (prevScope.any()) {
+                    val finishedScope = prevScope.finish(scopeChange.prevScopeEnabled)
+                    sendScopeSummary(finishedScope.summary)
+                    println("$finishedScope have been saved.")
+                    agentState.scopes[finishedScope.id] = finishedScope
+                    if (finishedScope.enabled) {
+                        calculateAndSendBuildCoverage()
+                    }
+                } else {
+                    println("$prevScope is empty, it won't be added to the build.")
+                    cleanTopics(prevScope.id)
                 }
-            } else {
-                println("$prevScope is empty, it won't be added to the build.")
-                cleanTopics(prevScope.id)
             }
-        }
-        val activeScope = agentState.activeScope
-        println("Current active scope $activeScope")
-        calculateAndSendActiveScopeCoverage()
-        sendScopeMessages()
-    }
+            val activeScope = agentState.activeScope
+            println("Current active scope $activeScope")
+            calculateAndSendActiveScopeCoverage()
+            sendScopeMessages()
+            ValidationResult("Switched to the new scope \'${scopeChange.scopeName}\'")
+        } else ValidationResult("Failed to switch to a new scope: name ${scopeChange.scopeName} is already in use")
 
     internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {
         sendCoverageBlock(cis.coverageBlock, path)
