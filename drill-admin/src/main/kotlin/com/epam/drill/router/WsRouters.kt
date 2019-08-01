@@ -9,6 +9,9 @@ object WsRoutes {
     @Location("/get-agent/{agentId}")
     data class GetAgent(val agentId: String)
 
+    @Location("/{agentId}/{pluginId}/config")
+    data class GetPluginConfig(val agentId: String, val pluginId: String)
+
     @Location("/agent/{agentId}/get-builds")
     data class GetAgentBuilds(val agentId: String)
 

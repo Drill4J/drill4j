@@ -56,38 +56,37 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
         }
     }
 
-    @UseExperimental(ImplicitReflectionSerializer::class)
     private suspend fun subscribe(
         wsSession: DrillWsSession,
         event: Message
     ) {
         sessionStorage += (wsSession)
         println("${event.destination} is subscribed")
+        sendToAllSubscribed(event.destination)
+    }
+
+    @UseExperimental(ImplicitReflectionSerializer::class)
+    suspend fun sendToAllSubscribed(destination: String){
         app.run {
             wsTopic {
-                val resolve = resolve(event.destination, sessionStorage)!!
-                if (resolve is Collection<*>) {
-                    sessionStorage.sendTo(
-                        Message(
-                            MessageType.MESSAGE,
-                            event.destination,
-                            Json.stringify(resolve)
-                        )
-                    )
-                } else {
-                    @Suppress("UNCHECKED_CAST") val serializer = resolve::class.serializer() as KSerializer<Any>
-                    sessionStorage.sendTo(
-                        Message(
-                            MessageType.MESSAGE,
-                            event.destination,
-                            serializer stringify resolve
-                        )
-                    )
+                val resolve = resolve(destination, sessionStorage)!!
+                val message = when (resolve) {
+                    is Collection<*> -> Json.stringify(resolve)
+                    is String -> resolve
+                    else -> {
+                        @Suppress("UNCHECKED_CAST")
+                        resolve::class.serializer() as KSerializer<Any> stringify resolve
+                    }
                 }
+                sessionStorage.sendTo(
+                    Message(
+                        MessageType.MESSAGE,
+                        destination,
+                        message
+                    )
+                )
             }
         }
     }
 
-
 }
-
