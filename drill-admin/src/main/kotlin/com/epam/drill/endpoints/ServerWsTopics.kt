@@ -67,6 +67,10 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 }
 
+                topic<WsRoutes.GetPluginConfig> { ids, _ ->
+                    agentManager[ids.agentId]?.plugins?.find { it.id == ids.pluginId }?.config ?: ""
+                }
+
                 topic<WsRoutes.GetAgent> { x, _ ->
                     agentManager[x.agentId]?.toAgentInfoWebSocket()
                 }
