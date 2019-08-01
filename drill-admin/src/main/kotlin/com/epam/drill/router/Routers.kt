@@ -19,11 +19,8 @@ object Routes {
             @Location("/{agentId}")
             data class Agent(val agentId: String)
 
-            @Location("/{agentId}/update-plugin")
-            data class UpdatePlugin(val agentId: String)
-
-            @Location("/{agentId}/{pluginId}/config")
-            data class GetPluginConfig(val agentId: String, val pluginId: String)
+            @Location("/{agentId}/{pluginId}/update-plugin")
+            data class UpdatePlugin(val agentId: String, val pluginId: String)
 
             @Location("/{agentId}/{pluginId}/dispatch-action")
             data class DispatchPluginAction(val agentId: String, val pluginId: String)

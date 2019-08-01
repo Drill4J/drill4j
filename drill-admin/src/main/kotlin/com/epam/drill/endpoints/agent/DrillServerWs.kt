@@ -75,12 +75,15 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
                         )
                     )
                 } else {
-                    @Suppress("UNCHECKED_CAST") val serializer = resolve::class.serializer() as KSerializer<Any>
+                    val message = if (resolve !is String) {
+                        @Suppress("UNCHECKED_CAST")
+                        resolve::class.serializer() as KSerializer<Any> stringify resolve
+                    } else resolve
                     sessionStorage.sendTo(
                         Message(
                             MessageType.MESSAGE,
                             event.destination,
-                            serializer stringify resolve
+                            message
                         )
                     )
                 }

@@ -26,6 +26,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val plugins: Plugins by instance()
     private val agentManager: AgentManager by instance()
     private val wsService: Sender by kodein.instance()
+    private val sessionStorage: MutableSet<DrillWsSession> by instance()
 
     suspend fun processPluginData(pluginData: String, agentInfo: AgentInfo) {
         val message = MessageWrapper.serializer().parse(pluginData)
@@ -59,29 +60,14 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
         app.routing {
             authenticate {
                 patch<Routes.Api.Agent.UpdatePlugin> { ll ->
-                    val pc = call.parse(PluginConfig.serializer())
+                    val config = call.receive<String>().trimIndent().replace("\n", "")
+                    val pc = PluginConfig(ll.pluginId, config)
                     agentManager.agentSession(ll.agentId)
                         ?.send(PluginConfig.serializer().agentWsMessage("/plugins/updatePluginConfig", pc))
                     if (agentManager.updateAgentPluginConfig(ll.agentId, pc)) {
+                        sendPluginConfig(ll.agentId, ll.pluginId)
                         call.respond(HttpStatusCode.OK, "")
                     } else call.respond(HttpStatusCode.NotFound, "")
-                }
-            }
-            authenticate {
-                get<Routes.Api.Agent.GetPluginConfig> { ll ->
-                    val agentInfo = agentManager[ll.agentId]
-                    val pluginBean = agentInfo?.plugins?.find { it.id == ll.pluginId }
-                    when {
-                        agentInfo == null -> call.respond(
-                            HttpStatusCode.NotFound,
-                            "Agent with id ${ll.agentId} not found"
-                        )
-                        pluginBean == null -> call.respond(
-                            HttpStatusCode.NotFound,
-                            "Plugin with id ${ll.pluginId} not found"
-                        )
-                        else -> call.respond(pluginBean.config)
-                    }
                 }
             }
             authenticate {
@@ -176,6 +162,17 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
         }
     }
+
+    private suspend fun sendPluginConfig(agentId: String, pluginId: String) {
+        val config = agentManager[agentId]?.plugins?.find { it.id == pluginId }?.config ?: ""
+        val destination = app.toLocation(WsRoutes.GetPluginConfig(agentId, pluginId))
+        sessionStorage.sendTo(
+            Message(
+                MessageType.MESSAGE, destination, config
+            )
+        )
+    }
+
 }
 
 @Serializable
