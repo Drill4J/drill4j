@@ -27,7 +27,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
     private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
-
+    private val subscribeInfos: ConcurrentMap<String, SubscribeInfo> = ConcurrentHashMap()
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
@@ -38,12 +38,14 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
             logger.debug { "send data to $id destination" }
             eventStorage[id] = messageForSend
 
-            sessionStorage[destination]?.let { sessionSet ->
-                for (session in sessionSet) {
-                    try {
-                        session.send(Frame.Text(messageForSend))
-                    } catch (ex: Exception) {
-                        sessionSet.remove(session)
+            if (subscribeInfos[agentInfo.id]?.buildVersion == agentInfo.buildVersion) {
+                sessionStorage[destination]?.let { sessionSet ->
+                    for (session in sessionSet) {
+                        try {
+                            session.send(Frame.Text(messageForSend))
+                        } catch (ex: Exception) {
+                            sessionSet.remove(session)
+                        }
                     }
                 }
             }
@@ -60,9 +62,10 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
                             when (event.type) {
                                 MessageType.SUBSCRIBE -> {
                                     val subscribeInfo = SubscribeInfo.serializer() parse event.message
+                                    subscribeInfos[subscribeInfo.agentId] = subscribeInfo
+
                                     saveSession(event)
                                     val buildVersion = subscribeInfo.buildVersion
-
 
                                     val message =
                                         eventStorage[
