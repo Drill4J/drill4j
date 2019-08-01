@@ -6,7 +6,6 @@ include(":drill-common")
 include(":drill-admin")
 include(":drill-plugin-api:drill-admin-part")
 include(":drill-plugin-api:drill-agent-part")
-include(":nativeprojects:drill-jvmapi")
 
 if (Os.isFamily(Os.FAMILY_UNIX)) {
     include("platformDependent")

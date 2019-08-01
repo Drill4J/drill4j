@@ -14,7 +14,7 @@ kotlin {
     sourceSets {
         named("linuxMain") {
             dependencies {
-                implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation("com.epam.drill:drill-jvmapi-$preset:$version")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
         }

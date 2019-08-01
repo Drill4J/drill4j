@@ -53,7 +53,7 @@ kotlin {
             dependencies {
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation("com.epam.drill:drill-jvmapi-$preset:$version")
             }
         }
         named("adminPartMain") {
