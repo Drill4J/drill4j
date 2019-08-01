@@ -21,7 +21,7 @@ Work in progress.
 
 To launch the development environment, follow these steps:
 1. Install JDK 8. **Installation path cannot have space characters**.
-2. Run gradle tasks 'buildAgent', 'buildCoveragePluginDev','runAgent'.
+2. Run gradle tasks 'buildAgent', 'buildToDistr','runAgent'.
 3. Run gradle task 'runDrillAdmin'.
 4. Build frontend, follow this [link](https://github.com/Drill4J/admin-ui).
 5. Install [Drill4J extension](https://chrome.google.com/webstore/detail/drill4j-browser-extension/lhlkfdlgddnmbhhlcopcliflikibeplm?hl=ru) for chrome.
