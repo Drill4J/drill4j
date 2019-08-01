@@ -26,8 +26,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
     private val app: Application by instance()
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
-    private val sessionStorage: ConcurrentMap<String, MutableSet<DefaultWebSocketServerSession>> = ConcurrentHashMap()
-
+    private val sessionStorage: ConcurrentMap<String, MutableSet<SessionData>> = ConcurrentHashMap()
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
@@ -38,12 +37,13 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
             logger.debug { "send data to $id destination" }
             eventStorage[id] = messageForSend
 
-            sessionStorage[destination]?.let { sessionSet ->
-                for (session in sessionSet) {
+            sessionStorage[destination]?.let { sessionDataSet ->
+                sessionDataSet.forEach { data ->
                     try {
-                        session.send(Frame.Text(messageForSend))
+                        if (data.subscribeInfo == SubscribeInfo(agentInfo.id, agentInfo.buildVersion))
+                            data.session.send(Frame.Text(messageForSend))
                     } catch (ex: Exception) {
-                        sessionSet.remove(session)
+                        sessionDataSet.removeIf { it == data }
                     }
                 }
             }
@@ -60,9 +60,9 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
                             when (event.type) {
                                 MessageType.SUBSCRIBE -> {
                                     val subscribeInfo = SubscribeInfo.serializer() parse event.message
-                                    saveSession(event)
-                                    val buildVersion = subscribeInfo.buildVersion
 
+                                    saveSession(event, subscribeInfo)
+                                    val buildVersion = subscribeInfo.buildVersion
 
                                     val message =
                                         eventStorage[
@@ -86,7 +86,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
                                 }
                                 MessageType.UNSUBSCRIBE -> {
                                     sessionStorage[event.destination]?.let {
-                                        it.removeIf { ses -> ses == this }
+                                        it.removeIf { data -> data.session == this }
                                     }
                                 }
                                 else -> {
@@ -101,14 +101,26 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
         }
     }
 
-    private fun DefaultWebSocketServerSession.saveSession(event: Message) {
+    private fun DefaultWebSocketServerSession.saveSession(event: Message, subscribeInfo: SubscribeInfo) {
         val sessionSet = sessionStorage.getOrPut(event.destination) {
             Collections.newSetFromMap(ConcurrentHashMap())
         }
-        sessionSet.add(this)
+        sessionSet.add(SessionData(this, subscribeInfo))
     }
 
 }
 
 @Serializable
-data class SubscribeInfo(val agentId: String, val buildVersion: String? = null)
+data class SubscribeInfo(
+    val agentId: String,
+    val buildVersion: String? = null
+)
+
+data class SessionData(
+    val session: DefaultWebSocketServerSession,
+    val subscribeInfo: SubscribeInfo
+) {
+    override fun equals(other: Any?) = other is SessionData && other.session == session
+
+    override fun hashCode() = session.hashCode()
+}
