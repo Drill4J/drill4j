@@ -125,7 +125,9 @@ suspend fun AgentInfo.update(agentManager: AgentManager) {
             })
 
             buildVersions = SizedCollection(ai.buildVersions.map { bv ->
-                AgentBuildVersion.find { AgentBuildVersions.buildVersion eq bv.id }.firstOrNull()
+                AgentBuildVersion.find {
+                    (AgentBuildVersions.buildVersion eq bv.id) and (AgentBuildVersions.name eq bv.name)
+                }.firstOrNull()
                     ?.fill(bv) ?: AgentBuildVersion.new { fill(bv) }
             })
         }
