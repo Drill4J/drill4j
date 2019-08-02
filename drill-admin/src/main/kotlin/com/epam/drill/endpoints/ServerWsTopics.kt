@@ -3,14 +3,12 @@ package com.epam.drill.endpoints
 
 import com.epam.drill.agentmanager.*
 import com.epam.drill.common.*
-import com.epam.drill.dataclasses.*
 import com.epam.drill.plugins.*
 import com.epam.drill.router.*
 import com.epam.drill.storage.*
 import io.ktor.application.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
-import org.jetbrains.exposed.sql.transactions.*
 import org.kodein.di.*
 import org.kodein.di.generic.*
 
@@ -72,13 +70,7 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                 }
 
                 topic<WsRoutes.GetAgentBuilds> { agent, _ ->
-                    agentManager[agent.agentId]?.let {
-                        transaction {
-                            AgentInfoDb.findById(agent.agentId)?.buildVersions?.map {
-                                it.toAgentBuildVersionJson()
-                            }?.toList()
-                        }
-                    }
+                    agentManager[agent.agentId]?.buildVersions
                 }
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
