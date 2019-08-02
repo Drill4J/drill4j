@@ -55,7 +55,7 @@ class CoverageAdminPartTest {
             val agentData = data as ClassDataBuilder
             val (name, bytes) = agentData.classData.first()
             assertEquals(dummyClass.path, name)
-            assertTrue { dummyBytes.contentEquals(bytes) }
+            assertTrue { dummyBytes contentEquals bytes }
         }
     }
 
@@ -106,10 +106,10 @@ class CoverageAdminPartTest {
 
     @Test
     fun `empty activeScope should not be saved during switch to new scope`() {
-        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         runBlocking {
-            coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2", true))
+            coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope2", true)))
         }
         assertNull(agentState.scopes["testScope"])
     }
@@ -117,23 +117,38 @@ class CoverageAdminPartTest {
     @Test
     fun `not empty activeScope should switch to a specified one with previous scope deletion`() {
         prepareClasses()
-        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         appendSessionStub(agentState, agentState.classesData())
-        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2")) }
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope2"))) }
         assertNull(agentState.scopes["testScope"])
     }
 
     @Test
     fun `not empty activeScope should switch to a specified one with saving previous scope`() {
         prepareClasses()
-        runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope")) }
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         appendSessionStub(agentState, agentState.classesData())
         runBlocking {
-            coverageController.changeActiveScope(ActiveScopeChangePayload("testScope2", true))
+            coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope2", true)))
         }
         assertTrue { agentState.scopes.values.any { it.name == "testScope" } }
+    }
+
+    @Test
+    fun `DropScope action deletes the specified scope data from storage`() {
+        prepareClasses()
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testDropScope"))) }
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking {
+            coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testDropScope2", true)))
+        }
+        val id = agentState.scopes.values.find { it.name == "testDropScope" }?.id
+        assertNotNull(id)
+        runBlocking { coverageController.doAction(DropScope(ScopePayload(id))) }
+        val deleted = agentState.scopes.values.find { it.id == id }
+        assertNull(deleted)
     }
 
     private fun appendSessionStub(agentState: AgentState, classesData: ClassesData) {
