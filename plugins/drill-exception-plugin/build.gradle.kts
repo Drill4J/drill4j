@@ -53,7 +53,7 @@ kotlin {
             dependencies {
                 implementation(project(":drill-common"))
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation("com.epam.drill:drill-jvmapi-$preset:$version")
+                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
             }
         }
         named("adminPartMain") {

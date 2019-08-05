@@ -16,7 +16,7 @@ kotlin {
     sourceSets {
         named("winMain") {
             dependencies {
-                implementation("com.epam.drill:drill-jvmapi-$preset:$version")
+                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
         }

@@ -91,7 +91,7 @@ kotlin {
                 implementation("io.ktor:ktor-utils-native:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation("com.epam.drill:drill-jvmapi-$preset:$version")
+                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
                 implementation(project(":drill-common"))
                 implementation(project(":platformDependent"))
             }
