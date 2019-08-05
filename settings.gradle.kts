@@ -1,19 +1,19 @@
-import org.apache.tools.ant.taskdefs.condition.*
+import org.apache.tools.ant.taskdefs.condition.Os
 
 rootProject.name = "drill4j"
 include(":drill-agent")
+if (Os.isFamily(Os.FAMILY_UNIX)) {
+    include("platformDependent")
+    project(":platformDependent").projectDir = file("drill-agent/drill-linux")
+} else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    include("platformDependent")
+    project(":platformDependent").projectDir = file("drill-agent/drill-win")
+}
+
 include(":drill-common")
 include(":drill-admin")
 include(":drill-plugin-api:drill-admin-part")
 include(":drill-plugin-api:drill-agent-part")
-
-if (Os.isFamily(Os.FAMILY_UNIX)) {
-    include("platformDependent")
-    project(":platformDependent").projectDir = file("nativeprojects/drill-linux")
-} else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    include("platformDependent")
-    project(":platformDependent").projectDir = file("nativeprojects/drill-win")
-}
 
 /**plugin's projects*/
 include(":plugins:drill-coverage-plugin")
