@@ -23,7 +23,7 @@ kotlin {
         }
         named("natMain") {
             dependencies {
-                implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:1.2.0")
             }
         }

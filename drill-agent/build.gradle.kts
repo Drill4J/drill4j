@@ -13,7 +13,6 @@ repositories {
     mavenLocal()
     jcenter()
     maven(url = "https://kotlin.bintray.com/kotlinx")
-    maven(url = "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/")
 }
 
 kotlin {
@@ -92,7 +91,7 @@ kotlin {
                 implementation("io.ktor:ktor-utils-native:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation(project(":nativeprojects:drill-jvmapi"))
+                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
                 implementation(project(":drill-common"))
                 implementation(project(":platformDependent"))
             }

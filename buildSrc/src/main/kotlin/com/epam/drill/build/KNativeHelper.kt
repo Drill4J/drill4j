@@ -14,6 +14,14 @@ val preset =
         else -> throw RuntimeException("Target ${System.getProperty("os.name")} is not supported")
     }
 
+val targetName =
+    when {
+        Os.isFamily(Os.FAMILY_MAC) -> "macos"
+        Os.isFamily(Os.FAMILY_UNIX) -> "linux"
+        Os.isFamily(Os.FAMILY_WINDOWS) -> "mingw"
+        else -> throw RuntimeException("Target ${System.getProperty("os.name")} is not supported")
+    }
+
 
 val staticLibraryExtension =
     when {
