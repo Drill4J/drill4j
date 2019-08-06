@@ -67,7 +67,7 @@ class AgentState(
         val diff = MethodsComparator(bundleCoverage).compareClasses(prevMethods, currentMethods)
 
         val prevAgentInfo = prevData?.agentInfo
-        val changed = prevAgentInfo == agentInfo && diff.notEmpty()
+        val changed = prevAgentInfo != agentInfo || diff.notEmpty()
         data = ClassesData(
             agentInfo = agentInfo,
             classesBytes = classBytes,
