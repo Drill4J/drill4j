@@ -1,4 +1,4 @@
-import com.epam.drill.build.serializationRuntimeVersion
+import com.epam.drill.build.*
 
 plugins {
     id("kotlin-multiplatform")
@@ -17,7 +17,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common:$drillCommonVersion")
             }
         }
         val drillAdminPartMain by getting
@@ -25,7 +25,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
             }
         }
     }

@@ -10,7 +10,7 @@ if (Os.isFamily(Os.FAMILY_UNIX)) {
     project(":platformDependent").projectDir = file("drill-agent/drill-win")
 }
 
-include(":drill-common")
+//include(":drill-common")
 include(":drill-admin")
 include(":drill-plugin-api:drill-admin-part")
 include(":drill-plugin-api:drill-agent-part")

@@ -40,7 +40,7 @@ kotlin {
         }
         named("agentPartMain") {
             dependencies {
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common:$drillCommonVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
@@ -50,14 +50,14 @@ kotlin {
         }
         named("nativePartMain") {
             dependencies {
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common:$drillCommonVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
             }
         }
         named("adminPartMain") {
             dependencies {
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common:$drillCommonVersion")
                 implementation(project(":drill-plugin-api:drill-admin-part"))
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")

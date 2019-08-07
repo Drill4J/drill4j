@@ -47,7 +47,7 @@ kotlin {
                 implementation(kotlin("reflect")) //TODO jarhell quick fix for kotlin jvm apps
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
             }
         }
@@ -56,20 +56,13 @@ kotlin {
                 implementation(kotlin("test-junit"))
             }
         }
-
-        jvm("javaAgent").compilations["test"].defaultSourceSet {
-            dependencies {
-                implementation(kotlin("test-junit"))
-            }
-        }
-
 
         named("commonMain") {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common:$drillCommonVersion")
             }
         }
         named("commonTest") {
@@ -78,7 +71,6 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
             }
         }
-
 
         named("nativeAgentMain") {
             dependencies {
@@ -92,7 +84,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
                 implementation(project(":drill-plugin-api:drill-agent-part"))
                 implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillCommonVersion")
                 implementation(project(":platformDependent"))
             }
         }
