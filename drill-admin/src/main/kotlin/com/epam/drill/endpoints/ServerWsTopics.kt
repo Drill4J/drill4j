@@ -65,12 +65,12 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
 
                 }
 
-                topic<WsRoutes.GetAgent> { x, _ ->
-                    agentManager[x.agentId]?.toAgentInfoWebSocket()
+                topic<WsRoutes.GetAgent> { payload, _ ->
+                    agentManager[payload.agentId]?.toAgentInfoWebSocket()
                 }
 
-                topic<WsRoutes.GetAgentBuilds> { agent, _ ->
-                    agentManager[agent.agentId]?.buildVersions
+                topic<WsRoutes.GetAgentBuilds> { payload, _ ->
+                    agentManager[payload.agentId]?.buildVersions
                 }
 
                 topic<WsRoutes.GetAllPlugins> { _, _ ->
@@ -78,9 +78,9 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                         .toAllPluginsWebSocket(agentManager.agentStorage.values.map { it.agent }.toMutableSet())
                 }
 
-                topic<WsRoutes.GetPluginInfo> { gpi, _ ->
+                topic<WsRoutes.GetPluginInfo> { payload, _ ->
                     val installedPluginBeanIds = agentManager
-                        .getAllInstalledPluginBeanIds(gpi.agentId)
+                        .getAllInstalledPluginBeanIds(payload.agentId)
                     plugins.getAllPluginBeans().map { plug ->
                         val pluginWebSocket = plug.toPluginWebSocket()
                         if (plug partOf installedPluginBeanIds) {
@@ -88,6 +88,10 @@ class ServerWsTopics(override val kodein: Kodein) : KodeinAware {
                         }
                         pluginWebSocket
                     }
+                }
+
+                topic<WsRoutes.GetPluginConfig> { payload, _ ->
+                    agentManager[payload.agent]?.plugins?.find { it.id == payload.plugin }?.config
                 }
             }
 

@@ -4,18 +4,11 @@ import com.epam.drill.common.*
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.locations.*
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.*
 import org.kodein.di.*
 import java.util.concurrent.*
-import kotlin.collections.MutableMap
-import kotlin.collections.MutableSet
-import kotlin.collections.filter
-import kotlin.collections.forEachIndexed
-import kotlin.collections.iterator
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
-import kotlin.collections.toTypedArray
 import kotlin.reflect.*
 import kotlin.reflect.full.*
 
@@ -28,7 +21,7 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    fun Application.resolve(destination: WsUrl, x: MutableSet<DrillWsSession>): Any? {
+    fun Application.resolve(destination: WsUrl, x: MutableSet<DrillWsSession>): String {
         if (xas.isEmpty()) return ""
         val split = destination.split("/")
 
@@ -57,8 +50,8 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
         }
         val param = feature(Locations).resolve<Any>(next.value.first, parameters)
 
-        return next.value.second.resolve(param, x)
-
+        val result = next.value.second.resolve(param, x)
+        return serialize(result)
     }
 }
 
@@ -75,3 +68,31 @@ class Temp<T, R>(val block: (R, MutableSet<DrillWsSession>) -> T) {
     }
 }
 
+@UseExperimental(ImplicitReflectionSerializer::class)
+fun serialize(value: Any?): String {
+    if (value == null) return ""
+    val serializer = when (value) {
+        is String -> null
+        is List<*> -> ArrayListSerializer(elementSerializer(value))
+        is Set<*> -> HashSetSerializer(elementSerializer(value))
+        is Map<*, *> -> HashMapSerializer(
+            elementSerializer(value.keys),
+            elementSerializer(value.values)
+        )
+        is Array<*> -> {
+            @Suppress("UNCHECKED_CAST")
+            (ReferenceArraySerializer(
+                value::class as KClass<Any>,
+                elementSerializer(value.asList()) as KSerializer<Any>
+            ))
+        }
+        else -> value::class.serializer()
+    }
+    @Suppress("UNCHECKED_CAST")
+    return if (serializer != null) {
+        serializer as KSerializer<Any> stringify value
+    } else value as String
+}
+
+@UseExperimental(ImplicitReflectionSerializer::class)
+fun elementSerializer(collection: Collection<*>) = (collection.firstOrNull() ?: String)::class.serializer()

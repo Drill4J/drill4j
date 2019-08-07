@@ -7,7 +7,6 @@ import com.epam.drill.endpoints.*
 import io.ktor.application.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
-import io.ktor.swagger.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
@@ -56,38 +55,29 @@ class DrillServerWs(override val kodein: Kodein) : KodeinAware {
         }
     }
 
-    @UseExperimental(ImplicitReflectionSerializer::class)
     private suspend fun subscribe(
         wsSession: DrillWsSession,
         event: Message
     ) {
         sessionStorage += (wsSession)
         println("${event.destination} is subscribed")
+        sendToAllSubscribed(event.destination)
+    }
+
+    @UseExperimental(ImplicitReflectionSerializer::class)
+    suspend fun sendToAllSubscribed(destination: String) {
         app.run {
             wsTopic {
-                val resolve = resolve(event.destination, sessionStorage)!!
-                if (resolve is Collection<*>) {
-                    sessionStorage.sendTo(
-                        Message(
-                            MessageType.MESSAGE,
-                            event.destination,
-                            Json.stringify(resolve)
-                        )
+                val message = resolve(destination, sessionStorage)
+                sessionStorage.sendTo(
+                    Message(
+                        MessageType.MESSAGE,
+                        destination,
+                        message
                     )
-                } else {
-                    @Suppress("UNCHECKED_CAST") val serializer = resolve::class.serializer() as KSerializer<Any>
-                    sessionStorage.sendTo(
-                        Message(
-                            MessageType.MESSAGE,
-                            event.destination,
-                            serializer stringify resolve
-                        )
-                    )
-                }
+                )
             }
         }
     }
 
-
 }
-
