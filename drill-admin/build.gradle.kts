@@ -36,7 +36,7 @@ application {
 
 
 dependencies {
-    implementation(project(":drill-common"))
+    implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
     implementation(project(":drill-plugin-api:drill-admin-part"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")

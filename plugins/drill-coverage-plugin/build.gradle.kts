@@ -39,7 +39,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation(project(":drill-common"))
+                implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
@@ -79,7 +79,7 @@ kotlin {
         jvms.forEach {
             it.compilations["main"].defaultSourceSet {
                 dependencies {
-                    implementation(project(":drill-common"))
+                    implementation("com.epam.drill:drill-common:$drillCommonVersion")
                     implementation(kotlin("stdlib-jdk8"))
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                     compileOnly("org.jetbrains.kotlinx:atomicfu:$atomicFuVersion")
