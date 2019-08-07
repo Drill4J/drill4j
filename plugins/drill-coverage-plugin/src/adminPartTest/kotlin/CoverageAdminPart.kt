@@ -66,7 +66,7 @@ class CoverageAdminPartTest {
         sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
         val finished = SessionFinished(sessionId, currentTimeMillis())
         sendMessage(finished)
-        assertTrue { ws.sent.any { it.first.endsWith("/build-methods") } }
+        assertTrue { ws.sent.any { it.first.endsWith("/methods") } }
         assertTrue { ws.sent.any { it.first.endsWith("/coverage") } }
         assertTrue { ws.sent.any { it.first.endsWith("/coverage-by-packages") } }
     }
