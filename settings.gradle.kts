@@ -11,8 +11,6 @@ if (Os.isFamily(Os.FAMILY_UNIX)) {
 }
 
 include(":drill-admin")
-include(":drill-plugin-api:drill-admin-part")
-include(":drill-plugin-api:drill-agent-part")
 
 /**plugin's projects*/
 include(":plugins:drill-coverage-plugin")

@@ -48,7 +48,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
                 implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part-jvm:0.2.0")
             }
         }
         jvm("javaAgent").compilations["test"].defaultSourceSet {
@@ -61,7 +61,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part:0.2.0")
                 implementation("com.epam.drill:drill-common:$drillCommonVersion")
             }
         }
@@ -82,7 +82,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation("io.ktor:ktor-utils-native:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:0.2.0")
                 implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
                 implementation("com.epam.drill:drill-common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillCommonVersion")
                 implementation(project(":platformDependent"))

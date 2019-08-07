@@ -61,7 +61,7 @@ kotlin {
             }
             dependencies {
                 
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part-jvm:0.2.0")
             }
         }
         agentPartMain.dependsOn(jvmMain)
@@ -70,7 +70,7 @@ kotlin {
                 extendsFrom(adminJarDeps)
             }
             dependencies {
-                implementation(project(":drill-plugin-api:drill-admin-part"))
+                implementation("com.epam.drill:drill-admin-part-jvm:0.2.0")
             }
         }
         adminPartMain.dependsOn(jvmMain)
