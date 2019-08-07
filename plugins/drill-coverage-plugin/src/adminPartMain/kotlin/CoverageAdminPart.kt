@@ -268,7 +268,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
         sender.send(
             agentInfo,
-            "$path/build-methods",
+            "$path/methods",
             BuildMethods.serializer() stringify cis.buildMethods
         )
 
