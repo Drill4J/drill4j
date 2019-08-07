@@ -117,7 +117,7 @@ fun Methods.getInfo(
     data: Map<Pair<String, String>, IMethodCoverage>
 ) = MethodsInfo(
     totalCount = this.count(),
-    coveredCount = mapNotNull { data[it.ownerClass to it.sign]?.instructionCounter?.coveredCount }.count(),
+    coveredCount = count { data[it.ownerClass to it.sign]?.instructionCounter?.coveredCount ?: 0 > 0 },
     methods = this
 )
 
