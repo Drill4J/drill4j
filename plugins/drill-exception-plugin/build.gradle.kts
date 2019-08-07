@@ -41,7 +41,7 @@ kotlin {
         named("agentPartMain") {
             dependencies {
                 implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part-jvm:0.2.0")
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 project.dependencies.add("agentDeps", "org.jacoco:org.jacoco.core:0.8.3")
@@ -51,14 +51,14 @@ kotlin {
         named("nativePartMain") {
             dependencies {
                 implementation("com.epam.drill:drill-common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillCommonVersion")
-                implementation(project(":drill-plugin-api:drill-agent-part"))
+                implementation("com.epam.drill:drill-agent-part-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:0.2.0")
                 implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$drillUtilsVersion")
             }
         }
         named("adminPartMain") {
             dependencies {
                 implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
-                implementation(project(":drill-plugin-api:drill-admin-part"))
+                implementation("com.epam.drill:drill-admin-part-jvm:0.2.0")
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jacoco:org.jacoco.core:0.8.3")
