@@ -39,7 +39,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common:$drillCommonVersion")
+                implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
