@@ -74,8 +74,7 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
             name = au.name
             groupName = au.group
             description = au.description
-            buildVersion = au.buildVersion
-            buildAlias = au.buildVersions.firstOrNull { it.id == au.buildVersion }?.name!!
+            buildAlias = au.buildVersions.firstOrNull { it.id == this.buildVersion }?.name!!
             buildVersions.replaceAll(au.buildVersions)
             status = au.status
             update(this@AgentManager)
