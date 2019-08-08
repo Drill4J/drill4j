@@ -36,8 +36,8 @@ application {
 
 
 dependencies {
-    implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
-    implementation("com.epam.drill:drill-admin-part-jvm:0.2.0")
+    implementation("com.epam.drill:drill-common-jvm:$version")
+    implementation("com.epam.drill:drill-admin-part-jvm:$version")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
     implementation("org.litote.kmongo:kmongo:3.9.0")

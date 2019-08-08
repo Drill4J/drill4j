@@ -39,7 +39,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common-jvm:$drillCommonVersion")
+                implementation("com.epam.drill:drill-common-jvm:$version")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
@@ -61,7 +61,7 @@ kotlin {
             }
             dependencies {
                 
-                implementation("com.epam.drill:drill-agent-part-jvm:0.2.0")
+                implementation("com.epam.drill:drill-agent-part-jvm:$version")
             }
         }
         agentPartMain.dependsOn(jvmMain)
@@ -70,7 +70,7 @@ kotlin {
                 extendsFrom(adminJarDeps)
             }
             dependencies {
-                implementation("com.epam.drill:drill-admin-part-jvm:0.2.0")
+                implementation("com.epam.drill:drill-admin-part-jvm:$version")
             }
         }
         adminPartMain.dependsOn(jvmMain)
@@ -79,7 +79,7 @@ kotlin {
         jvms.forEach {
             it.compilations["main"].defaultSourceSet {
                 dependencies {
-                    implementation("com.epam.drill:drill-common:$drillCommonVersion")
+                    implementation("com.epam.drill:drill-common:$version")
                     implementation(kotlin("stdlib-jdk8"))
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                     compileOnly("org.jetbrains.kotlinx:atomicfu:$atomicFuVersion")

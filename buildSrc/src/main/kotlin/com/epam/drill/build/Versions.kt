@@ -11,7 +11,3 @@ val atomicFuVersion = "0.12.9"
 val korioVersion = "1.7.+"
 
 val ktorVersion = "1.2.0"
-
-val drillUtilsVersion = "0.2.0"
-
-val drillCommonVersion = "0.2.0"
