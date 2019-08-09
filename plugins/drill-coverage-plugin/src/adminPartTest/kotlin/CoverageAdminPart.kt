@@ -152,6 +152,64 @@ class CoverageAdminPartTest {
         assertNull(deleted)
     }
 
+    @Test
+    fun `active scope renaming process goes correctly`() {
+        prepareClasses()
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("renameActiveScope1"))) }
+        assertEquals(agentState.activeScope.summary.name, "renameActiveScope1")
+        val activeId = agentState.activeScope.id
+        runBlocking { coverageController.doAction(RenameScope(RenameScopePayload(activeId, "renameActiveScope2"))) }
+        assertEquals(agentState.activeScope.summary.name, "renameActiveScope2")
+    }
+
+    @Test
+    fun `finished scope renaming process goes correctly`() {
+        prepareClasses()
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("renameFinishedScope1"))) }
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking {
+            coverageController.doAction(
+                SwitchActiveScope(
+                    ActiveScopeChangePayload(
+                        "renameFinishedScope2",
+                        true
+                    )
+                )
+            )
+        }
+        val finishedId = agentState.scopes.values.find { it.name == "renameFinishedScope1" }?.id!!
+        runBlocking { coverageController.doAction(RenameScope(RenameScopePayload(finishedId, "renamedScope1"))) }
+        val renamed = agentState.scopes[finishedId]!!
+        assertEquals(renamed.name, "renamedScope1")
+    }
+
+    @Test
+    fun `neither active nor finished scope can be renamed to an existing scope name`() {
+        prepareClasses()
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName1"))) }
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName2", true))) }
+        appendSessionStub(agentState, agentState.classesData())
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("freeName", true))) }
+        val finishedId = agentState.scopes.values.find { it.name == "occupiedName1" }?.id!!
+        runBlocking { coverageController.doAction(RenameScope(RenameScopePayload(finishedId, "occupiedName2"))) }
+        assertEquals(agentState.scopes[finishedId]!!.name, "occupiedName1")
+        val activeId = agentState.activeScope.id
+        runBlocking { coverageController.doAction(RenameScope(RenameScopePayload(activeId, "occupiedName2"))) }
+        assertEquals(agentState.activeScope.summary.name, "freeName")
+    }
+
+    @Test
+    fun `not possible to switch scope to a new one with already existing name`() {
+        prepareClasses()
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName"))) }
+        appendSessionStub(agentState, agentState.classesData())
+        val activeId1 = agentState.activeScope.id
+        runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName", true))) }
+        val activeId2 = agentState.activeScope.id
+        assertEquals(activeId1, activeId2)
+    }
+
     private fun appendSessionStub(agentState: AgentState, classesData: ClassesData) {
         agentState.activeScope.update(
             FinishedSession(

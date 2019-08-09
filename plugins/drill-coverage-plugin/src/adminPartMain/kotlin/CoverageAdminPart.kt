@@ -32,8 +32,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         return when (action) {
             is SwitchActiveScope ->
                 serDe.actionSerializer stringify changeActiveScope(action.payload)
-            is RenameActiveScope ->
-                serDe.actionSerializer stringify renameActiveScope(action.payload)
+            is RenameScope ->
+                serDe.actionSerializer stringify renameScope(action.payload)
             is ToggleScope -> toggleScope(action.payload.scopeId)
             is DropScope -> dropScope(action.payload.scopeId)
             is StartNewSession -> {
@@ -49,12 +49,23 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         }
     }
 
-    internal suspend fun renameActiveScope(payload: ActiveScopePayload) =
-        if (agentState.scopes.values.find { it.name == payload.scopeName } == null) {
-            val oldSummary = activeScope.rename(payload.scopeName)
-            sendActiveScope()
-            ValidationResult("Renamed $activeScope: ${oldSummary.name} -> ${payload.scopeName}")
-        } else ValidationResult("Failed to rename active scope: name ${payload.scopeName} is already in use")
+    internal suspend fun renameScope(payload: RenameScopePayload) =
+        when {
+            agentState.scopeNotExisting(payload.scopeId) -> ValidationResult(
+                "Failed to rename scope with id ${payload.scopeId}: scope not found"
+            )
+            agentState.scopeNameNotExisting(payload.scopeName) -> {
+                agentState.renameScope(payload.scopeId, payload.scopeName)
+                sendScopeMessages()
+                ValidationResult("Renamed scope with id ${payload.scopeId} -> ${payload.scopeName}")
+            }
+            else -> ValidationResult(
+                "Failed to rename scope with id ${payload.scopeId}:" +
+                        " name ${payload.scopeName} is already in use"
+            )
+        }
+
+
 
     override suspend fun processData(dm: DrillMessage): Any {
         val content = dm.content
@@ -231,7 +242,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) =
-        if (agentState.scopes.values.find { it.name == scopeChange.scopeName } == null) {
+        if (agentState.scopes.values.find { it.name == scopeChange.scopeName } == null &&
+            activeScope.summary.name != scopeChange.scopeName) {
             val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
             if (scopeChange.savePrevScope) {
                 if (prevScope.any()) {
