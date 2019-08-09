@@ -71,7 +71,7 @@ class ActiveScope(
     override fun toString() = "act-scope($id, $name)"
 }
 
-class FinishedScope(
+data class FinishedScope(
     val id: String,
     val name: String,
     val summary: ScopeSummary,

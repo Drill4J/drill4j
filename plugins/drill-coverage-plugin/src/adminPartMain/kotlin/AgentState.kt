@@ -43,6 +43,15 @@ class AgentState(
         }
     }
 
+    fun renameScope(id: String, newName: String) {
+        if (id == activeScope.id) activeScope.rename(newName)
+        else scopes[id]?.apply { scopes[id] = this.copy(name = newName, summary = this.summary.copy(name = newName)) }
+    }
+
+    fun scopeNameNotExisting(name: String) = scopes.values.find { it.name == name } == null
+
+    fun scopeNotExisting(id: String) = scopes[id] == null && activeScope.id != id
+
     fun addClass(key: String, bytes: ByteArray) {
         //throw ClassCastException if the ref value is in the wrong state
         val agentData = data as ClassDataBuilder
