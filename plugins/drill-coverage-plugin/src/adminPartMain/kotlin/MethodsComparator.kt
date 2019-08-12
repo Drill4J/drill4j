@@ -100,15 +100,13 @@ class IncrementalCache {
     }
 
     fun filterMethods(bundle: IBundleCoverage?): MethodChanges {
-        return if (bundle != null) {
-            bundle.toDataMap().run {
-                map.mapValues { methods ->
-                    methods.filter { this[it.ownerClass to it.sign] != null }
-                }
+        return (bundle?.toDataMap()?.run {
+            map.map { diffType, methods ->
+                if (diffType != DiffType.DELETED) {
+                    tuple(diffType, methods!!.filter { this[it.ownerClass to it.sign] != null })
+                } else tuple(diffType, methods)
             }
-        } else {
-            map
-        }.toJavaMap()
+        } ?: map).toJavaMap()
     }
 }
 
