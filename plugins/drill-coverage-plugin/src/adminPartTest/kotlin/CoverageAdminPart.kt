@@ -7,6 +7,8 @@ import com.epam.drill.plugins.coverage.test.bar.*
 import com.epam.drill.plugins.coverage.test.foo.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
+import org.jacoco.core.internal.data.*
+import java.util.concurrent.*
 import kotlin.test.*
 
 class CoverageAdminPartTest {
@@ -66,9 +68,9 @@ class CoverageAdminPartTest {
         sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
         val finished = SessionFinished(sessionId, currentTimeMillis())
         sendMessage(finished)
-        assertTrue { ws.sent.any { it.first.endsWith("/methods") } }
-        assertTrue { ws.sent.any { it.first.endsWith("/coverage") } }
-        assertTrue { ws.sent.any { it.first.endsWith("/coverage-by-packages") } }
+        assertTrue { ws.sent["/build/methods"] != null }
+        assertTrue { ws.sent["/build/coverage"] != null }
+        assertTrue { ws.sent["/build/coverage-by-packages"] != null }
     }
 
     @Test
@@ -210,6 +212,19 @@ class CoverageAdminPartTest {
         assertEquals(activeId1, activeId2)
     }
 
+    @Test
+    fun `should compute new methods coverage rates`() {
+        runBlocking {
+            prepareClasses(Dummy::class.java)
+            commendTestSession(listOf(true, false))
+            val methods = ws.sent["/scope/${agentState.activeScope.id}/methods"]
+            @Suppress("UNCHECKED_CAST")
+            val parsed = BuildMethods.serializer() parse (methods as String)
+            assertTrue { parsed.totalMethods.methods.any { it.coverageRate == CoverageRate.FULL } }
+            assertTrue { parsed.totalMethods.methods.any { it.coverageRate == CoverageRate.MISSED } }
+        }
+    }
+
     private fun appendSessionStub(agentState: AgentState, classesData: ClassesData) {
         agentState.activeScope.update(
             FinishedSession(
@@ -219,6 +234,26 @@ class CoverageAdminPartTest {
             ),
             classesData
         )
+    }
+
+    private fun commendTestSession(probes: List<Boolean>) {
+        val sessionId = "test"
+        val className = "com/epam/drill/plugins/coverage/Dummy"
+        sendMessage(SessionStarted(sessionId, "MANUAL", currentTimeMillis()))
+        sendMessage(
+            CoverDataPart(
+                sessionId,
+                listOf(
+                    ExecClassData(
+                        id = CRC64.classId(agentState.classesData().classesBytes[className]),
+                        className = className,
+                        probes = probes,
+                        testName = "someTestName"
+                    )
+                )
+            )
+        )
+        sendMessage(SessionFinished(sessionId, currentTimeMillis()))
     }
 
     private fun prepareClasses(vararg classes: Class<*>) {
@@ -252,15 +287,16 @@ class CoverageAdminPartTest {
 
 class SenderStub : Sender {
 
-    val sent = mutableListOf<Pair<String, Any>>()
+    val sent = ConcurrentHashMap<String, Any>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         if (!message.isEmpty()) {
-            sent.add(destination to message)
+            sent[destination] = message
             if (destination.endsWith("/coverage-by-packages"))
                 javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
         }
     }
+
 }
