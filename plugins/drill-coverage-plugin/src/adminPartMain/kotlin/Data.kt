@@ -7,7 +7,8 @@ data class JavaMethod(
     val ownerClass: String,
     val name: String,
     val desc: String,
-    val hash: String?
+    val hash: String?,
+    val coverageRate: CoverageRate = CoverageRate.MISSED
 ) {
 
     val sign = "$name$desc"
@@ -18,6 +19,12 @@ data class JavaMethod(
 
     fun bodyModified(otherMethod: JavaMethod) = name == otherMethod.name && desc == otherMethod.desc
 
+}
+
+enum class CoverageRate {
+    MISSED,
+    PARTLY,
+    FULL
 }
 
 @Serializable

@@ -7,6 +7,8 @@ import com.epam.drill.plugins.coverage.test.bar.*
 import com.epam.drill.plugins.coverage.test.foo.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
+import org.jacoco.core.internal.data.*
+import java.util.concurrent.*
 import kotlin.test.*
 
 class CoverageAdminPartTest {
@@ -66,9 +68,9 @@ class CoverageAdminPartTest {
         sendMessage(SessionStarted(sessionId, "", currentTimeMillis()))
         val finished = SessionFinished(sessionId, currentTimeMillis())
         sendMessage(finished)
-        assertTrue { ws.sent.any { it.first.endsWith("/methods") } }
-        assertTrue { ws.sent.any { it.first.endsWith("/coverage") } }
-        assertTrue { ws.sent.any { it.first.endsWith("/coverage-by-packages") } }
+        assertTrue { ws.sent["/build/methods"] != null }
+        assertTrue { ws.sent["/build/coverage"] != null }
+        assertTrue { ws.sent["/build/coverage-by-packages"] != null }
     }
 
     @Test
@@ -106,7 +108,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `empty activeScope should not be saved during switch to new scope`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         runBlocking {
@@ -117,7 +119,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `not empty activeScope should switch to a specified one with previous scope deletion`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testScope"))) }
         assertEquals("testScope", agentState.activeScope.name)
         appendSessionStub(agentState, agentState.classesData())
@@ -127,7 +129,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `not empty activeScope should switch to a specified one with saving previous scope`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.changeActiveScope(ActiveScopeChangePayload("testScope66")) }
         assertEquals("testScope66", agentState.activeScope.name)
         appendSessionStub(agentState, agentState.classesData())
@@ -139,7 +141,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `DropScope action deletes the specified scope data from storage`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("testDropScope"))) }
         appendSessionStub(agentState, agentState.classesData())
         runBlocking {
@@ -154,7 +156,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `active scope renaming process goes correctly`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("renameActiveScope1"))) }
         assertEquals(agentState.activeScope.summary.name, "renameActiveScope1")
         val activeId = agentState.activeScope.id
@@ -164,7 +166,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `finished scope renaming process goes correctly`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("renameFinishedScope1"))) }
         appendSessionStub(agentState, agentState.classesData())
         runBlocking {
@@ -185,7 +187,7 @@ class CoverageAdminPartTest {
 
     @Test
     fun `neither active nor finished scope can be renamed to an existing scope name`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName1"))) }
         appendSessionStub(agentState, agentState.classesData())
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName2", true))) }
@@ -201,13 +203,26 @@ class CoverageAdminPartTest {
 
     @Test
     fun `not possible to switch scope to a new one with already existing name`() {
-        prepareClasses()
+        prepareClasses(Dummy::class.java)
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName"))) }
         appendSessionStub(agentState, agentState.classesData())
         val activeId1 = agentState.activeScope.id
         runBlocking { coverageController.doAction(SwitchActiveScope(ActiveScopeChangePayload("occupiedName", true))) }
         val activeId2 = agentState.activeScope.id
         assertEquals(activeId1, activeId2)
+    }
+
+    @Test
+    fun `should compute new methods coverage rates`() {
+        runBlocking {
+            prepareClasses(Dummy::class.java)
+            commendTestSession(listOf(true, false))
+            val methods = ws.sent["/scope/${agentState.activeScope.id}/methods"]
+            @Suppress("UNCHECKED_CAST")
+            val parsed = BuildMethods.serializer() parse (methods as String)
+            assertTrue { parsed.totalMethods.methods.any { it.coverageRate == CoverageRate.FULL } }
+            assertTrue { parsed.totalMethods.methods.any { it.coverageRate == CoverageRate.MISSED } }
+        }
     }
 
     private fun appendSessionStub(agentState: AgentState, classesData: ClassesData) {
@@ -248,17 +263,37 @@ class CoverageAdminPartTest {
             coverageController.processData(DrillMessage("", messageStr))
         }
     }
+
+    private fun commendTestSession(probes: List<Boolean>) {
+        val sessionId = "test"
+        val className = "com/epam/drill/plugins/coverage/Dummy"
+        sendMessage(SessionStarted(sessionId, "MANUAL", currentTimeMillis()))
+        sendMessage(
+            CoverDataPart(
+                sessionId,
+                listOf(
+                    ExecClassData(
+                        id = CRC64.classId(agentState.classesData().classesBytes[className]),
+                        className = className,
+                        probes = probes,
+                        testName = "someTestName"
+                    )
+                )
+            )
+        )
+        sendMessage(SessionFinished(sessionId, currentTimeMillis()))
+    }
 }
 
 class SenderStub : Sender {
 
-    val sent = mutableListOf<Pair<String, Any>>()
+    val sent = ConcurrentHashMap<String, Any>()
 
     lateinit var javaPackagesCoverage: List<JavaPackageCoverage>
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         if (!message.isEmpty()) {
-            sent.add(destination to message)
+            sent[destination] = message
             if (destination.endsWith("/coverage-by-packages"))
                 javaPackagesCoverage = JavaPackageCoverage.serializer().list parse message
         }
