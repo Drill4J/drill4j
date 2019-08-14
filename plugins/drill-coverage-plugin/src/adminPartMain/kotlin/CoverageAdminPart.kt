@@ -229,6 +229,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         agentState.scopes[scopeId]?.let { scope ->
             scope.toggle()
             sendScopes()
+            sendScopeSummary(scope.summary)
             calculateAndSendBuildCoverage()
         }
     }
