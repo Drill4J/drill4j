@@ -6,10 +6,13 @@ import com.epam.drill.cache.impl.*
 import com.epam.drill.common.*
 import com.epam.drill.endpoints.agent.*
 import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
 import io.ktor.locations.*
 import io.ktor.server.testing.*
+import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
+import org.junit.*
 import org.junit.Test
 import org.kodein.di.*
 import org.kodein.di.generic.*
@@ -19,25 +22,42 @@ import kotlin.test.*
 @KtorExperimentalLocationsAPI
 internal class DrillServerWsTest {
 
+    @ExperimentalCoroutinesApi
+    @KtorExperimentalLocationsAPI
+    @KtorExperimentalAPI
+    companion object {
+        val engine = TestApplicationEngine(createTestEnvironment())
+        val pluginStorage = HashSet<DrillWsSession>()
+        @BeforeClass
+        @JvmStatic
+        fun initTestEngine() {
+            engine.start(wait = false)
+            installation = {
+                install(WebSockets)
+                install(Locations)
+            }
+            val wsHandlers = Kodein.Module(name = "wsHandlers") {
+                bind<DrillServerWs>() with eagerSingleton {
+                    DrillServerWs(
+                        kodein
+                    )
+                }
+            }
+            kodeinConfig = {
+                import(wsHandlers, allowOverride = true)
+                bind<WsTopic>() with singleton { WsTopic(kodein) }
+                bind<MutableSet<DrillWsSession>>() with eagerSingleton { pluginStorage }
+                bind<CacheService>() with eagerSingleton { HazelcastCacheService() }
+                bind<ServerStubTopics>() with eagerSingleton { ServerStubTopics(kodein) }
+            }
+            engine.application.module()
+        }
+    }
+
     @Test
     fun testConversation() {
-        val engine = TestApplicationEngine(createTestEnvironment())
-        engine.start(wait = false)
-        val pluginStorage = HashSet<DrillWsSession>()
-        installation = {
-            install(WebSockets)
-            install(Locations)
-        }
-        kodeinConfig = {
-            import(wsHandlers)
-            bind<WsTopic>() with singleton { WsTopic(kodein) }
-            bind<MutableSet<DrillWsSession>>() with eagerSingleton { pluginStorage }
-            bind<CacheService>() with eagerSingleton { HazelcastCacheService() }
-
-        }
-        engine.application.module()
-
         with(engine) {
+            pluginStorage.clear()
             handleWebSocketConversation("/ws/drill-admin-socket") { incoming, outgoing ->
                 outgoing.send(message(MessageType.SUBSCRIBE, "/mytopic", ""))
                 assertNotNull(incoming.receive())
@@ -74,35 +94,16 @@ internal class DrillServerWsTest {
 
     @Test
     fun `topic resolvation goes correctly`() {
-        val engine = TestApplicationEngine(createTestEnvironment())
-        engine.start(wait = false)
-        val pluginStorage = HashSet<DrillWsSession>()
-        installation = {
-            install(WebSockets)
-            install(Locations)
-        }
-        val wsHandlers = Kodein.Module(name = "wsHandlers") {
-            bind<DrillServerWs>() with eagerSingleton {
-                DrillServerWs(
-                    kodein
-                )
-            }
-        }
-        kodeinConfig = {
-            import(wsHandlers, allowOverride = true)
-            bind<WsTopic>() with singleton { WsTopic(kodein) }
-            bind<MutableSet<DrillWsSession>>() with eagerSingleton { pluginStorage }
-            bind<CacheService>() with eagerSingleton { HazelcastCacheService() }
-            bind<ServerStubTopics>() with eagerSingleton { ServerStubTopics(kodein) }
-        }
-        engine.application.module()
+
         with(engine) {
             handleWebSocketConversation("/ws/drill-admin-socket") { incoming, outgoing ->
-                outgoing.send(message(MessageType.SUBSCRIBE, "/pathOfPain", ""))
+                outgoing.send(message(MessageType.SUBSCRIBE, "/blabla/pathOfPain", ""))
                 val tmp = incoming.receive()
-                //val response = (tmp as Frame.Text).readText()
-                //println("RESPONSE: $response")
                 assertNotNull(tmp)
+                val response = Message.serializer() parse (tmp as Frame.Text).readText()
+                val parsed = AgentBuildVersionJson.serializer() parse response.message
+                assertEquals("testId", parsed.id)
+                assertEquals("blabla", parsed.name)
             }
         }
     }
@@ -119,7 +120,20 @@ class ServerStubTopics(override val kodein: Kodein) : KodeinAware {
         runBlocking {
             wsTopic {
                 topic<PainRoutes.SomeData> { payload, _ ->
-                    "the data is: ${payload.data}"
+                    if (payload.data == "string") {
+                        "the data is: ${payload.data}"
+                    } else {
+                        AgentBuildVersionJson(
+                            id = "testId",
+                            name = payload.data
+                        )
+                    }
+                }
+                topic<PainRoutes.MyTopic> { _, _ ->
+                    "Topic1 response"
+                }
+                topic<PainRoutes.MyTopic2> { _, _ ->
+                    "Topic2 response"
                 }
             }
 
@@ -128,6 +142,12 @@ class ServerStubTopics(override val kodein: Kodein) : KodeinAware {
 }
 
 object PainRoutes {
-    @Location("/pathOfPain")
+    @Location("/{data}/pathOfPain")
     data class SomeData(val data: String)
+
+    @Location("/mytopic")
+    data class MyTopic(val data: String = "")
+
+    @Location("/mytopic2")
+    data class MyTopic2(val data: String = "")
 }

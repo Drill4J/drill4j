@@ -123,6 +123,8 @@ class AgentManager(override val kodein: Kodein) : KodeinAware {
 
     fun agentSession(k: String) = agentStorage.targetMap[k]?.agentSession
 
+    fun buildVersionByAgentId(agentId: String) = get(agentId)?.buildVersion ?: ""
+
     operator fun contains(k: String) = k in agentStorage.targetMap
 
     operator fun get(agentId: String) = agentStorage.targetMap[agentId]?.agent

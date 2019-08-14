@@ -27,6 +27,7 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
     private val cacheService: CacheService by instance()
     private val eventStorage: Cache<String, String> by cacheService
     private val sessionStorage: ConcurrentMap<String, MutableSet<SessionData>> = ConcurrentHashMap()
+    private val agentManager: AgentManager by instance()
 
     override suspend fun send(agentInfo: AgentInfo, destination: String, message: String) {
         val id = "${agentInfo.id}:$destination:${agentInfo.buildVersion}"
@@ -68,8 +69,9 @@ class DrillPluginWs(override val kodein: Kodein) : KodeinAware, Sender {
                                         eventStorage[
                                                 subscribeInfo.agentId + ":" +
                                                         event.destination + ":" +
-                                                        if (buildVersion.isNullOrEmpty()) subscribeInfo.agentId
-                                                        else buildVersion
+                                                        if (buildVersion.isNullOrEmpty()) {
+                                                            agentManager.buildVersionByAgentId(subscribeInfo.agentId)
+                                                        } else buildVersion
                                         ]
 
                                     if (message.isNullOrEmpty()) {

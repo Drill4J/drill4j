@@ -1,45 +1,26 @@
-/*
 @file:Suppress("UNUSED_PARAMETER")
 
 package com.epam.drill.endpoints
 
-import com.epam.drill.storage.AgentStorage
-import com.epam.drill.common.AgentInfo
-import com.epam.drill.common.Message
-import com.epam.drill.common.MessageType
-import com.epam.drill.installation
-import com.epam.drill.kodeinConfig
-import com.epam.drill.module
-import com.epam.drill.plugin.api.end.WsService
-import com.epam.drill.storage.MongoClient
-import com.google.gson.Gson
-import io.ktor.application.install
-import io.ktor.config.MapApplicationConfig
-import io.ktor.http.cio.websocket.CloseReason
-import io.ktor.http.cio.websocket.DefaultWebSocketSession
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readReason
-import io.ktor.http.cio.websocket.readText
-import io.ktor.locations.KtorExperimentalLocationsAPI
-import io.ktor.locations.Locations
-import io.ktor.server.testing.TestApplicationEngine
-import io.ktor.server.testing.createTestEnvironment
-import io.ktor.util.KtorExperimentalAPI
-import io.ktor.websocket.WebSockets
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import org.junit.BeforeClass
+import com.epam.drill.*
+import com.epam.drill.cache.*
+import com.epam.drill.cache.impl.*
+import com.epam.drill.common.*
+import com.epam.drill.endpoints.plugin.*
+import com.epam.drill.storage.*
+import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
+import io.ktor.locations.*
+import io.ktor.server.testing.*
+import io.ktor.util.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.junit.*
 import org.junit.Test
-import org.kodein.di.generic.bind
-import org.kodein.di.generic.eagerSingleton
-import org.kodein.di.generic.singleton
-import org.testcontainers.containers.GenericContainer
-import kotlin.coroutines.CoroutineContext
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import org.kodein.di.generic.*
+import kotlin.coroutines.*
+import kotlin.test.*
 
 
 @KtorExperimentalAPI
@@ -52,34 +33,39 @@ class DrillPluginWsTest {
     @KtorExperimentalAPI
     companion object {
         var engine: TestApplicationEngine? = null
-        var wsPluginService: WsService? = null
+        var wsPluginService: DrillPluginWs? = null
         val agentStorage = AgentStorage()
+        val agentId = "testAgent"
+        val buildVersion = "1.0.0"
+        val agentInfo = AgentInfo(
+            id = agentId,
+            name = "test",
+            status = AgentStatus.READY,
+            ipAddress = "1.7.2.23",
+            groupName = "test",
+            description = "test",
+            buildVersion = buildVersion,
+            buildAlias = "testAlias"
+        )
 
         @BeforeClass
         @JvmStatic
         fun initTestEngine() {
-            val genericContainer = GenericContainer<Nothing>("mongo")
-            genericContainer.withExposedPorts(27017)
-            genericContainer.start()
-            engine = TestApplicationEngine(createTestEnvironment {
-                config = MapApplicationConfig(
-                    "mongo.host" to genericContainer.containerIpAddress,
-                    "mongo.port" to genericContainer.firstMappedPort.toString()
-                )
-            })
+            engine = TestApplicationEngine(createTestEnvironment())
             engine!!.start(wait = false)
-            installation={
+            installation = {
                 install(WebSockets)
                 install(Locations)
             }
             kodeinConfig = {
-                bind<WsService>() with eagerSingleton {
+                bind<DrillPluginWs>() with eagerSingleton {
                     wsPluginService = DrillPluginWs(kodein)
                     wsPluginService!!
                 }
                 bind<WsTopic>() with singleton { WsTopic(kodein) }
-                bind<MongoClient>() with eagerSingleton { MongoClient(kodein) }
+                bind<CacheService>() with eagerSingleton { HazelcastCacheService() }
                 bind<AgentStorage>() with eagerSingleton { agentStorage }
+                bind<AgentManager>() with eagerSingleton { AgentManager(kodein) }
             }
             engine!!.application.module()
         }
@@ -89,10 +75,10 @@ class DrillPluginWsTest {
     fun `should retrun CloseFrame if we subscribe without SubscribeInfo`() {
         with(engine) {
             this?.handleWebSocketConversation("/ws/drill-plugin-socket") { incoming, outgoing ->
-                outgoing.send(Message(MessageType.SUBSCRIBE, "/pluginTopic", "").textFrame())
+                outgoing.send(message(MessageType.SUBSCRIBE, "/pluginTopic1", ""))
                 val receive = incoming.receive()
                 assertTrue(receive is Frame.Close)
-                assertEquals(CloseReason.Codes.PROTOCOL_ERROR.code, receive.readReason()?.code)
+                assertEquals(CloseReason.Codes.UNEXPECTED_CONDITION.code, receive.readReason()?.code)
             }
         }
     }
@@ -102,59 +88,47 @@ class DrillPluginWsTest {
     fun `should communicate with pluginWs and return the empty MESSAGE`() {
         with(engine) {
             this?.handleWebSocketConversation("/ws/drill-plugin-socket") { incoming, outgoing ->
-                val destination = "/pluginTopic"
-                val agentId = "testAgent"
-                val buildVersion = "1.0.0"
+                val destination = "/pluginTopic2"
                 outgoing.send(
-                    Message(
+                    message(
                         MessageType.SUBSCRIBE,
                         destination,
-                        SubscribeInfo(agentId, buildVersion).stringify()
-                    ).textFrame()
+                        SubscribeInfo.serializer() stringify SubscribeInfo(agentId, buildVersion)
+                    )
                 )
                 val receive = incoming.receive() as? Frame.Text ?: fail()
                 val readText = receive.readText()
-                val fromJson = Gson().fromJson(readText, Message::class.java)
+                val fromJson = Message.serializer() parse readText
                 assertEquals(destination, fromJson.destination)
                 assertEquals(MessageType.MESSAGE, fromJson.type)
                 assertTrue { fromJson.message.isEmpty() }
-                assertTrue { wsPluginService?.getPlWsSession()?.isNotEmpty() ?: false }
             }
         }
     }
 
     @Test
-    fun `should return data from storage which we sent before via convertAndSend`() {
+    fun `should return data from storage which was sent before via send()`() {
         with(engine) {
-            val agentId = "testAgent"
-            val buildVersion = "1.0.0"
             this?.handleWebSocketConversation("/ws/drill-plugin-socket") { incoming, outgoing ->
-                val destination = "/pluginTopic"
+                val destination = "/pluginTopic1"
                 val messageForTest = "testMessage"
-                val agentInfo = AgentInfo(
-                    id = agentId,
-                    name = "test",
-                    ipAddress = "1.7.2.23",
-                    groupName = "test",
-                    description = "test",
-                    isEnable = true,
-                    buildVersion = buildVersion
-                )
-                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest)
+                wsPluginService?.send(agentInfo, destination, messageForTest)
                 outgoing.send(
-                    Message(
+                    message(
                         MessageType.SUBSCRIBE,
                         destination,
-                        SubscribeInfo(agentId, buildVersion).stringify()
-                    ).textFrame()
+                        SubscribeInfo.serializer() stringify SubscribeInfo(agentId, buildVersion)
+                    )
                 )
 
                 val receive = incoming.receive() as? Frame.Text ?: fail()
                 val readText = receive.readText()
-                val fromJson = Gson().fromJson(readText, Message::class.java)
+                val fromJson = Message.serializer() parse readText
                 assertEquals(destination, fromJson.destination)
                 assertEquals(MessageType.MESSAGE, fromJson.type)
                 assertEquals(messageForTest, fromJson.message)
+
+                outgoing.send(message(MessageType.SUBSCRIBE, destination, ""))
             }
         }
     }
@@ -162,73 +136,64 @@ class DrillPluginWsTest {
     @Test
     fun `should return data from storage for current buildVersion if BV is null`() {
         with(engine) {
-            val agentId = "testAgent2"
-            val buildVersion = "1.0.0"
             this?.handleWebSocketConversation("/ws/drill-plugin-socket") { incoming, outgoing ->
-                val destination = "/pluginTopic"
+                val destination = "/pluginTopic1"
                 val messageForTest = "testMessage"
-                val agentInfo = AgentInfo(
-                    id = agentId,
-                    name = "test",
-                    ipAddress = "1.2.23.2",
-                    groupName = "test",
-                    description = "test",
-                    isEnable = true,
-                    buildVersion = buildVersion
+                agentStorage.put(
+                    agentInfo.id, AgentEntry(
+                        agentInfo,
+                        DefWebSocketSessionStub()
+                    )
                 )
-                agentStorage.put(agentInfo, DefWebSocketSessionStub())
-                wsPluginService?.convertAndSend(agentInfo, destination, messageForTest)
+                wsPluginService?.send(agentInfo, destination, messageForTest)
                 outgoing.send(
-                    Message(
+                    message(
                         MessageType.SUBSCRIBE,
                         destination,
-                        SubscribeInfo(agentId, null).stringify()
-                    ).textFrame()
+                        SubscribeInfo.serializer() stringify SubscribeInfo(agentId, null)
+                    )
                 )
 
                 val receive = incoming.receive() as? Frame.Text ?: fail()
                 val readText = receive.readText()
-                val fromJson = Gson().fromJson(readText, Message::class.java)
+                val fromJson = Message.serializer() parse readText
                 assertEquals(destination, fromJson.destination)
                 assertEquals(MessageType.MESSAGE, fromJson.type)
                 assertEquals(messageForTest, fromJson.message)
+
+                outgoing.send(message(MessageType.SUBSCRIBE, destination, ""))
             }
         }
     }
 }
 
 class DefWebSocketSessionStub : DefaultWebSocketSession {
+
     override val closeReason: Deferred<CloseReason?>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
     override val coroutineContext: CoroutineContext
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
     override val incoming: ReceiveChannel<Frame>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
     override var masking: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
         set(value) {}
     override var maxFrameSize: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
         set(value) {}
     override val outgoing: SendChannel<Frame>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
     override var pingIntervalMillis: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
         set(value) {}
     override var timeoutMillis: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("not implemented")
         set(value) {}
 
     @KtorExperimentalAPI
     override suspend fun close(cause: Throwable?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override suspend fun flush() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun terminate() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-}*/
+    override suspend fun flush() {}
+    override fun terminate() {}
+}
