@@ -81,8 +81,7 @@ fun IBundleCoverage.toDataMap() = packages
 fun calculateBuildMethods(
     methodChanges: MethodChanges,
     bundleCoverage: IBundleCoverage
-) = if (methodChanges.notEmpty()) {
-
+): BuildMethods {
     val methodsCoverages = bundleCoverage.toDataMap()
 
     val infos = DiffType.values().map { type ->
@@ -100,7 +99,7 @@ fun calculateBuildMethods(
             )
         }
 
-    BuildMethods(
+    return BuildMethods(
         totalMethods = totalInfo,
         newMethods = infos[DiffType.NEW]!!,
         modifiedNameMethods = infos[DiffType.MODIFIED_NAME]!!,
@@ -108,8 +107,6 @@ fun calculateBuildMethods(
         modifiedBodyMethods = infos[DiffType.MODIFIED_BODY]!!,
         deletedMethods = infos[DiffType.DELETED]!!
     )
-} else {
-    BuildMethods()
 }
 
 
@@ -118,7 +115,10 @@ fun Methods.getInfo(
 ) = MethodsInfo(
     totalCount = this.count(),
     coveredCount = count { data[it.ownerClass to it.sign]?.instructionCounter?.coveredCount ?: 0 > 0 },
-    methods = this
+    methods = this.map { method ->
+        val rate = data[method.ownerClass to method.sign]?.coverageRate() ?: CoverageRate.MISSED
+        method.copy(coverageRate = rate)
+    }
 )
 
 fun IMethodCoverage.sign() = "$name$desc"

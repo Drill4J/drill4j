@@ -338,7 +338,6 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     internal suspend fun cleanTopics(id: String) {
         sender.send(agentInfo, "/scope/$id/associated-tests", "")
-        sender.send(agentInfo, "/scope/$id/coverage-new", "")
         sender.send(agentInfo, "/scope/$id/methods", "")
         sender.send(agentInfo, "/scope/$id/tests-usages", "")
         sender.send(agentInfo, "/scope/$id/coverage-by-packages", "")
