@@ -30,10 +30,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     override suspend fun doAction(action: Action): Any {
         return when (action) {
-            is SwitchActiveScope ->
-                serDe.actionSerializer stringify changeActiveScope(action.payload)
-            is RenameScope ->
-                serDe.actionSerializer stringify renameScope(action.payload)
+            is SwitchActiveScope -> changeActiveScope(action.payload)
+            is RenameScope -> renameScope(action.payload)
             is ToggleScope -> toggleScope(action.payload.scopeId)
             is DropScope -> dropScope(action.payload.scopeId)
             is StartNewSession -> {
@@ -51,15 +49,15 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
 
     internal suspend fun renameScope(payload: RenameScopePayload) =
         when {
-            agentState.scopeNotExisting(payload.scopeId) -> ValidationResult(
-                "Failed to rename scope with id ${payload.scopeId}: scope not found"
-            )
+            agentState.scopeNotExisting(payload.scopeId) ->
+                StatusMessage(404, "Failed to rename scope with id ${payload.scopeId}: scope not found")
             agentState.scopeNameNotExisting(payload.scopeName) -> {
                 agentState.renameScope(payload.scopeId, payload.scopeName)
                 sendScopeMessages()
-                ValidationResult("Renamed scope with id ${payload.scopeId} -> ${payload.scopeName}")
+                StatusMessage(200, "Renamed scope with id ${payload.scopeId} -> ${payload.scopeName}")
             }
-            else -> ValidationResult(
+            else -> StatusMessage(
+                409,
                 "Failed to rename scope with id ${payload.scopeId}:" +
                         " name ${payload.scopeName} is already in use"
             )
@@ -263,8 +261,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             println("Current active scope $activeScope")
             calculateAndSendActiveScopeCoverage()
             sendScopeMessages()
-            ValidationResult("Switched to the new scope \'${scopeChange.scopeName}\'")
-        } else ValidationResult("Failed to switch to a new scope: name ${scopeChange.scopeName} is already in use")
+            StatusMessage(200, "Switched to the new scope \'${scopeChange.scopeName}\'")
+        } else StatusMessage(409, "Failed to switch to a new scope: name ${scopeChange.scopeName} is already in use")
 
     internal suspend fun sendCalcResults(cis: CoverageInfoSet, path: String = "") {
         sendCoverageBlock(cis.coverage, path)

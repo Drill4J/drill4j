@@ -99,9 +99,13 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                                     send(agentFrame)
                                 }
                             }
-                            HttpStatusCode.OK to when(adminActionResult) {
-                                is String -> adminActionResult
-                                else -> EmptyContent
+                            if (adminActionResult is StatusMessage) {
+                                HttpStatusCode.fromValue(adminActionResult.code) to adminActionResult.message
+                            } else {
+                                HttpStatusCode.OK to when (adminActionResult) {
+                                    is String -> adminActionResult
+                                    else -> EmptyContent
+                                }
                             }
                         }
                     }
@@ -140,18 +144,25 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
 
             authenticate {
                 post<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentManager.agentSession(ll.agentId)
-
-                        ?.send(
-                            Frame.Text(
-                                Message.serializer() stringify
-                                        Message(
-                                            MessageType.MESSAGE,
-                                            "/plugins/togglePlugin", ll.pluginId
-                                        )
+                    val dp: Plugin? = plugins[ll.pluginId]
+                    val session = agentManager.agentSession(ll.agentId)
+                    val (statusCode, response) = when {
+                        (dp == null) -> HttpStatusCode.NotFound to "plugin with id ${ll.pluginId} not found"
+                        (session == null) -> HttpStatusCode.NotFound to "agent with id ${ll.agentId} not found"
+                        else -> {
+                            session.send(
+                                Frame.Text(
+                                    Message.serializer() stringify
+                                            Message(
+                                                MessageType.MESSAGE,
+                                                "/plugins/togglePlugin", ll.pluginId
+                                            )
+                                )
                             )
-                        )
-                    call.respond(HttpStatusCode.OK, "OK")
+                            HttpStatusCode.OK to "OK"
+                        }
+                    }
+                    call.respond(statusCode, response)
                 }
             }
             authenticate {
