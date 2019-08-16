@@ -40,7 +40,7 @@ class CoverageAdminPartTest {
 
         assertEquals(1, agentStates.count())
         val agentData = agentStates[agentInfo.id]?.data
-        assertTrue { agentData is ClassDataBuilder && agentData.count == initInfo.classesCount }
+        assertTrue { agentData is ClassDataBuilder }
     }
 
     @Test

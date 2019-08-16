@@ -89,6 +89,12 @@ class AgentState(
         )
     }
 
+    fun reset() {
+        data = NoData
+        changeActiveScope("New Scope 1")
+        scopes.clean()
+    }
+
     //throw ClassCastException if the ref value is in the wrong state
     fun classesData(): ClassesData = data as ClassesData
 
