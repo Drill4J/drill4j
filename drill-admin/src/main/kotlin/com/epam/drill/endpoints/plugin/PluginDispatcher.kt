@@ -20,7 +20,6 @@ import io.ktor.routing.*
 import kotlinx.serialization.*
 import org.kodein.di.*
 import org.kodein.di.generic.*
-import kotlin.collections.set
 
 class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     private val app: Application by instance()
@@ -154,13 +153,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                     call.respond(HttpStatusCode.OK, "OK")
                 }
             }
-            authenticate {
-                get<Routes.Api.PluginConfiguration> {
 
-                    call.respond(plugins.keys.toTypedArray())
-
-                }
-            }
         }
     }
 }

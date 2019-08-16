@@ -41,16 +41,16 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
     private fun Routing.registerAgent() {
 
         authenticate {
-            post<Routes.Api.Agent.UnloadPlugin> { up ->
+            post<Routes.Api.Agent.UnloadPlugin> { payload ->
                 val pluginId = call.receive<PluginId>()
-                val drillAgent = agentManager.agentSession(up.agentId)
+                val drillAgent = agentManager.agentSession(payload.agentId)
                 if (drillAgent == null) {
-                    call.respond("can't find the agent '${up.agentId}'")
+                    call.respond("can't find the agent '${payload.agentId}'")
                     return@post
                 }
                 val agentPluginPartFile = plugins[pluginId.pluginId]?.agentPluginPart
                 if (agentPluginPartFile == null) {
-                    call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${up.agentId}'")
+                    call.respond("can't find the plugin '${pluginId.pluginId}' in the agent '${payload.agentId}'")
                     return@post
                 }
 
@@ -69,14 +69,8 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
         }
 
         authenticate {
-            get<Routes.Api.Agent.Agent> { up ->
-                call.respond(agentManager[up.agentId] ?: "can't find")
-            }
-        }
-
-        authenticate {
-            post<Routes.Api.Agent.AgentToggleStandby> { agent ->
-                val agentId = agent.agentId
+            post<Routes.Api.Agent.AgentToggleStandby> { payload ->
+                val agentId = payload.agentId
                 agentManager[agentId]?.let { agentInfo ->
                     agentInfo.status = when (agentInfo.status) {
                         AgentStatus.DISABLED -> AgentStatus.READY
@@ -99,9 +93,31 @@ class SwaggerDrillAdminServer(override val kodein: Kodein) : KodeinAware {
                     }
                     agentInfo.update(agentManager)
 
-
                     call.respond(HttpStatusCode.OK, "toggled")
                 }
+            }
+        }
+
+        authenticate {
+            post<Routes.Api.ResetPlugin> { payload ->
+                val agentId = payload.agentId
+                val pluginId = payload.pluginId
+                val agentEntry = agentManager.full(agentId)
+                val (statusCode, response) = when {
+                    agentEntry == null -> HttpStatusCode.NotFound to "agent with id $agentId not found"
+                    plugins[pluginId] == null -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
+                    else -> {
+                        val pluginInstance = agentEntry.instance[pluginId]
+                        if (pluginInstance == null) {
+                            HttpStatusCode.NotFound to
+                                    "plugin with id $pluginId not installed to agent with id $agentId"
+                        } else {
+                            pluginInstance.dropData()
+                            HttpStatusCode.OK to "reset plugin with id $pluginId for agent with id $agentId"
+                        }
+                    }
+                }
+                call.respond(statusCode, response)
             }
         }
 

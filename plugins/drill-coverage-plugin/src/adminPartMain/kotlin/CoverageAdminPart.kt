@@ -28,6 +28,10 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     
     private val activeScope get() = agentState.activeScope
 
+    override suspend fun dropData() {
+        TODO("not implemented")
+    }
+
     override suspend fun doAction(action: Action): Any {
         return when (action) {
             is SwitchActiveScope ->

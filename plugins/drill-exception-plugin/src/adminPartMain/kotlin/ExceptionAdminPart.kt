@@ -16,6 +16,10 @@ class ExceptionAdminPart(private val ws: Sender, agentInfo: AgentInfo, id: Strin
     override suspend fun doAction(action: String) {
     }
 
+    override suspend fun dropData() {
+        TODO("not implemented")
+    }
+
     override suspend fun processData(dm: DrillMessage): Any {
         println("$id got a message ${dm.content}")
         return ""

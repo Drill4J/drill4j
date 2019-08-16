@@ -16,9 +16,6 @@ object Routes {
             @Location("/{agentId}/unload-plugin")
             data class UnloadPlugin(val agentId: String)
 
-            @Location("/{agentId}")
-            data class Agent(val agentId: String)
-
             @Location("/{agentId}/{pluginId}/update-plugin")
             data class UpdatePlugin(val agentId: String, val pluginId: String)
 
@@ -38,14 +35,14 @@ object Routes {
             data class UnregisterAgent(val agentId: String)
         }
 
+        @Location("/{agentId}/{pluginId}/reset")
+        data class ResetPlugin(val agentId: String, val pluginId: String)
+
         @Location("/agent/{agentId}")
         data class UpdateAgentConfig(val agentId: String)
 
         @Location("/drill-admin/plugin/get-all-plugins")
         class AllPlugins
-
-        @Location("/plugin-info/get-plugins-configuration")
-        class PluginConfiguration
 
         @Location("/login")
         class Login
