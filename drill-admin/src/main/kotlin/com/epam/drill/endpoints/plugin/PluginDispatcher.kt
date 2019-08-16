@@ -59,24 +59,22 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
     init {
         app.routing {
             authenticate {
-                patch<Routes.Api.Agent.UpdatePlugin> { ll ->
+                patch<Routes.Api.Agent.UpdatePlugin> { (agentId, pluginId) ->
                     val config = call.receive<String>()
-                    val pc = PluginConfig(ll.pluginId, config)
-                    agentManager.agentSession(ll.agentId)
+                    val pc = PluginConfig(pluginId, config)
+                    agentManager.agentSession(agentId)
                         ?.send(PluginConfig.serializer().agentWsMessage("/plugins/updatePluginConfig", pc))
-                    if (agentManager.updateAgentPluginConfig(ll.agentId, pc)) {
-                        serverWs.sendToAllSubscribed("/${ll.agentId}/${ll.pluginId}/config")
+                    if (agentManager.updateAgentPluginConfig(agentId, pc)) {
+                        serverWs.sendToAllSubscribed("/$agentId/$pluginId/config")
                         call.respond(HttpStatusCode.OK, "")
                     } else call.respond(HttpStatusCode.NotFound, "")
                 }
             }
             authenticate {
-                post<Routes.Api.Agent.DispatchPluginAction> { ll ->
+                post<Routes.Api.Agent.DispatchPluginAction> { (agentId, pluginId) ->
                     val action = call.receive<String>()
-                    val agentId = ll.agentId
-                    val pluginId = ll.pluginId
                     val dp: Plugin? = plugins[pluginId]
-                    val agentInfo = agentManager[ll.agentId]
+                    val agentInfo = agentManager[agentId]
                     val (statusCode, response) = when {
                         (dp == null) -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
                         (agentInfo == null) -> HttpStatusCode.NotFound to "agent with id $agentId not found"
@@ -98,9 +96,13 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                                     send(agentFrame)
                                 }
                             }
-                            HttpStatusCode.OK to when(adminActionResult) {
-                                is String -> adminActionResult
-                                else -> EmptyContent
+                            if (adminActionResult is StatusMessage) {
+                                HttpStatusCode.fromValue(adminActionResult.code) to adminActionResult.message
+                            } else {
+                                HttpStatusCode.OK to when (adminActionResult) {
+                                    is String -> adminActionResult
+                                    else -> EmptyContent
+                                }
                             }
                         }
                     }
@@ -109,8 +111,7 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
             }
 
             authenticate {
-                post<Routes.Api.Agent.AddNewPlugin> { ll ->
-                    val agentId = ll.agentId
+                post<Routes.Api.Agent.AddNewPlugin> { (agentId) ->
                     val pluginId = call.parse(PluginId.serializer()).pluginId
                     val (status, msg) = when (pluginId) {
                         null -> HttpStatusCode.BadRequest to "Plugin id is null for agent '$agentId'"
@@ -136,21 +137,27 @@ class PluginDispatcher(override val kodein: Kodein) : KodeinAware {
                     call.respond(status, msg)
                 }
             }
-
             authenticate {
-                post<Routes.Api.Agent.TogglePlugin> { ll ->
-                    agentManager.agentSession(ll.agentId)
-
-                        ?.send(
-                            Frame.Text(
-                                Message.serializer() stringify
-                                        Message(
-                                            MessageType.MESSAGE,
-                                            "/plugins/togglePlugin", ll.pluginId
-                                        )
+                post<Routes.Api.Agent.TogglePlugin> { (agentId, pluginId) ->
+                    val dp: Plugin? = plugins[pluginId]
+                    val session = agentManager.agentSession(agentId)
+                    val (statusCode, response) = when {
+                        (dp == null) -> HttpStatusCode.NotFound to "plugin with id $pluginId not found"
+                        (session == null) -> HttpStatusCode.NotFound to "agent with id $agentId not found"
+                        else -> {
+                            session.send(
+                                Frame.Text(
+                                    Message.serializer() stringify
+                                            Message(
+                                                MessageType.MESSAGE,
+                                                "/plugins/togglePlugin", pluginId
+                                            )
+                                )
                             )
-                        )
-                    call.respond(HttpStatusCode.OK, "OK")
+                            HttpStatusCode.OK to "OK"
+                        }
+                    }
+                    call.respond(statusCode, response)
                 }
             }
 
