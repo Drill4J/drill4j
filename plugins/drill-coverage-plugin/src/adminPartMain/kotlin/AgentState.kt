@@ -48,7 +48,7 @@ class AgentState(
         else scopes[id]?.apply { scopes[id] = this.copy(name = newName, summary = this.summary.copy(name = newName)) }
     }
 
-    fun scopeNameNotExisting(name: String) = scopes.values.find { it.name == name } == null
+    fun scopeNameNotExisting(name: String) = scopes.values.find { it.name == name } == null && name != activeScope.name
 
     fun scopeNotExisting(id: String) = scopes[id] == null && activeScope.id != id
 
