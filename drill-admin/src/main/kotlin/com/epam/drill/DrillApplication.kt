@@ -54,7 +54,7 @@ val devContainer = Kodein.Module(name = "devContainer") {
 val userSource: UserSource = UserSourceImpl()
 
 val handlers = Kodein.Module(name = "handlers") {
-    bind<SwaggerDrillAdminServer>() with eagerSingleton { SwaggerDrillAdminServer(kodein) }
+    bind<DrillAdminEndpoints>() with eagerSingleton { DrillAdminEndpoints(kodein) }
     bind<PluginDispatcher>() with eagerSingleton { PluginDispatcher(kodein) }
 }
 

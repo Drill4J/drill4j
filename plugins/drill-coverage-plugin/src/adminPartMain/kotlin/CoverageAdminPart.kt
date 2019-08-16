@@ -28,10 +28,6 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     
     private val activeScope get() = agentState.activeScope
 
-    override suspend fun dropData() {
-        TODO("not implemented")
-    }
-
     override suspend fun doAction(action: Action): Any {
         return when (action) {
             is SwitchActiveScope ->
@@ -339,10 +335,31 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     internal suspend fun cleanTopics(id: String) {
         sender.send(agentInfo, "/scope/$id/associated-tests", "")
         sender.send(agentInfo, "/scope/$id/coverage-new", "")
-        sender.send(agentInfo, "/scope/$id/new-methods", "")
+        sender.send(agentInfo, "/scope/$id/methods", "")
         sender.send(agentInfo, "/scope/$id/tests-usages", "")
         sender.send(agentInfo, "/scope/$id/coverage-by-packages", "")
         sender.send(agentInfo, "/scope/$id/coverage", "")
     }
+
+    override suspend fun dropData() {
+        agentInfo.buildVersions.map { it.id }.forEach {
+            val oldAgentInfo = agentInfo.copy(buildVersion = it)
+            sender.send(oldAgentInfo, "/scopes", "")
+            sender.send(oldAgentInfo, "/build/associated-tests", "")
+            sender.send(oldAgentInfo, "/build/coverage-new", "")
+            sender.send(oldAgentInfo, "/build/methods", "")
+            sender.send(oldAgentInfo, "/build/tests-usages", "")
+            sender.send(oldAgentInfo, "/build/coverage-by-packages", "")
+            sender.send(oldAgentInfo, "/build/coverage", "")
+        }
+        val classesBytes = agentState.classesData().classesBytes
+        agentState.reset()
+        processData(InitInfo(classesBytes.keys.count(), ""))
+        classesBytes.forEach { className, bytes ->
+            agentState.addClass(className, bytes)
+        }
+        processData(Initialized(""))
+    }
+
 
 }

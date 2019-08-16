@@ -13,8 +13,8 @@ object Routes {
             @Location("/{agentId}/toggle-standby")
             data class AgentToggleStandby(val agentId: String)
 
-            @Location("/{agentId}/unload-plugin")
-            data class UnloadPlugin(val agentId: String)
+            @Location("/{agentId}/{pluginId}/unload-plugin")
+            data class UnloadPlugin(val agentId: String, val pluginId: String)
 
             @Location("/{agentId}/{pluginId}/update-plugin")
             data class UpdatePlugin(val agentId: String, val pluginId: String)
@@ -38,11 +38,14 @@ object Routes {
         @Location("/{agentId}/{pluginId}/reset")
         data class ResetPlugin(val agentId: String, val pluginId: String)
 
+        @Location("/{agentId}/reset")
+        data class ResetAgent(val agentId: String)
+
+        @Location("/reset")
+        class ResetAllAgents
+
         @Location("/agent/{agentId}")
         data class UpdateAgentConfig(val agentId: String)
-
-        @Location("/drill-admin/plugin/get-all-plugins")
-        class AllPlugins
 
         @Location("/login")
         class Login

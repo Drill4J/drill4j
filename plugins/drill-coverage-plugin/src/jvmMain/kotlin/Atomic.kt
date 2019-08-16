@@ -27,6 +27,10 @@ class AtomicCache<K, V> : (K, (V?) -> V?) -> V? {
     fun remove(key: K) = _map.getAndUpdate { it.remove(key) }.getOrNull(key)
 
     override fun toString(): String = map.toString()
+
+    fun clean() {
+        map.keySet().forEach { map.remove(it) }
+    }
 }
 
 val <K, V> AtomicCache<K, V>.keys get() = map.keySet().asSequence().toSet()
