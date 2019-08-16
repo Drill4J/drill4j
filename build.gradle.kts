@@ -37,7 +37,7 @@ allprojects {
 allprojects {
 
     repositories {
-        maven(url = "https://mymavenrepo.com/repo/OgSYgOfB6MOBdJw3tWuX/")
+        maven(url = "https://mymavenrepo.com/repo/BP3Ud0UqOuz2moFKE7Ry/")
         mavenCentral()
 //        mavenLocal()
         jcenter()
