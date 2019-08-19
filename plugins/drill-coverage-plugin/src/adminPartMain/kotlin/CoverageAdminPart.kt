@@ -243,9 +243,8 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
     }
 
     internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) =
-        if (agentState.scopes.values.find { it.name == scopeChange.scopeName } == null &&
-            activeScope.summary.name != scopeChange.scopeName) {
-            val prevScope = agentState.changeActiveScope(scopeChange.scopeName)
+        if (agentState.scopeNameNotExisting(scopeChange.scopeName)) {
+            val prevScope = agentState.changeActiveScope(scopeChange.scopeName.trim())
             if (scopeChange.savePrevScope) {
                 if (prevScope.any()) {
                     val finishedScope = prevScope.finish(scopeChange.prevScopeEnabled)
