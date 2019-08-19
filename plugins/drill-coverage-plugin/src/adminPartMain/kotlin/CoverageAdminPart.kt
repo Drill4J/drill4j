@@ -61,8 +61,7 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
             }
             else -> StatusMessage(
                 StatusCodes.CONFLICT,
-                "Failed to rename scope with id ${payload.scopeId}:" +
-                        " name ${payload.scopeName} is already in use"
+                "Scope with such name already exists. Please choose a different name."
             )
         }
 
