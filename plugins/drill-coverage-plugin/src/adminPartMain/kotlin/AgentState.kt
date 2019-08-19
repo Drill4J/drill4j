@@ -53,11 +53,15 @@ class AgentState(
     }
 
     fun renameScope(id: String, newName: String) {
-        if (id == activeScope.id) activeScope.rename(newName)
-        else scopes[id]?.apply { scopes[id] = this.copy(name = newName, summary = this.summary.copy(name = newName)) }
+        val trimmedNewName = newName.trim()
+        if (id == activeScope.id) activeScope.rename(trimmedNewName)
+        else scopes[id]?.apply {
+            scopes[id] = this.copy(name = newName, summary = this.summary.copy(name = trimmedNewName))
+        }
     }
 
-    fun scopeNameNotExisting(name: String) = scopes.values.find { it.name == name } == null && name != activeScope.name
+    fun scopeNameNotExisting(name: String) =
+        scopes.values.find { it.name == name.trim() } == null && name.trim() != activeScope.name
 
     fun scopeNotExisting(id: String) = scopes[id] == null && activeScope.id != id
 
