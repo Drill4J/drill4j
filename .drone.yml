@@ -17,7 +17,7 @@ pipeline:
           -Djib.to.auth.username=$${DRILL_USERNAME}
           -Djib.to.auth.password=$${DRILL_PASSWORD}
           -Djib.to.tags=coverage-latest
-          -Djib.extraDirectories.paths=$${PWD}/distr
+          -Djib.extraDirectories.paths=$${PWD}/distr,$${PWD}/drill-admin/ssl
     when:
       branch:
         - develop
