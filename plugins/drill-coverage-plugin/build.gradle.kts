@@ -4,6 +4,7 @@ plugins {
     `kotlin-multiplatform`
     `kotlinx-serialization`
     `kotlinx-atomicfu`
+    distribution
 }
 
 val jacocoVersion = "0.8.3"
@@ -60,7 +61,7 @@ kotlin {
                 extendsFrom(agentJarDeps)
             }
             dependencies {
-                
+
                 implementation("com.epam.drill:drill-agent-part-jvm:$version")
             }
         }
@@ -94,9 +95,7 @@ kotlin {
             }
         }
 
-        
-        
-        
+
     }
 }
 

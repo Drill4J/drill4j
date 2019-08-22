@@ -1,8 +1,0 @@
-{
-  "id": "MySuperAgent",
-  "adminUrl": "localhost:8090",
-  "name": "MyTestApp",
-  "groupName": "TestGroup",
-  "description": "This agent configured only for petclinic",
-  "isEnable": true
-}

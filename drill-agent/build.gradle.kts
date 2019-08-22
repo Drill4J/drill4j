@@ -1,11 +1,12 @@
 import com.epam.drill.build.*
-import org.apache.tools.ant.taskdefs.condition.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
     id("kotlin-multiplatform")
     id("kotlinx-serialization")
+    distribution
 }
 
 repositories {
@@ -15,35 +16,27 @@ repositories {
     maven(url = "https://kotlin.bintray.com/kotlinx")
 }
 
+val libName = "drill-agent"
+val nativeTargets = mutableSetOf<KotlinNativeTarget>()
+
 kotlin {
     targets {
-        createNativeTargetForCurrentOs("nativeAgent") {
-            mainCompilation {
-                binaries {
-                    sharedLib(
-                        namePrefix = "drill-agent",
-                        buildTypes = setOf(DEBUG)
-                    )
-                }
-                val drillInternal by cinterops.creating
-                drillInternal.apply {
-                }
-            }
-            compilations.getByName("test"){
-                val jvmapi by cinterops.creating
-                jvmapi.apply {
-                    defFile = file("src/nativeInterop/cinterop/testdrillinternal.def")
-                }
-            }
-        }
-
+        currentTarget("nativeAgent")
+        mingwX64 { binaries { sharedLib(libName, setOf(DEBUG)) } }.apply { nativeTargets.add(this) }
+        linuxX64 { binaries { staticLib(libName, setOf(DEBUG)) } }.apply { nativeTargets.add(this) }
         jvm("javaAgent")
     }
+    targets.filterIsInstance<KotlinNativeTarget>().forEach { it.compilations["test"].cinterops?.create("jvmapiStub") }
 
     sourceSets {
+        val commonNativeMain = maybeCreate("nativeAgentMain")
+        @Suppress("UNUSED_VARIABLE") val commonNativeTest = maybeCreate("nativeAgentTest")
+        @Suppress("UNUSED_VARIABLE") val mingwX64Main by getting { dependsOn(commonNativeMain) }
+        @Suppress("UNUSED_VARIABLE") val linuxX64Main by getting { dependsOn(commonNativeMain) }
+
         jvm("javaAgent").compilations["main"].defaultSourceSet {
             dependencies {
-                implementation(kotlin("stdlib-jdk8"))
+                implementation(kotlin("stdlib"))
                 implementation(kotlin("reflect")) //TODO jarhell quick fix for kotlin jvm apps
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
@@ -74,18 +67,13 @@ kotlin {
 
         named("nativeAgentMain") {
             dependencies {
-                when {
-                    Os.isFamily(Os.FAMILY_MAC) -> implementation("com.soywiz:korio-macosx64:$korioVersion")
-                    Os.isFamily(Os.FAMILY_WINDOWS) -> implementation("com.soywiz:korio-mingwx64:$korioVersion")
-                    else -> implementation("com.soywiz:korio-linuxx64:$korioVersion")
-                }
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
                 implementation("io.ktor:ktor-utils-native:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
-                implementation("com.epam.drill:drill-agent-part-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
-                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
-                implementation("com.epam.drill:drill-common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
-                implementation(project(":platformDependent"))
+                implementation("com.epam.drill:drill-agent-part-native:$version")
+                implementation("com.epam.drill:drill-jvmapi-native:$version")
+                implementation("com.epam.drill:drill-common-native:$version")
+                implementation(project(":drill-agent:util"))
             }
         }
     }
@@ -96,12 +84,11 @@ tasks.withType<KotlinNativeCompile> {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.io.core.ExperimentalIoApi"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"
+    kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
 }
 
-val staticLibraryName = "${staticLibraryPrefix}drill_jvmapi.$staticLibraryExtension"
 tasks {
-    val javaAgentJar = "javaAgentJar"(Jar::class) {
-        destinationDirectory.set(file("../distr"))
+    named<Jar>("javaAgentJar") {
         archiveFileName.set("drillRuntime.jar")
         from(provider {
             kotlin.targets["javaAgent"].compilations["main"].compileDependencyFiles.map {
@@ -110,36 +97,64 @@ tasks {
         })
     }
 
+    register("link${libName.capitalize()}DebugSharedLinuxX64", Exec::class) {
+        mustRunAfter("link${libName.capitalize()}DebugStaticLinuxX64")
+        group = LifecycleBasePlugin.BUILD_GROUP
+        val linuxTarget = kotlin.targets["linuxX64"] as KotlinNativeTarget
+        val linuxStaticLib = linuxTarget
+            .binaries
+            .findStaticLib(libName, NativeBuildType.DEBUG)!!
+            .outputFile.toPath()
 
-    val deleteAndCopyAgent by registering {
-
-        dependsOn("linkDrill-agentDebugSharedNativeAgent")
+        val linuxBuildDir = linuxStaticLib.parent.parent
+        val targetSo = linuxBuildDir.resolve("${libName}DebugShared").resolve("lib${libName.replace("-", "_")}.so")
+        outputs.file(targetSo)
         doFirst {
-            delete(file("distr/$staticLibraryName"))
+
+            targetSo.parent.toFile().mkdirs()
+            commandLine = listOf(
+                "docker-compose",
+                "run",
+                "--rm",
+                "gcc",
+                "-shared",
+                "-o",
+                "/home/project/${project.name}/${projectDir.toPath().relativize(targetSo)
+                    .toString()
+                    .replace(
+                        "\\",
+                        "/"
+                    )}",
+                "-Wl,--whole-archive",
+                "/home/project/${project.name}/${projectDir.toPath().relativize(linuxStaticLib)
+                    .toString()
+                    .replace(
+                        "\\",
+                        "/"
+                    )}",
+                "-Wl,--no-whole-archive",
+                "-static-libgcc",
+                "-static-libstdc++",
+                "-lstdc++"
+            )
+
         }
-        doLast {
-            val binary = (kotlin.targets["nativeAgent"] as KotlinNativeTarget)
-                .binaries
-                .findSharedLib(
-                    "drill-agent",
-                    NativeBuildType.DEBUG
-                )?.outputFile
-            copy {
-                from(file("$binary"))
-                into(file("../distr"))
+    }
+}
+
+val javaAgentJar: Jar by tasks
+
+afterEvaluate {
+    distributions {
+        nativeTargets.forEach {
+            val name = it.name
+            create(name) {
+                baseName = name
+                contents {
+                    from(javaAgentJar)
+                    from(tasks.getByPath("link${libName.capitalize()}DebugShared${name.capitalize()}"))
+                }
             }
         }
     }
-    register("buildAgent") {
-        dependsOn("metadataJar")
-        dependsOn(javaAgentJar)
-        dependsOn(deleteAndCopyAgent)
-        group = "application"
-    }
-
-    "nativeAgentTestProcessResources"(ProcessResources::class) {
-        setDestinationDir(file("build/bin/nativeAgent/testDebugExecutable/resources"))
-    }
-
-
 }

@@ -54,7 +54,7 @@ val jvmPaths =
     }
 
 
-fun KotlinMultiplatformExtension.createNativeTargetForCurrentOs(
+fun KotlinMultiplatformExtension.currentTarget(
     name: String,
     config: KotlinNativeTarget.() -> Unit = {}
 ) {

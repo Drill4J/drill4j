@@ -1,20 +1,23 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.common.*
-import com.epam.drill.core.*
-import com.epam.drill.core.concurrency.*
-import com.epam.drill.core.exceptions.*
-import com.epam.drill.core.messanger.*
-import com.epam.drill.core.plugin.loader.*
-import com.epam.drill.logger.*
-import com.soywiz.korio.net.ws.*
-import kotlinx.cinterop.*
+import com.epam.drill.core.concurrency.LockFreeMPSCQueue
+import com.epam.drill.core.drillInstallationDir
+import com.epam.drill.core.exceptions.WsClosedException
+import com.epam.drill.core.exec
+import com.epam.drill.core.messanger.sendNativeMessage
+import com.epam.drill.core.plugin.loader.loadPlugin
+import com.epam.drill.logger.DLogger
+import com.epam.drill.ws.RWebsocketClient
+import kotlinx.cinterop.staticCFunction
 import kotlinx.coroutines.*
-import kotlinx.serialization.*
-import kotlinx.serialization.cbor.*
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.dumps
 import kotlin.collections.set
-import kotlin.native.concurrent.*
-
+import kotlin.native.concurrent.Future
+import kotlin.native.concurrent.ThreadLocal
+import kotlin.native.concurrent.TransferMode
+import kotlin.native.concurrent.Worker
 
 @SharedImmutable
 val wsLogger = DLogger("DrillWebsocket")
@@ -61,8 +64,12 @@ fun startWs() =
 suspend fun websocket(adminUrl: String) {
     val url = "ws://$adminUrl/agent/attach"
     wsLogger.debug { "try to create websocket $url" }
-    val wsClient = WebSocketClient(
-        url, params = mutableMapOf(
+    val wsClient = RWebsocketClient(
+        url = url,
+        protocols = emptyList(),
+        origin = "",
+        wskey = "",
+        params = mutableMapOf(
             AgentConfigParam to Cbor.dumps(AgentConfig.serializer(), exec { agentConfig }),
             NeedSyncParam to exec { agentConfig.needSync }.toString()
         )

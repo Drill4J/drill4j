@@ -64,8 +64,7 @@ tasks {
         val drillDistrDir = "${file("../../distr")}"
         val agentPath = "${file("$drillDistrDir/${pref}drill_agent.$ex")}"
         jvmArgs(
-            "-agentpath:$agentPath=drillInstallationDir=$drillDistrDir,adminAddress=${project.properties["adminAddress"]
-                ?: "localhost:8090"},agentId=${project.properties["agentId"] ?: "Petclinic"}"
+            "-agentpath:$agentPath=drillInstallationDir=$drillDistrDir,adminAddress=host.docker.internal:8090,agentId=${project.properties["agentId"] ?: "Petclinic"}"
         )
     }
 

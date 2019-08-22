@@ -56,10 +56,11 @@ class CoverageAgentPart @JvmOverloads constructor(
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
-        if (!enabled) return null
-        return _loadedClasses.value[className]?.let { classId ->
-            instrumenter(className, classId, initialBytes)
-        }
+//        if (!enabled) return null
+//        return _loadedClasses.value[className]?.let { classId ->
+//            instrumenter(className, classId, initialBytes)
+//        }
+        return null
     }
 
     override fun destroyPlugin(unloadReason: UnloadReason) {
@@ -75,7 +76,8 @@ class CoverageAgentPart @JvmOverloads constructor(
                     isAllowedClass(bytecodePackageView, packageName)
                 }
             }
-        DrillRequest.RetransformClasses(filter.toTypedArray())
+        if (filter.isNotEmpty())
+            DrillRequest.RetransformClasses(filter.toTypedArray())
 
         println("${filter.size} classes were re-transformed")
     }

@@ -15,7 +15,7 @@ kotlin {
         jvm("adminPart"),
         jvm("agentPart")
     )
-    createNativeTargetForCurrentOs("nativePart") {
+    currentTarget("nativePart") {
         mainCompilation {
             binaries {
                 sharedLib(
