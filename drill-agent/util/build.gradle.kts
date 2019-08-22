@@ -7,6 +7,7 @@ kotlin {
     targets {
         mingwX64("win")
         linuxX64("linux")
+        macosX64("mac")
     }
 
     sourceSets {
@@ -20,6 +21,12 @@ kotlin {
             dependencies {
                 implementation("com.epam.drill:drill-jvmapi-linuxx64:$version")
                 implementation("com.epam.drill:drill-agent-part-linuxx64:$version")
+            }
+        }
+        named("macMain") {
+            dependencies {
+                implementation("com.epam.drill:drill-jvmapi-macosx64:$version")
+                implementation("com.epam.drill:drill-agent-part-macosx64:$version")
             }
         }
 

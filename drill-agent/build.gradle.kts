@@ -23,6 +23,7 @@ kotlin {
     targets {
         currentTarget("nativeAgent")
         mingwX64 { binaries { sharedLib(libName, setOf(DEBUG)) } }.apply { nativeTargets.add(this) }
+        macosX64 { binaries { sharedLib(libName, setOf(DEBUG)) } }.apply { nativeTargets.add(this) }
         linuxX64 { binaries { staticLib(libName, setOf(DEBUG)) } }.apply { nativeTargets.add(this) }
         jvm("javaAgent")
     }
@@ -33,6 +34,7 @@ kotlin {
         @Suppress("UNUSED_VARIABLE") val commonNativeTest = maybeCreate("nativeAgentTest")
         @Suppress("UNUSED_VARIABLE") val mingwX64Main by getting { dependsOn(commonNativeMain) }
         @Suppress("UNUSED_VARIABLE") val linuxX64Main by getting { dependsOn(commonNativeMain) }
+        @Suppress("UNUSED_VARIABLE") val macosX64Main by getting { dependsOn(commonNativeMain) }
 
         jvm("javaAgent").compilations["main"].defaultSourceSet {
             dependencies {
