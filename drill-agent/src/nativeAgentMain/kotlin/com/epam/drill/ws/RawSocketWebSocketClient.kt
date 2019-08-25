@@ -274,7 +274,8 @@ class RawSocketWebSocketClient(
     }
 }
 
-class WsOpcode(val id: Int) {
+inline class WsOpcode(val id: Int) {
+
     companion object {
         val Text = WsOpcode(0x01)
         val Binary = WsOpcode(0x02)

@@ -55,7 +55,7 @@ class ByteArrayBuilder(var data: ByteArray, size: Int = data.size, val allowGrow
     fun toByteArray(): ByteArray = data.copyOf(_size)
 }
 
-class ByteArrayBuilderLE(val bab: ByteArrayBuilder)
+inline class ByteArrayBuilderLE(val bab: ByteArrayBuilder)
 
 val ByteArrayBuilderLE.size get() = bab.size
 fun ByteArrayBuilderLE.append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset) =
@@ -65,7 +65,7 @@ fun ByteArrayBuilderLE.append(v: Byte) = bab.append(v)
 fun ByteArrayBuilderLE.append(vararg v: Byte) = bab.append(*v)
 fun ByteArrayBuilderLE.append(vararg v: Int) = bab.append(*v)
 
-class ByteArrayBuilderBE(val bab: ByteArrayBuilder)
+inline class ByteArrayBuilderBE(val bab: ByteArrayBuilder)
 
 val ByteArrayBuilderBE.size get() = bab.size
 fun ByteArrayBuilderBE.append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset) =

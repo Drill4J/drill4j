@@ -55,7 +55,7 @@ class NativeSocket private constructor(@Suppress("RedundantSuspendModifier") pri
 
     private fun recv(data: ByteArray, offset: Int = 0, count: Int = data.size - offset): Int {
         val result = recv(sockfd, data.refTo(offset), count.convert(), 0)
-        checkErrors("recv")
+//        checkErrors("recv")
         return result.toInt()
     }
 

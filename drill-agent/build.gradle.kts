@@ -89,6 +89,7 @@ tasks.withType<KotlinNativeCompile> {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.io.core.ExperimentalIoApi"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"
+    kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
 }
 
 tasks {
@@ -142,16 +143,6 @@ tasks {
                 "-lstdc++"
             )
 
-        }
-    }
-    named<KotlinNativeTest>("mingwX64Test"){
-        testLogging {
-            showStandardStreams = true
-        }
-    }
- named<KotlinNativeTest>("nativeAgentTest"){
-        testLogging {
-            showStandardStreams = true
         }
     }
 }

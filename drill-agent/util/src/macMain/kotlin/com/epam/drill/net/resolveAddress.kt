@@ -66,13 +66,12 @@ fun close(sockRaw: ULong) {
 }
 
 fun setSocketNonBlocking(sockRaw: ULong) {
-    println(sockRaw)
     var flags = fcntl(sockRaw.toInt(), F_GETFL, 0)
     if (flags == -1) return
     flags = (flags or O_NONBLOCK)
     fcntl(sockRaw.toInt(), F_SETFL, flags)
 }
 
-fun checkErrors(name: String) {
-    println("check the $name error")
+fun checkErrors(@Suppress("UNUSED_PARAMETER") name: String) {
+//    println("check the $name error")
 }
