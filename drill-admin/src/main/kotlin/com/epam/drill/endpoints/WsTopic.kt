@@ -21,7 +21,7 @@ class WsTopic(override val kodein: Kodein) : KodeinAware {
     }
 
 
-    fun Application.resolve(destination: WsUrl, x: MutableSet<DrillWsSession>): String {
+    fun Application.resolve(destination: String, x: MutableSet<DrillWsSession>): String {
         if (xas.isEmpty()) return ""
         val split = destination.split("/")
 

@@ -1,23 +1,19 @@
 package com.epam.drill.core.ws
 
 import com.epam.drill.common.*
-import com.epam.drill.core.concurrency.LockFreeMPSCQueue
-import com.epam.drill.core.drillInstallationDir
-import com.epam.drill.core.exceptions.WsClosedException
-import com.epam.drill.core.exec
-import com.epam.drill.core.messanger.sendNativeMessage
-import com.epam.drill.core.plugin.loader.loadPlugin
-import com.epam.drill.logger.DLogger
-import com.epam.drill.ws.RWebsocketClient
-import kotlinx.cinterop.staticCFunction
+import com.epam.drill.core.*
+import com.epam.drill.core.concurrency.*
+import com.epam.drill.core.exceptions.*
+import com.epam.drill.core.messanger.*
+import com.epam.drill.core.plugin.loader.*
+import com.epam.drill.logger.*
+import com.epam.drill.ws.*
+import kotlinx.cinterop.*
 import kotlinx.coroutines.*
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.dumps
+import kotlinx.serialization.*
+import kotlinx.serialization.cbor.*
 import kotlin.collections.set
-import kotlin.native.concurrent.Future
-import kotlin.native.concurrent.ThreadLocal
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
+import kotlin.native.concurrent.*
 
 @SharedImmutable
 val wsLogger = DLogger("DrillWebsocket")
@@ -201,7 +197,10 @@ suspend fun websocket(adminUrl: String) {
 }
 
 
-private fun String.toWsMessage() = Message.serializer().parse(this)
+private fun String.toWsMessage(): Message {
+    println("Action form admin: '$this'")
+    return Message.serializer().parse(this)
+}
 
 
 fun Worker.executeCoroutines(block: suspend CoroutineScope.() -> Unit): Future<Unit> {

@@ -1,11 +1,11 @@
 package com.epam.drill.build
 
-val serializationRuntimeVersion = "0.11.0"
+val serializationRuntimeVersion = "0.12.0"
 
-val serializationNativeVersion = "0.11.0"
+val serializationNativeVersion = "0.12.0"
 
-val jvmCoroutinesVersion = "1.2.1"
+val jvmCoroutinesVersion = "1.3.0"
 
-val atomicFuVersion = "0.12.9"
+val atomicFuVersion = "0.12.11"
 
-val ktorVersion = "1.2.0"
+val ktorVersion = "1.2.3"

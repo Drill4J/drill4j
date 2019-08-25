@@ -1,6 +1,7 @@
 import com.epam.drill.build.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
@@ -14,6 +15,8 @@ repositories {
     mavenLocal()
     jcenter()
     maven(url = "https://kotlin.bintray.com/kotlinx")
+    maven(url = "https://dl.bintray.com/kotlin/kotlinx/")
+    maven(url = "https://dl.bintray.com/kotlin/ktor/")
 }
 
 val libName = "drill-agent"
@@ -70,8 +73,8 @@ kotlin {
         named("nativeAgentMain") {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serializationNativeVersion")
-                implementation("io.ktor:ktor-utils-native:$ktorVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.8")
+                implementation("io.ktor:ktor-utils-native:1.2.3-1.3.50-eap-5")
+                implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.13-1.3.50-eap-5")
                 implementation("com.epam.drill:drill-agent-part-native:$version")
                 implementation("com.epam.drill:drill-jvmapi-native:$version")
                 implementation("com.epam.drill:drill-common-native:$version")
@@ -86,7 +89,6 @@ tasks.withType<KotlinNativeCompile> {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.io.core.ExperimentalIoApi"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"
-    kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
 }
 
 tasks {
@@ -140,6 +142,16 @@ tasks {
                 "-lstdc++"
             )
 
+        }
+    }
+    named<KotlinNativeTest>("mingwX64Test"){
+        testLogging {
+            showStandardStreams = true
+        }
+    }
+ named<KotlinNativeTest>("nativeAgentTest"){
+        testLogging {
+            showStandardStreams = true
         }
     }
 }

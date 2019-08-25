@@ -1,8 +1,8 @@
 package com.epam.drill.plugins.coverage
 
 import com.epam.drill.plugin.api.*
-import kotlinx.serialization.*
 import kotlinx.serialization.modules.*
+import kotlin.native.concurrent.SharedImmutable
 
 private val serialModule = SerializersModule {
     polymorphic<Action> {
