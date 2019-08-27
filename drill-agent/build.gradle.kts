@@ -45,7 +45,7 @@ kotlin {
                 implementation(kotlin("reflect")) //TODO jarhell quick fix for kotlin jvm apps
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$jvmCoroutinesVersion")
-                implementation("com.epam.drill:drill-common-jvm:$version")
+                implementation("com.epam.drill:common-jvm:$version")
                 implementation("com.epam.drill:drill-agent-part-jvm:$version")
             }
         }
@@ -59,8 +59,8 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
-                implementation("com.epam.drill:drill-agent-part:$version")
-                implementation("com.epam.drill:drill-common:$version")
+                implementation("com.epam.drill:agent-part:$version")
+                implementation("com.epam.drill:common:$version")
             }
         }
         named("commonTest") {
@@ -76,8 +76,8 @@ kotlin {
                 implementation("io.ktor:ktor-utils-native:1.2.3-1.3.50-eap-5")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-native:0.1.13-1.3.50-eap-5")
                 implementation("com.epam.drill:drill-agent-part-native:$version")
-                implementation("com.epam.drill:drill-jvmapi-native:$version")
-                implementation("com.epam.drill:drill-common-native:$version")
+                implementation("com.epam.drill:jvmapi-native:$version")
+                implementation("com.epam.drill:common-native:$version")
                 implementation(project(":drill-agent:util"))
             }
         }
