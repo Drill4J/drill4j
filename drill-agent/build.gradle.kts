@@ -59,7 +59,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
-                implementation("com.epam.drill:agent-part:$version")
+                implementation("com.epam.drill:drill-agent-part:$version")
                 implementation("com.epam.drill:common:$version")
             }
         }
