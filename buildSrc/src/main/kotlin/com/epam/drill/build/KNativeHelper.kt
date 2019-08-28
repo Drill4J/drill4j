@@ -57,10 +57,11 @@ val jvmPaths =
 fun KotlinMultiplatformExtension.currentTarget(
     name: String,
     config: KotlinNativeTarget.() -> Unit = {}
-) {
+): KotlinNativeTarget {
     val createTarget = (presets.getByName(preset) as KotlinNativeTargetPreset).createTarget(name)
     targets.add(createTarget)
     config(createTarget)
+    return createTarget
 }
 
 fun KotlinNativeTarget.mainCompilation(configureAction: Action<KotlinNativeCompilation>) {
