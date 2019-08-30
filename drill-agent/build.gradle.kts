@@ -229,9 +229,8 @@ afterEvaluate {
             publications {
                 availableTarget.forEach {
                     create<MavenPublication>("${it.name}Zip") {
-                        artifactId = libName
+                        artifactId = "$libName-${it.name}"
                         val artifact = artifact(tasks["${it.name}DistZip"])
-                        artifact.classifier = it.name
                     }
                 }
             }
