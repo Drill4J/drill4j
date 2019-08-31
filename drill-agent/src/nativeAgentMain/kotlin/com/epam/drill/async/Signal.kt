@@ -2,7 +2,7 @@
 
 package com.epam.drill.async
 
-import com.epam.drill.lang.Closeable
+import com.epam.drill.stream.Closeable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

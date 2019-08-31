@@ -3,14 +3,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 rootProject.name = "drill4j"
 include(":drill-agent")
 include(":drill-agent:util")
-//if (Os.isFamily(Os.FAMILY_UNIX)) {
-//    include("platformDependent")
-//    project(":platformDependent").projectDir = file("drill-agent/drill-linux")
-//} else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//    include("platformDependent")
-//    project(":platformDependent").projectDir = file("drill-agent/drill-win")
-//}
-
 include(":drill-admin")
 
 /**plugin's projects*/

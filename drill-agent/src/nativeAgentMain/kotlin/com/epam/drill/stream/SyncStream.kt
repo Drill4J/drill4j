@@ -3,19 +3,19 @@ package com.epam.drill.stream
 import com.epam.drill.ByteArrayBuilder
 import com.epam.drill.lang.alloc2
 import com.epam.drill.lang.smallBytesPool
-import com.epam.drill.lang.Closeable
-import com.epam.drill.lang.OptionalCloseable
 import com.epam.drill.lang.invalidOp
 import com.epam.drill.lang.unsupported
 import kotlin.math.max
 import kotlin.math.min
-
-interface SyncInputStream : OptionalCloseable {
+interface Closeable {
+    fun close()
+}
+interface SyncInputStream : Closeable {
     fun read(buffer: ByteArray, offset: Int = 0, len: Int = buffer.size - offset): Int
     fun read(): Int = smallBytesPool.alloc2 { if (read(it, 0, 1) > 0) it[0].unsigned else -1 }
 }
 
-interface SyncOutputStream : OptionalCloseable {
+interface SyncOutputStream : Closeable {
     fun write(buffer: ByteArray, offset: Int = 0, len: Int = buffer.size - offset)
     fun write(byte: Int) = smallBytesPool.alloc2 { it[0] = byte.toByte(); write(it, 0, 1) }
     fun flush() = Unit

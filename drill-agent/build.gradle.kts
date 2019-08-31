@@ -188,9 +188,6 @@ val javaAgentJar: Jar by tasks
 
 afterEvaluate {
     val availableTarget = nativeTargets.filter { HostManager().isEnabled(it.konanTarget) }
-    availableTarget.forEach {
-        println(it)
-    }
 
     distributions {
         availableTarget.forEach {
