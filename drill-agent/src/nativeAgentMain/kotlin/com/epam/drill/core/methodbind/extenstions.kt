@@ -11,5 +11,5 @@ fun DirectBufferAddress.readBytes(end: Int) = this.toPointer().readBytes(end)
 
 
 fun DirectBufferAddress.rawString(end: Int): String {
-    return this.readBytes(end).stringFromUtf8()
+    return this.readBytes(end).decodeToString()
 }

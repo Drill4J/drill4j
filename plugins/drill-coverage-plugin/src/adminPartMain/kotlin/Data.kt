@@ -53,7 +53,7 @@ data class BuildMethods(
 data class MethodsInfo(
     val totalCount: Int = 0,
     val coveredCount: Int = 0,
-    val methods: Methods = emptyList()
+    val methods: List<JavaMethod> = emptyList()
 )
 
 @Serializable

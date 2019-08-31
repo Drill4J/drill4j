@@ -1,5 +1,7 @@
 package com.epam.drill.plugins.coverage
 
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * Provides boolean array for the probe.
  * Implementations must be kotlin singleton objects.
@@ -26,7 +28,7 @@ class ExecDatum(
 )
 
 
-typealias ExecData = AtomicCache<Long, ExecDatum>
+typealias ExecData = ConcurrentHashMap<Long, ExecDatum>
 
 /**
  * A container for session runtime data and optionally runtime data of tests
@@ -34,7 +36,7 @@ typealias ExecData = AtomicCache<Long, ExecDatum>
  */
 class ExecRuntime : (Long, String, Int, String) -> BooleanArray {
 
-    private val execData = AtomicCache<String, ExecData>()
+    private val execData = ConcurrentHashMap<String, ExecData>()
 
     override fun invoke(
             id: Long,
@@ -50,7 +52,7 @@ class ExecRuntime : (Long, String, Int, String) -> BooleanArray {
         )
     }.probes
 
-    fun collect() = execData.values.flatMap { it.values }
+    fun collect() = execData.values.flatMap { it.values.toList() }
 }
 
 /**
@@ -59,7 +61,7 @@ class ExecRuntime : (Long, String, Int, String) -> BooleanArray {
  * The provider must be a Kotlin singleton object, otherwise the instrumented probe calls will fail.
  */
 open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContext) : SessionProbeArrayProvider {
-    private val sessionRuntimes = AtomicCache<String, ExecRuntime>()
+    private val sessionRuntimes = ConcurrentHashMap<String, ExecRuntime>()
 
     override fun invoke(id: Long, name: String, probeCount: Int): BooleanArray {
         val sessionId = instrContext()
@@ -76,7 +78,7 @@ open class SimpleSessionProbeArrayProvider(private val instrContext: InstrContex
         sessionRuntimes[sessionId] = ExecRuntime()
     }
 
-    override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()
+    override fun stop(sessionId: String) = sessionRuntimes.remove(sessionId)?.collect()?.asSequence()
 
     override fun cancel(sessionId: String) {
         sessionRuntimes.remove(sessionId)

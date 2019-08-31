@@ -1,0 +1,30 @@
+stages:
+  - test_and_upload
+  - name: publish
+    if: branch = develop
+jobs:
+  include:
+    - os: windows
+      stage: test_and_upload
+      env: KBUILD=windows
+      language: shell # java is not supported but jdk is installed
+      script:
+        - powershell -Command "cmd /c travis_win.bat"
+    - os: osx
+      stage: test_and_upload
+      env:
+        KBUILD=macos
+        JAVA_OPTS=-Xmx2g
+      language: java
+      jdk: openjdk10
+      before_install:
+        - cp $(/usr/libexec/java_home)/lib/security/cacerts "${JAVA_HOME}/lib/security/cacerts"
+      install:
+        - echo install
+      before_script:
+        - echo before_script
+        - chmod +x ./gradlew
+      script:
+        - ./gradlew -s -i build
+        - ./gradlew -s -i publishMacosX64ZipPublicationToMavenRepository
+        - ./gradlew -s -i publishLinuxX64ZipPublicationToMavenRepository

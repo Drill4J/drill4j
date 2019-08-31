@@ -15,7 +15,7 @@ kotlin {
         jvm("adminPart"),
         jvm("agentPart")
     )
-    createNativeTargetForCurrentOs("nativePart") {
+    currentTarget("nativePart") {
         mainCompilation {
             binaries {
                 sharedLib(
@@ -40,7 +40,7 @@ kotlin {
         }
         named("agentPartMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common-jvm:$version")
+                implementation("com.epam.drill:common-jvm:$version")
                 implementation("com.epam.drill:drill-agent-part-jvm:$version")
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
@@ -50,14 +50,14 @@ kotlin {
         }
         named("nativePartMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
+                implementation("com.epam.drill:common-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
                 implementation("com.epam.drill:drill-agent-part-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
-                implementation("com.epam.drill:drill-jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
+                implementation("com.epam.drill:jvmapi-${org.jetbrains.kotlin.konan.target.HostManager.simpleOsName()}x64:$version")
             }
         }
         named("adminPartMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common-jvm:$version")
+                implementation("com.epam.drill:common-jvm:$version")
                 implementation("com.epam.drill:drill-admin-part-jvm:$version")
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")

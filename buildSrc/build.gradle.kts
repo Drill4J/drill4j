@@ -7,7 +7,7 @@ repositories {
     jcenter()
 }
 
-val kotlinVersion = "1.3.30"
+val kotlinVersion = "1.3.50"
 val atomicFuVersion = "0.12.6"
 dependencies {
     implementation(kotlin("gradle-plugin", kotlinVersion))

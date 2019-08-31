@@ -7,14 +7,13 @@ import com.epam.drill.core.exceptions.*
 import com.epam.drill.core.messanger.*
 import com.epam.drill.core.plugin.loader.*
 import com.epam.drill.logger.*
-import com.soywiz.korio.net.ws.*
+import com.epam.drill.ws.*
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.cbor.*
 import kotlin.collections.set
 import kotlin.native.concurrent.*
-
 
 @SharedImmutable
 val wsLogger = DLogger("DrillWebsocket")
@@ -61,8 +60,12 @@ fun startWs() =
 suspend fun websocket(adminUrl: String) {
     val url = "ws://$adminUrl/agent/attach"
     wsLogger.debug { "try to create websocket $url" }
-    val wsClient = WebSocketClient(
-        url, params = mutableMapOf(
+    val wsClient = RWebsocketClient(
+        url = url,
+        protocols = emptyList(),
+        origin = "",
+        wskey = "",
+        params = mutableMapOf(
             AgentConfigParam to Cbor.dumps(AgentConfig.serializer(), exec { agentConfig }),
             NeedSyncParam to exec { agentConfig.needSync }.toString()
         )
@@ -194,7 +197,10 @@ suspend fun websocket(adminUrl: String) {
 }
 
 
-private fun String.toWsMessage() = Message.serializer().parse(this)
+private fun String.toWsMessage(): Message {
+    println("Action form admin: '$this'")
+    return Message.serializer().parse(this)
+}
 
 
 fun Worker.executeCoroutines(block: suspend CoroutineScope.() -> Unit): Future<Unit> {

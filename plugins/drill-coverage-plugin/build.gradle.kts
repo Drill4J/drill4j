@@ -4,6 +4,7 @@ plugins {
     `kotlin-multiplatform`
     `kotlinx-serialization`
     `kotlinx-atomicfu`
+    distribution
 }
 
 val jacocoVersion = "0.8.3"
@@ -39,7 +40,7 @@ kotlin {
     sourceSets {
         named("commonMain") {
             dependencies {
-                implementation("com.epam.drill:drill-common-jvm:$version")
+                implementation("com.epam.drill:common-jvm:$version")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializationRuntimeVersion")
             }
@@ -60,7 +61,7 @@ kotlin {
                 extendsFrom(agentJarDeps)
             }
             dependencies {
-                
+
                 implementation("com.epam.drill:drill-agent-part-jvm:$version")
             }
         }
@@ -79,7 +80,7 @@ kotlin {
         jvms.forEach {
             it.compilations["main"].defaultSourceSet {
                 dependencies {
-                    implementation("com.epam.drill:drill-common:$version")
+                    implementation("com.epam.drill:common:$version")
                     implementation(kotlin("stdlib-jdk8"))
                     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationRuntimeVersion")
                     compileOnly("org.jetbrains.kotlinx:atomicfu:$atomicFuVersion")
@@ -94,9 +95,7 @@ kotlin {
             }
         }
 
-        
-        
-        
+
     }
 }
 

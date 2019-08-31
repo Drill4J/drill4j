@@ -58,6 +58,7 @@ tasks {
     val agentJvmArgs: JavaExec.() -> Unit = {
         jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007")
         val (pref, ex) = when {
+            Os.isFamily(Os.FAMILY_MAC) -> Pair("lib", "dylib")
             Os.isFamily(Os.FAMILY_UNIX) -> Pair("lib", "so")
             else -> Pair("", "dll")
         }
@@ -70,6 +71,11 @@ tasks {
     }
 
 
+    named<Test>("test") {
+        testLogging {
+            showStandardStreams = true
+        }
+    }
     named<BootRun>("bootRun") {
         jvmArgs("-Xmx2g")
         agentJvmArgs()
