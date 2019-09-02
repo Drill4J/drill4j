@@ -225,21 +225,35 @@ class CoverageAdminPart(sender: Sender, agentInfo: AgentInfo, id: String) :
         )
     }
 
-    internal suspend fun toggleScope(scopeId: String) {
-        agentState.scopes[scopeId]?.let { scope ->
+    internal suspend fun toggleScope(scopeId: String): StatusMessage {
+        return agentState.scopes[scopeId]?.let { scope ->
             scope.toggle()
             sendScopes()
             sendScopeSummary(scope.summary)
             calculateAndSendBuildCoverage()
-        }
+            StatusMessage(
+                StatusCodes.OK,
+                "Scope with id $scopeId toggled to 'enabled' value '${scope.enabled}'"
+            )
+        } ?: StatusMessage(
+            StatusCodes.CONFLICT,
+            "Failed to toggle scope with id $scopeId: scope not found"
+        )
     }
 
-    internal suspend fun dropScope(scopeId: String) {
-        agentState.scopes.remove(scopeId)?.let {
+    internal suspend fun dropScope(scopeId: String): StatusMessage {
+        return agentState.scopes.remove(scopeId)?.let {
             cleanTopics(id)
             sendScopes()
             calculateAndSendBuildCoverage()
-        }
+            StatusMessage(
+                StatusCodes.OK,
+                "Scope with id $scopeId was removed"
+            )
+        } ?: StatusMessage(
+            StatusCodes.CONFLICT,
+            "Failed to drop scope with id $scopeId: scope not found"
+        )
     }
 
     internal suspend fun changeActiveScope(scopeChange: ActiveScopeChangePayload) =
