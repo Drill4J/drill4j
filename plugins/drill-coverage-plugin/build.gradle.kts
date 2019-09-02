@@ -1,4 +1,6 @@
-import com.epam.drill.build.*
+import com.epam.drill.build.atomicFuVersion
+import com.epam.drill.build.jvmCoroutinesVersion
+import com.epam.drill.build.serializationRuntimeVersion
 
 plugins {
     `kotlin-multiplatform`
@@ -6,6 +8,16 @@ plugins {
     `kotlinx-atomicfu`
     distribution
 }
+
+repositories {
+    if (version.toString().endsWith("-SNAPSHOT"))
+        maven(url = "https://oss.jfrog.org/artifactory/list/oss-snapshot-local")
+    else
+        maven(url = "https://oss.jfrog.org/artifactory/list/oss-release-local")
+    mavenCentral()
+    jcenter()
+}
+
 
 val jacocoVersion = "0.8.3"
 val vavrVersion = "0.10.0"
@@ -34,8 +46,8 @@ kotlin {
         jvm("adminPart"),
         jvm("agentPart")
     )
-    
-    
+
+
 
     sourceSets {
         named("commonMain") {
@@ -126,9 +138,6 @@ tasks {
         group = "app"
         from(distJar) {
             into("adminStorage")
-        }
-        from(agentPartJar) {
-            into("tests/coverage")
         }
         destinationDir = project.rootProject.file("distr")
     }

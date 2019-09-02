@@ -1,19 +1,11 @@
-import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
     base
 }
 
 tasks {
-
-    val runAgent by registering {
-        dependsOn(gradle.includedBuild("spring-petclinic-kotlin").task(":bootRun"))
-        group = "application"
-    }
-    val runIntegrationTests by registering {
-        dependsOn(gradle.includedBuild("integration-tests").task(":test"))
-        group = "application"
-    }
 
     val cleanDistr by registering(Delete::class) {
         group = "build"
@@ -31,21 +23,5 @@ allprojects {
     }
     tasks.withType<KotlinNativeCompile> {
         kotlinOptions.allWarningsAsErrors = true
-    }
-}
-
-allprojects {
-
-    repositories {
-        if (version.toString().endsWith("-SNAPSHOT"))
-            maven(url = "https://oss.jfrog.org/artifactory/list/oss-snapshot-local")
-        else
-            maven(url = "https://oss.jfrog.org/artifactory/list/oss-release-local")
-        mavenCentral()
-//        mavenLocal()
-        jcenter()
-        maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
-        maven(url = "https://kotlin.bintray.com/kotlinx")
-
     }
 }

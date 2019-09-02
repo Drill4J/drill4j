@@ -1,5 +1,6 @@
-import com.epam.drill.build.*
-import org.jetbrains.kotlin.gradle.tasks.*
+import com.epam.drill.build.ktorVersion
+import com.epam.drill.build.serializationRuntimeVersion
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -13,6 +14,10 @@ repositories {
     jcenter()
     maven(url = "https://dl.bintray.com/kodein-framework/Kodein-DI/")
     mavenLocal()
+    if (version.toString().endsWith("-SNAPSHOT"))
+        maven(url = "https://oss.jfrog.org/artifactory/list/oss-snapshot-local")
+    else
+        maven(url = "https://oss.jfrog.org/artifactory/list/oss-release-local")
 }
 
 val appMainClassName by extra("io.ktor.server.netty.EngineMain")
@@ -30,7 +35,6 @@ val appJvmArgs = listOf(
 
 application {
     mainClassName = appMainClassName
-
     applicationDefaultJvmArgs = appJvmArgs
 }
 
@@ -86,12 +90,6 @@ sourceSets {
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
-    }
-
-    //TODO Only for backward compatibility, remove after CI/CD has been configured
-    register("runDrillAdmin") {
-        group = "application"
-        dependsOn("run")
     }
 }
 
