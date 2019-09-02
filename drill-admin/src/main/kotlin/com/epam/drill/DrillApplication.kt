@@ -116,7 +116,9 @@ var installation: Application.() -> Unit = {
         method(HttpMethod.Put)
         method(HttpMethod.Patch)
         header(HttpHeaders.Authorization)
+        header(HttpHeaders.ContentType)
         exposeHeader(HttpHeaders.Authorization)
+        exposeHeader(HttpHeaders.ContentType)
     }
 }
 var kodeinConfig: Kodein.MainBuilder.() -> Unit = {

@@ -1,9 +1,9 @@
 {
   "id": "coverage",
-  "name": "AwesomeCoveragePlugin",
-  "description": "This is the awesome custom plugin",
+  "name": "CoveragePlugin",
+  "description": "This is the coverage plugin. Upd description",
   "type": "Custom",
   "family": "INSTRUMENTATION",
   "enabled": true,
-  "config": "{\"pathPrefixes\": [\"org/drilspringframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
+  "config": "{\"pathPrefixes\": [\"org/springframework/samples/petclinic\",\"com/epam/ta/reportportal\"], \"message\": \"hello from default plugin config... This is 'plugin_config.json file\"}"
 }
