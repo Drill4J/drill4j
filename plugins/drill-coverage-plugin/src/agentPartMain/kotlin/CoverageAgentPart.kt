@@ -56,11 +56,10 @@ class CoverageAgentPart @JvmOverloads constructor(
     }
 
     override fun instrument(className: String, initialBytes: ByteArray): ByteArray? {
-//        if (!enabled) return null
-//        return _loadedClasses.value[className]?.let { classId ->
-//            instrumenter(className, classId, initialBytes)
-//        }
-        return null
+        if (!enabled) return null
+        return _loadedClasses.value[className]?.let { classId ->
+            instrumenter(className, classId, initialBytes)
+        }
     }
 
     override fun destroyPlugin(unloadReason: UnloadReason) {
