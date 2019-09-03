@@ -1,5 +1,6 @@
 import com.epam.drill.build.ktorVersion
 import com.epam.drill.build.serializationRuntimeVersion
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -7,6 +8,8 @@ plugins {
     id("kotlinx-serialization")
     id("com.google.cloud.tools.jib") version "1.2.0"
     application
+    `maven-publish`
+    id("com.github.johnrengelman.shadow") version "5.1.0"
 }
 
 repositories {
@@ -38,8 +41,11 @@ application {
     applicationDefaultJvmArgs = appJvmArgs
 }
 
+val remotePlugins: Configuration by configurations.creating {}
 
 dependencies {
+    remotePlugins("com.epam.drill:coverage-plugin:$version")
+
     implementation("com.epam.drill:common-jvm:$version")
     implementation("com.epam.drill:drill-admin-part-jvm:$version")
 
@@ -83,7 +89,7 @@ jib {
 
 sourceSets {
     main {
-        output.resourcesDir = file("build/classes/kotlin/main")
+        output.setResourcesDir(file("build/classes/kotlin/main"))
     }
 }
 
@@ -97,4 +103,45 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=io.ktor.util.KtorExperimentalAPI"
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
+}
+
+tasks {
+    val downloadPlugins by register("downloadPlugins", Copy::class) {
+        from(remotePlugins.files.filter { it.extension == "zip" })
+        into(rootDir.resolve("distr").resolve("adminStorage"))
+    }
+
+    named("run") {
+        dependsOn(downloadPlugins)
+    }
+    named("shadowJar", ShadowJar::class) {
+
+    }
+
+}
+publishing {
+    repositories {
+        maven {
+            url =
+                if (version.toString().endsWith("-SNAPSHOT"))
+                    uri("http://oss.jfrog.org/oss-snapshot-local")
+                else uri("http://oss.jfrog.org/oss-release-local")
+            credentials {
+                username =
+                    if (project.hasProperty("bintrayUser"))
+                        project.property("bintrayUser").toString()
+                    else System.getenv("BINTRAY_USER")
+                password =
+                    if (project.hasProperty("bintrayApiKey"))
+                        project.property("bintrayApiKey").toString()
+                    else System.getenv("BINTRAY_API_KEY")
+            }
+        }
+    }
+
+    publications {
+        create<MavenPublication>("admin") {
+            artifact(tasks["shadowJar"])
+        }
+    }
 }

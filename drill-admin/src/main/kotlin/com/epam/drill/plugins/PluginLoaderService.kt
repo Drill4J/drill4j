@@ -12,6 +12,7 @@ import org.kodein.di.generic.*
 import java.io.*
 import java.lang.System.*
 import java.util.jar.*
+import java.util.zip.*
 
 
 private val logger = KotlinLogging.logger {}
@@ -29,15 +30,15 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
             logger.info { "Searching for plugins in paths $pluginPaths" }
             val pluginsFiles = pluginPaths.filter { it.exists() }
                 .flatMap { it.listFiles()!!.asIterable() }
-                .filter { it.isFile && it.extension.equals("jar", true) }
+                .filter { it.isFile && it.extension.equals("zip", true) }
                 .map { it.canonicalFile }
             if (pluginsFiles.isNotEmpty()) {
                 logger.info { "Plugin jars found: ${pluginsFiles.count()}." }
                 pluginsFiles.forEach { pluginFile ->
                     logger.info { "Loading from $pluginFile." }
-                    JarFile(pluginFile).use { jar ->
+                    ZipFile(pluginFile).use { jar ->
                         val configPath = "plugin_config.json"
-                        val configEntry = jar.getJarEntry(configPath)
+                        val configEntry = jar.getEntry(configPath)
                         if (configEntry != null) {
                             val configText = jar.getInputStream(configEntry).reader().readText()
                             @Suppress("EXPERIMENTAL_API_USAGE")
@@ -98,8 +99,8 @@ class PluginLoaderService(override val kodein: Kodein) : KodeinAware {
 
 }
 
-fun JarFile.extractPluginEntry(pluginId: String, entry: String): File? {
-    val jarEntry: JarEntry = getJarEntry(entry) ?: return null
+fun ZipFile.extractPluginEntry(pluginId: String, entry: String): File? {
+    val jarEntry: ZipEntry = getEntry(entry) ?: return null
     return getInputStream(jarEntry).use { istream ->
         val workDir = File(getenv("DRILL_HOME"), "work")
         val pluginDir = workDir.resolve("plugins").resolve(pluginId)

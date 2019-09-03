@@ -1,9 +1,0 @@
-{
-  "id": "exception-plugin",
-  "name": "Exception Native Plugin",
-  "description": "This is the awesome native plugin",
-  "type": "Developers",
-  "family": "GENERIC",
-  "enabled": true,
-  "config": "{\"blackList\": [\"stopWord\"]}"
-}
