@@ -1,0 +1,24 @@
+[submodule "agent"]
+	path = agent
+	url = https://github.com/Drill4J/agent
+[submodule "admin"]
+	path = admin
+	url = https://github.com/Drill4J/admin
+[submodule "common"]
+	path = common
+	url = https://github.com/Drill4J/common
+[submodule "jvmapi"]
+	path = jvmapi
+	url = https://github.com/Drill4J/jvmapi
+[submodule "plugin-api"]
+	path = plugin-api
+	url = https://github.com/Drill4J/plugin-api
+[submodule "coverage-plugin"]
+	path = coverage-plugin
+	url = https://github.com/Drill4J/coverage-plugin
+[submodule "admin-ui"]
+	path = admin-ui
+	url = https://github.com/Drill4J/admin-ui
+[submodule "browser-extension"]
+	path = browser-extension
+	url = https://github.com/Drill4J/browser-extension
