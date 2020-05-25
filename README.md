@@ -108,5 +108,5 @@ To launch the development environment, follow these steps:
 Used technology stack: [Kotlin-Native](https://kotlinlang.org/docs/reference/native-overview.html)
 
 ## Community / Support
-[Telegram chat](https://t.me/drill4j)
+[Telegram chat](https://t.me/drill4j)  
 [Youtube channel](https://www.youtube.com/watch?v=N_WJYrt5qNc&feature=emb_title)
