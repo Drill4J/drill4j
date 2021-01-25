@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  admin-ui:
+    # it's a lates version of drill ui
+    # The list of other versions here https://hub.docker.com/r/drill4j/admin-ui/tags
+    image: drill4j/admin-ui
+    ports:
+      - 3000:8080
+    environment:
+      - REACT_APP_API_HOST=drill-admin:8090
+  admin:
+    # it's a lates version of drill backend
+    # The list of other versions here  https://hub.docker.com/r/drill4j/admin/tags
+    image: drill4j/admin
+    hostname: drill-admin
+    ports:
+      - 8090:8090
