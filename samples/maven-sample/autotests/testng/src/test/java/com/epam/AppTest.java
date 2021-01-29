@@ -3,7 +3,8 @@ package com.epam;
 
 import org.apache.http.client.methods.*;
 import org.apache.http.impl.client.*;
-import org.junit.*;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import java.io.*;
 
