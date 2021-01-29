@@ -42,8 +42,8 @@
 - Junit 4
 - Junit 5
 - Testng 
-- Cucumber 5
-- Spoke 5
+- Cucumber 
+- Spoke 
 - Selenium
 
 
