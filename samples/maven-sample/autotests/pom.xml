@@ -5,6 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.epam</groupId>
     <artifactId>autotests</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
@@ -17,5 +18,33 @@
         <module>selenium</module>
         <module>spoke</module>
     </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>4.0.rc2</version>
+                <configuration>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>https://raw.githubusercontent.com/Drill4J/drill4j/develop/COPYRIGHT</header>
+                            <excludes>
+                                <exclude>**/README</exclude>
+                                <exclude>**/pom.xml</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

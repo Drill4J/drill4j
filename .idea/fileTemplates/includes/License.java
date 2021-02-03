@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2020 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.epam.ui.cucumber;
-
-import io.cucumber.junit.*;
-import org.junit.runner.*;
-
-@RunWith(Cucumber.class)
-@CucumberOptions(features = {"src/test/resources/com/epam/ui/cucumber/test-scenario.feature"},
-        glue = {"com.epam.ui.cucumber"})
-public class CucumberTests {
-
-}
