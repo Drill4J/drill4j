@@ -1,6 +1,13 @@
 # [Drill4J Project](https://drill4j.github.io/)
 
-[![License](https://camo.githubusercontent.com/8e7da7b6b632d5ef4bce9a550a5d5cfe400ca1fe/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4170616368652532304c6963656e7365253230322e302d626c75652e7376673f7374796c653d666c6174)](http://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/github/license/Drill4J/drill4j)](LICENSE)
+[![Visit the website at drill4j.github.io](https://img.shields.io/badge/visit-website-green.svg?logo=firefox)](https://drill4j.github.io/)
+[![Telegram Chat](https://img.shields.io/badge/Chat%20on-Telegram-brightgreen.svg)](https://t.me/drill4j)
+![GitHub contributors](https://img.shields.io/github/contributors/Drill4J/drill4j)
+![Lines of code](https://img.shields.io/tokei/lines/github/Drill4J/drill4j)
+![YouTube Channel Views](https://img.shields.io/youtube/channel/views/UCJtegUnUHr0bO6icF1CYjKw?style=social)
+
+
 <img src="./resources/logo.svg" alt="Logo" width="128" align="right">
 
 *Drill* is a **“feature-on-demand”** tool for real-time application profiling that **does not affect codebase**.
