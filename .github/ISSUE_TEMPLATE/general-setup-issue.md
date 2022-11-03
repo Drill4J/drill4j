@@ -20,8 +20,6 @@ Issue:
 
 <!-- A brief description summarizing your issue in 2-3 sentences -->
 
-Setup:
-
 ## Details
 
 1. Your application
