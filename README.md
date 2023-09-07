@@ -54,6 +54,32 @@ All the above allows to speed up testing and development cycle, eliminate guessw
    * [Browser Extension](https://github.com/Drill4J/browser-extension) - allows to collect metrics for _Manual tests_
    * Drill4J is somewhat test-platform-agnostic - while we have tools and example integrations for other platforms (e.g. [Postman](https://github.com/Drill4J/pwad), [Cypress](https://github.com/Drill4J/cypress-example-integration)), it can be integrated (with some efforts) in almost any testing solution/setup
 
+
+## How it works  (briefly, very simplified version)
+
+__! This explanation !__ employs Selenium-based tests and HTTP-transport for the example purpose only. Drill4J is not limited to just Java/ just automated tests / just HTTP. It supports metric collection for almost any type of testing setup.
+
+Imagine a basic picture of your average Selenium tests (simplified for the explanation purposes)
+
+![Automated Testing Setup with Selenium-based tests](./media/schema-basic-automated-no-drill.jpg)
+
+And now, this is how it looks with Drill4J installed and configured.
+
+![Drill4J - Automated Testing with Selenium-based tests](./media/schema-automated-tests.jpg)
+
+You can see 3 key integration points:
+
+1. The target application. The [__Drill4J Java Agent__](https://github.com/Drill4J/java-agent) is added to the target app to enable metrics collection.
+
+2. The [__Drill4J Autotesting Agent__](https://github.com/Drill4J/js-auto-test-agent) - __it relays tests metadata__ to Drill4J Backend Service, __integrates__ with various testing frameworks and __configures__ Selenium to add headers to the  HTTP requests
+
+3. The [__Drill4J Backend__](https://github.com/Drill4J/admin) processes data and provides results via API.
+
+The manual setup does not look much different: instead of Autotesting Agent, there is a [__Drill4J Browser Extension__](https://github.com/Drill4J/browser-extension/releases), that one have to use, to capture the testing metrics.
+
+![Drill4J - Manual Testing With The Browser Extension](./media/schema-manual-tests.jpg)
+
+
 ## Community / Support
 [Telegram chat](https://t.me/drill4j)  
 [Youtube channel](https://www.youtube.com/watch?v=N_WJYrt5qNc&feature=emb_title)
