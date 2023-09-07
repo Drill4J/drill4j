@@ -21,7 +21,7 @@ Based on that Drill4J:
 - shows code not touched by any tests. Both in percentage and down to exact place in code.
 - detects risks - modified or new code which needs to be tested;
 - recommends minimal and sufficient set of tests;
-- tracks if tests really covered aformentioned risks;
+- tracks if tests really covered aforementioned risks;
 - provides comprehensive metrics which can be easily integrated to automated release pipeline with straightforward Quality Gate API.
 
 All the above allows to speed up testing and development cycle, eliminate guesswork and back tests results with hard data.
@@ -67,4 +67,3 @@ All the above allows to speed up testing and development cycle, eliminate guessw
   </a>
   .
 </p>
-
